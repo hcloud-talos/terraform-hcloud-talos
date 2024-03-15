@@ -16,6 +16,19 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "datacenter_name" {
+  type        = string
+  description = <<EOF
+    The name of the datacenter where the cluster will be created.
+    This is used to determine the region and zone of the cluster and network.
+    Possible values: fsn1-dc14, nbg1-dc3, hel1-dc2, ash-dc1, hil-dc1
+  EOF
+  validation {
+    condition     = contains(["fsn1-dc14", "nbg1-dc3", "hel1-dc2", "ash-dc1", "hil-dc1"], var.datacenter_name)
+    error_message = "Invalid datacenter name."
+  }
+}
+
 # Firewall
 variable "firewall_use_current_ip" {
   type        = bool
@@ -52,3 +65,9 @@ variable "firewall_talos_api_source" {
   EOF
 }
 
+# Network
+variable "network_ipv4_cidr" {
+  description = "The main network cidr that all subnets will be created upon."
+  type        = string
+  default     = "10.0.0.0/16"
+}
