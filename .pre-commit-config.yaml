@@ -4,3 +4,6 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_docs
+      - id: terraform_tflint
+      - id: terraform_checkov
+      - id: tfupdate
