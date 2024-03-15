@@ -45,10 +45,24 @@ data "talos_machine_configuration" "worker" {
   examples = false
 }
 
+resource "talos_machine_bootstrap" "this" {
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoint             = hcloud_server.control_planes[0].ipv4_address
+  node                 = hcloud_server.control_planes[0].ipv4_address
+}
+
 data "talos_client_configuration" "this" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.this.client_configuration
   endpoints = [
-    for controlplane_ip in local.control_plane_ips : controlplane_ip
+    for server in hcloud_server.control_planes : server.ipv4_address
+  ]
+}
+
+data "talos_cluster_kubeconfig" "this" {
+  client_configuration = talos_machine_secrets.this.client_configuration
+  node                 = hcloud_server.control_planes[0].ipv4_address
+  depends_on = [
+    talos_machine_bootstrap.this
   ]
 }

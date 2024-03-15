@@ -73,6 +73,15 @@ variable "talos_version" {
   description = "The version of Talos to use for the cluster."
 }
 
+variable "ssh_public_key" {
+  description = <<EOF
+    The public key to be set in the servers. It is not used in any way.
+    Unfortunately, it is still required, otherwise the Hetzner will sen E-Mails with login credentials.
+  EOF
+  type        = string
+  sensitive   = true
+}
+
 variable "control_plane_count" {
   type        = number
   description = <<EOF
@@ -85,7 +94,43 @@ variable "control_plane_count" {
   }
 }
 
+variable "control_plane_server_type" {
+  type        = string
+  description = <<EOF
+    The server type to use for the control plane nodes.
+    Possible values: cx11, cx21, cx31, cx41, cx51, cpx11, cpx21, cpx31, cpx41,
+    cpx51, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63
+  EOF
+  validation {
+    condition = contains([
+      "cx11", "cx21", "cx31", "cx41", "cx51",
+      "cpx11", "cpx21", "cpx31", "cpx41", "cpx51",
+      "cax11", "cax21", "cax31", "cax41",
+      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63"
+    ], var.control_plane_server_type)
+    error_message = "Invalid control plane server type."
+  }
+}
+
 variable "worker_count" {
   type        = number
   description = "The number of worker nodes to create."
+}
+
+variable "worker_server_type" {
+  type        = string
+  description = <<EOF
+    The server type to use for the worker nodes.
+    Possible values: cx11, cx21, cx31, cx41, cx51, cpx11, cpx21, cpx31, cpx41,
+    cpx51, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63
+  EOF
+  validation {
+    condition = contains([
+      "cx11", "cx21", "cx31", "cx41", "cx51",
+      "cpx11", "cpx21", "cpx31", "cpx41", "cpx51",
+      "cax11", "cax21", "cax31", "cax41",
+      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63"
+    ], var.worker_server_type)
+    error_message = "Invalid worker server type."
+  }
 }
