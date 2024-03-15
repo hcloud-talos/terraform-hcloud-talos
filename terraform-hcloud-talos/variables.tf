@@ -5,12 +5,6 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "talos_version" {
-  type        = string
-  default     = "v1.6.0"
-  description = "The version of Talos to use for the cluster."
-}
-
 variable "cluster_name" {
   type        = string
   description = "The name of the cluster."
@@ -70,4 +64,28 @@ variable "network_ipv4_cidr" {
   description = "The main network cidr that all subnets will be created upon."
   type        = string
   default     = "10.0.0.0/16"
+}
+
+# Server
+variable "talos_version" {
+  type        = string
+  default     = "v1.6.6"
+  description = "The version of Talos to use for the cluster."
+}
+
+variable "control_plane_count" {
+  type        = number
+  description = <<EOF
+    The number of control plane nodes to create.
+    Must be an odd number.
+  EOF
+  validation {
+    condition     = var.control_plane_count % 2 == 1
+    error_message = "The number of control plane nodes must be an odd number."
+  }
+}
+
+variable "worker_count" {
+  type        = number
+  description = "The number of worker nodes to create."
 }

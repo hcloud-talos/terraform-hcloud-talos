@@ -16,3 +16,12 @@ resource "hcloud_network_subnet" "worker" {
   network_zone = data.hcloud_location.this.network_zone
   ip_range     = cidrsubnet(var.network_ipv4_cidr, 8, 1)
 }
+
+locals {
+  control_plane_ips = [
+    for index in range(var.control_plane_count) : cidrhost(hcloud_network_subnet.control_plane.ip_range, index + 101)
+  ]
+  worker_ips = [
+    for index in range(var.worker_count) : cidrhost(hcloud_network_subnet.worker.ip_range, index + 201)
+  ]
+}
