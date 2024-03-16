@@ -9,7 +9,7 @@ locals {
   ]
 }
 
-data "talos_machine_configuration" "controlplane" {
+data "talos_machine_configuration" "control_plane" {
   count            = var.control_plane_count
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name

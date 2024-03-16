@@ -35,7 +35,7 @@ resource "hcloud_server" "control_planes" {
   name               = "control-plane-${count.index + 1}"
   image              = local.control_plane_image_id
   server_type        = var.control_plane_server_type
-  user_data          = data.talos_machine_configuration.controlplane[count.index].machine_configuration
+  user_data          = data.talos_machine_configuration.control_plane[count.index].machine_configuration
   ssh_keys           = [hcloud_ssh_key.this.id]
   placement_group_id = hcloud_placement_group.control_plane.id
 
@@ -60,7 +60,7 @@ resource "hcloud_server" "control_planes" {
 
   depends_on = [
     hcloud_network_subnet.control_plane,
-    data.talos_machine_configuration.controlplane
+    data.talos_machine_configuration.control_plane
   ]
 }
 
