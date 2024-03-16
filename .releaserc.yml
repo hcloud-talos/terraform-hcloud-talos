@@ -1,0 +1,56 @@
+branches:
+  - name: "+([0-9])?(.{+([0-9]),x}).x"
+    channel: "latest"
+  - name: "main"
+    channel: "latest"
+  - name: "next"
+    channel: "next"
+    prerelease: true
+
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - "@semantic-release/release-notes-generator"
+  - "@semantic-release/git"
+  - "@semantic-release/github"
+
+analyzeCommits:
+  - path: "@semantic-release/commit-analyzer"
+    preset: "angular"
+    releaseRules:
+      # Major
+      - breaking: true
+        release: "major"
+      # Minor
+      - type: "feat"
+        release: "minor"
+      # Patch
+      - revert: true
+        release: "patch"
+      - type: "fix"
+        release: "patch"
+      - type: "style"
+        release: "patch"
+      - type: "perf"
+        release: "patch"
+      - type: "chore"
+        scope: "deps"
+        release: "patch"
+
+generateNotes:
+  - path: "@semantic-release/release-notes-generator"
+    preset: "conventionalcommits"
+    presetConfig:
+      types:
+        - type: "feat"
+          section: "✨ Features"
+          hidden: false
+        - type: "fix"
+          section: "🐛 Bug Fixes"
+          hidden: false
+        - type: "revert"
+          section: "🔙 Reverts"
+          hidden: false
+        - type: "chore"
+          scope: "deps"
+          section: "📦‍ Dependencies"
+          hidden: false
