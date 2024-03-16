@@ -1,35 +1,48 @@
 resource "talos_machine_secrets" "this" {}
 
 locals {
-  cert_SANs = concat([
-    for control_plane_primary_ip in hcloud_primary_ip.control_planes : control_plane_primary_ip.ip_address
-    ], [
-    for control_plane_local_ip in local.control_plane_ips : control_plane_local_ip
+  // TODO: Possible to make domain and api_domain configurable?
+  // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
+  domain           = "cluster.local"
+  k8s_service_host = "api.${local.domain}"
+  k8s_service_port = 6443
+  cluster_endpoint = "https://${local.k8s_service_host}:${local.k8s_service_port}"
+  // ************
+  cert_SANs = concat(
+    local.control_plane_public_ipv4_list,
+    local.control_plane_public_ipv6_list,
+    local.control_plane_private_ipv4_list,
+    [local.k8s_service_host]
+  )
+  extra_host_entries = concat(
+    [
+      "127.0.0.1:${local.k8s_service_host}"
     ]
   )
-  cluster_endpoint = "https://${local.control_plane_ips[0]}:6443"
-  cluster_config_patches = [
-    templatefile("${path.module}/patches/cluster-patch.yaml.tmpl", {
-      allow_scheduling_on_control_planes = var.worker_count <= 0,
-      cert_SANs                          = join(",", local.cert_SANs)
-      cluster_ipv4_private_cidr          = var.network_ipv4_cidr
-    })
-  ]
 }
 
 data "talos_machine_configuration" "control_plane" {
-  count            = var.control_plane_count
+  // enable although we have no control planes to be able to debug the output
+  count            = var.control_plane_count > 0 ? var.control_plane_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name
   cluster_endpoint = local.cluster_endpoint
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches = concat(
-    local.cluster_config_patches,
     [
-      templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
-        node_ipv4_public          = hcloud_primary_ip.control_planes[count.index].ip_address
-        cluster_ipv4_private_cidr = var.network_ipv4_cidr
+      templatefile("${path.module}/patches/controlplane.yaml.tpl", {
+        allowSchedulingOnControlPlanes = var.worker_count <= 0,
+        domain                         = local.domain
+        apiDomain                      = local.k8s_service_host
+        certSANs                       = join(",", local.cert_SANs)
+        nodeSubnets                    = local.node_ipv4_cidr
+        nodeCidrMaskSizeIpv4           = local.node_ipv4_cidr_mask_size
+        podSubnets                     = local.pod_ipv4_cidr
+        serviceSubnets                 = local.service_ipv4_cidr
+        hcloudNetwork                  = hcloud_network.this.id
+        hcloudToken                    = var.hcloud_token
+        extraHostEntries               = join(",", local.extra_host_entries)
       })
     ]
   )
@@ -38,18 +51,21 @@ data "talos_machine_configuration" "control_plane" {
 }
 
 data "talos_machine_configuration" "worker" {
-  count            = var.worker_count
+  // enable although we have no control planes to be able to debug the output
+  count            = var.worker_count > 0 ? var.worker_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name
   cluster_endpoint = local.cluster_endpoint
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches = concat(
-    local.cluster_config_patches,
     [
-      templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
-        node_ipv4_public          = hcloud_primary_ip.workers[count.index].ip_address
-        cluster_ipv4_private_cidr = var.network_ipv4_cidr
+      templatefile("${path.module}/patches/worker.yaml.tpl", {
+        domain           = local.domain
+        nodeSubnets      = local.node_ipv4_cidr
+        serviceSubnets   = local.service_ipv4_cidr
+        podSubnets       = local.pod_ipv4_cidr
+        extraHostEntries = join(",", local.extra_host_entries)
       })
     ]
   )
@@ -58,9 +74,13 @@ data "talos_machine_configuration" "worker" {
 }
 
 resource "talos_machine_bootstrap" "this" {
+  count                = var.control_plane_count > 0 ? 1 : 0
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint             = hcloud_server.control_planes[0].ipv4_address
-  node                 = hcloud_server.control_planes[0].ipv4_address
+  endpoint             = local.control_plane_public_ipv4_list[0]
+  node                 = local.control_plane_public_ipv4_list[0]
+  depends_on = [
+    hcloud_server.control_planes
+  ]
 }
 
 data "talos_client_configuration" "this" {
@@ -72,8 +92,9 @@ data "talos_client_configuration" "this" {
 }
 
 data "talos_cluster_kubeconfig" "this" {
+  count                = var.control_plane_count > 0 ? 1 : 0
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = hcloud_server.control_planes[0].ipv4_address
+  node                 = local.control_plane_public_ipv4_list[0]
   depends_on = [
     talos_machine_bootstrap.this
   ]
