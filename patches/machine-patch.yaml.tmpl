@@ -11,10 +11,16 @@ machine:
       - interface: eth0
         dhcp: false
         addresses:
-          - ${node_ipv4}/32
+          - ${node_ipv4_public}/32
         routes:
           - network: 172.31.1.1/32
           - network: 0.0.0.0/0
             gateway: 172.31.1.1
       - interface: eth1
-        dhcp: true
+        dhcp: false
+        addresses:
+          - ${node_ipv4_private}/${split("/", node_ipv4_private_cidr)[1]}
+        routes:
+          - network: ${cidrhost(node_ipv4_private_cidr, 1)}/${split("/", node_ipv4_private_cidr)[1]}
+          - network: ${cluster_ipv4_private_cidr}
+            gateway: ${cidrhost(node_ipv4_private_cidr, 1)}
