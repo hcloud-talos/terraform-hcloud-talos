@@ -47,7 +47,9 @@ The talos os version is defined in the variable `talos_version`  in [talos-hclou
 ```
 
 ### Terraform
+
 Use the module as shown in the following example:
+
 ```hcl
 module "talos" {
   source  = "hcloud-talos/talos/hcloud"
@@ -65,9 +67,35 @@ module "talos" {
   control_plane_count       = 3 // number of control planes to create
   control_plane_server_type = "cax21" // server type for the control plane
 
-  worker_count       = 3 // number of worker to create
+  worker_count       = 3 // number of worker to create (if 0, allow_scheduling_on_control_planes will be set to true)
   worker_server_type = "cax21" // server type for the worker
 }
+```
+
+You can then run the following commands to export the kubeconfig and talosconfig:
+
+```bash
+terraform output --raw kubeconfig > ./kubeconfig
+terraform output --raw talosconfig > ./talosconfig
+```
+
+If you want to merge the kubeconfig with your existing kubeconfig, you can use the following commands. (backup
+file `~/.kube/config.bak` is created)
+
+```bash
+terraform output --raw kubeconfig > ./kubeconfig
+mv ~/.kube/config ~/.kube/config.bak
+KUBECONFIG=./kubeconfig:~/.kube/config.bak kubectl config view --flatten > ~/.kube/config
+rm ./kubeconfig
+```
+
+And for the talosconfig:
+
+```bash
+terraform output --raw talosconfig > ./talosconfig
+cp ~/.talos/config ~/.talos/config.bak
+talosctl config merge ./talosconfig
+rm ./talosconfig
 ```
 
 ## Credits
