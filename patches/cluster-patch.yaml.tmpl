@@ -2,3 +2,6 @@ cluster:
   allowSchedulingOnControlPlanes: ${allow_scheduling_on_control_planes}
   apiServer:
     certSANs: ${format("%#v",split(",",cert_SANs))}
+  etcd:
+    advertisedSubnets:
+      - ${cluster_ipv4_private_cidr}

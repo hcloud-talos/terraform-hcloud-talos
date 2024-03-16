@@ -12,6 +12,7 @@ locals {
     templatefile("${path.module}/patches/cluster-patch.yaml.tmpl", {
       allow_scheduling_on_control_planes = var.worker_count <= 0,
       cert_SANs                          = join(",", local.cert_SANs)
+      cluster_ipv4_private_cidr          = var.network_ipv4_cidr
     })
   ]
 }
@@ -27,7 +28,8 @@ data "talos_machine_configuration" "control_plane" {
     local.cluster_config_patches,
     [
       templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
-        node_ipv4 = hcloud_primary_ip.control_planes[count.index].ip_address
+        node_ipv4_public          = hcloud_primary_ip.control_planes[count.index].ip_address
+        cluster_ipv4_private_cidr = var.network_ipv4_cidr
       })
     ]
   )
@@ -46,7 +48,8 @@ data "talos_machine_configuration" "worker" {
     local.cluster_config_patches,
     [
       templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
-        node_ipv4 = hcloud_primary_ip.workers[count.index].ip_address
+        node_ipv4_public          = hcloud_primary_ip.workers[count.index].ip_address
+        cluster_ipv4_private_cidr = var.network_ipv4_cidr
       })
     ]
   )
