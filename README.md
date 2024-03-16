@@ -7,8 +7,9 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Goals 🚀
 
-| Goal                                                               | Status | Description                                                                                                                                                                       |
+| Goals                                                              | Status | Description                                                                                                                                                                       |
 |--------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Production ready cluster in minutes                                | ❌      | Actually not production ready                                                                                                                                                     |
 | Use private networks for the internal communication of the cluster | ✅      |                                                                                                                                                                                   |
 | Do not expose the Kubernetes and Talos API to the public internet  | ❌      | Actually, the APIs are exposed to the public internet, but it is secured via the `firewall_use_current_ip` flag and a firewall rule that only allows traffic from one IP address. |
 | Possibility to change alls CIDRs of the networks                   | ⁉️     | Needs to be tested.                                                                                                                                                               |
@@ -97,6 +98,8 @@ cp ~/.talos/config ~/.talos/config.bak
 talosctl config merge ./talosconfig
 rm ./talosconfig
 ```
+## Future Plans
+- Addition module to bootstrap ArgoCD
 
 ## Credits
 
