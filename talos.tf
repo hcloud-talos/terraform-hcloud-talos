@@ -1,10 +1,17 @@
 resource "talos_machine_secrets" "this" {}
 
 locals {
+  cert_SANs = concat([
+    for control_plane_primary_ip in hcloud_primary_ip.control_planes : control_plane_primary_ip.ip_address
+    ], [
+    for control_plane_local_ip in local.control_plane_ips : control_plane_local_ip
+    ]
+  )
   cluster_endpoint = "https://${local.control_plane_ips[0]}:6443"
   cluster_config_patches = [
     templatefile("${path.module}/patches/cluster-patch.yaml.tmpl", {
-      allow_scheduling_on_control_planes = var.worker_count <= 0
+      allow_scheduling_on_control_planes = var.worker_count <= 0,
+      cert_SANs                          = join(",", local.cert_SANs)
     })
   ]
 }
