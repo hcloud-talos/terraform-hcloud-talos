@@ -20,15 +20,6 @@ resource "hcloud_ssh_key" "this" {
   public_key = var.ssh_public_key
 }
 
-resource "hcloud_primary_ip" "control_planes" {
-  count         = var.control_plane_count
-  name          = "control-plane-${count.index + 1}"
-  datacenter    = data.hcloud_datacenter.this.name
-  type          = "ipv4"
-  assignee_type = "server"
-  auto_delete   = false
-}
-
 resource "hcloud_server" "control_planes" {
   count              = var.control_plane_count
   datacenter         = data.hcloud_datacenter.this.name
@@ -49,28 +40,28 @@ resource "hcloud_server" "control_planes" {
 
   public_net {
     ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.control_planes[count.index].id
+    ipv4         = hcloud_primary_ip.control_plane_ipv4[count.index].id
     ipv6_enabled = true
+    ipv6         = hcloud_primary_ip.control_plane_ipv6[count.index].id
   }
 
   network {
-    network_id = hcloud_network_subnet.control_plane.network_id
-    ip         = local.control_plane_ips[count.index]
+    network_id = hcloud_network_subnet.nodes.network_id
+    ip         = local.control_plane_private_ipv4_list[count.index]
   }
 
   depends_on = [
-    hcloud_network_subnet.control_plane,
+    hcloud_network_subnet.nodes,
+    hcloud_primary_ip.control_plane_ipv4,
+    hcloud_primary_ip.control_plane_ipv6,
     data.talos_machine_configuration.control_plane
   ]
-}
 
-resource "hcloud_primary_ip" "workers" {
-  count         = var.worker_count
-  name          = "worker-${count.index + 1}"
-  datacenter    = data.hcloud_datacenter.this.name
-  type          = "ipv4"
-  assignee_type = "server"
-  auto_delete   = false
+  lifecycle {
+    ignore_changes = [
+      user_data
+    ]
+  }
 }
 
 resource "hcloud_server" "workers" {
@@ -93,17 +84,20 @@ resource "hcloud_server" "workers" {
 
   public_net {
     ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.workers[count.index].id
+    ipv4         = hcloud_primary_ip.worker_ipv4[count.index].id
     ipv6_enabled = true
+    ipv6         = hcloud_primary_ip.worker_ipv6[count.index].id
   }
 
   network {
-    network_id = hcloud_network_subnet.worker.network_id
-    ip         = local.worker_ips[count.index]
+    network_id = hcloud_network_subnet.nodes.network_id
+    ip         = local.worker_private_ipv4_list[count.index]
   }
 
   depends_on = [
-    hcloud_network_subnet.worker,
+    hcloud_network_subnet.nodes,
+    hcloud_primary_ip.worker_ipv4,
+    hcloud_primary_ip.worker_ipv6,
     data.talos_machine_configuration.worker
   ]
 }

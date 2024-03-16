@@ -1,32 +1,77 @@
+locals {
+  # https://github.com/hetznercloud/hcloud-cloud-controller-manager/blob/main/docs/deploy_with_networks.md#considerations-on-the-ip-ranges
+  network_ipv4_cidr        = "10.0.0.0/16"
+  node_ipv4_cidr           = "10.0.1.0/24"
+  node_ipv4_cidr_mask_size = split("/", local.node_ipv4_cidr)[1] # 24
+  pod_ipv4_cidr            = "10.0.16.0/20"
+  service_ipv4_cidr        = "10.0.8.0/21"
+}
+
 resource "hcloud_network" "this" {
   name     = var.cluster_name
-  ip_range = var.network_ipv4_cidr
+  ip_range = local.network_ipv4_cidr
 }
 
-resource "hcloud_network_subnet" "control_plane" {
+resource "hcloud_network_subnet" "nodes" {
   network_id   = hcloud_network.this.id
   type         = "cloud"
   network_zone = data.hcloud_location.this.network_zone
-  ip_range     = cidrsubnet(var.network_ipv4_cidr, 8, 0)
+  ip_range     = local.node_ipv4_cidr
 }
 
-resource "hcloud_network_subnet" "worker" {
-  network_id   = hcloud_network.this.id
-  type         = "cloud"
-  network_zone = data.hcloud_location.this.network_zone
-  ip_range     = cidrsubnet(var.network_ipv4_cidr, 8, 1)
+resource "hcloud_primary_ip" "control_plane_ipv4" {
+  count         = var.control_plane_count
+  name          = "control-plane-${count.index + 1}-ipv4"
+  datacenter    = data.hcloud_datacenter.this.name
+  type          = "ipv4"
+  assignee_type = "server"
+  auto_delete   = false
 }
 
-# https://docs.hetzner.com/cloud/networks/faq/#are-any-ip-addresses-reserved
-# We may not use th following IP addresses:
-# - The first IP address of your network IP range. For example, in 10.0.0.0/8, you cannot use 10.0.0.1.
-# - The network and broadcast IP addresses of any subnet. For example, in 10.0.0.0/24, you cannot use 10.0.0.0 as well as 10.0.0.255.
-# - The special private IP address 172.31.1.1. This IP address is being used as a default gateway of your server's public network interface.
+resource "hcloud_primary_ip" "control_plane_ipv6" {
+  count         = var.control_plane_count
+  name          = "control-plane-${count.index + 1}-ipv6"
+  datacenter    = data.hcloud_datacenter.this.name
+  type          = "ipv6"
+  assignee_type = "server"
+  auto_delete   = false
+}
+
+resource "hcloud_primary_ip" "worker_ipv4" {
+  count         = var.worker_count
+  name          = "worker-${count.index + 1}-ipv4"
+  datacenter    = data.hcloud_datacenter.this.name
+  type          = "ipv4"
+  assignee_type = "server"
+  auto_delete   = false
+}
+
+resource "hcloud_primary_ip" "worker_ipv6" {
+  count         = var.worker_count
+  name          = "worker-${count.index + 1}-ipv6"
+  datacenter    = data.hcloud_datacenter.this.name
+  type          = "ipv6"
+  assignee_type = "server"
+  auto_delete   = false
+}
+
 locals {
-  control_plane_ips = [
-    for index in range(var.control_plane_count) : cidrhost(hcloud_network_subnet.control_plane.ip_range, index + 101)
+  control_plane_public_ipv4_list = [
+    for ipv4 in hcloud_primary_ip.control_plane_ipv4 : ipv4.ip_address
   ]
-  worker_ips = [
-    for index in range(var.worker_count) : cidrhost(hcloud_network_subnet.worker.ip_range, index + 201)
+  control_plane_public_ipv6_list = [
+    for ipv6 in hcloud_primary_ip.control_plane_ipv6 : ipv6.ip_address
+  ]
+
+  # https://docs.hetzner.com/cloud/networks/faq/#are-any-ip-addresses-reserved
+  # We may not use th following IP addresses:
+  # - The first IP address of your network IP range. For example, in 10.0.0.0/8, you cannot use 10.0.0.1.
+  # - The network and broadcast IP addresses of any subnet. For example, in 10.0.0.0/24, you cannot use 10.0.0.0 as well as 10.0.0.255.
+  # - The special private IP address 172.31.1.1. This IP address is being used as a default gateway of your server's public network interface.
+  control_plane_private_ipv4_list = [
+    for index in range(var.control_plane_count) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 101)
+  ]
+  worker_private_ipv4_list = [
+    for index in range(var.worker_count) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 201)
   ]
 }

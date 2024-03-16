@@ -59,13 +59,6 @@ variable "firewall_talos_api_source" {
   EOF
 }
 
-# Network
-variable "network_ipv4_cidr" {
-  description = "The main network cidr that all subnets will be created upon."
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
 # Server
 variable "talos_version" {
   type        = string
@@ -86,10 +79,11 @@ variable "control_plane_count" {
   type        = number
   description = <<EOF
     The number of control plane nodes to create.
-    Must be an odd number.
+    Must be an odd number. Maximum 5.
   EOF
   validation {
-    condition     = var.control_plane_count % 2 == 1
+    // 0 is required for debugging (create configs etc. without servers)
+    condition     = var.control_plane_count == 0 || (var.control_plane_count % 2 == 1 && var.control_plane_count <= 5)
     error_message = "The number of control plane nodes must be an odd number."
   }
 }
@@ -114,7 +108,11 @@ variable "control_plane_server_type" {
 
 variable "worker_count" {
   type        = number
-  description = "The number of worker nodes to create."
+  description = "The number of worker nodes to create. Maximum 99."
+  validation {
+    condition     = var.worker_count <= 99
+    error_message = "The number of worker nodes must be less than 100."
+  }
 }
 
 variable "worker_server_type" {
