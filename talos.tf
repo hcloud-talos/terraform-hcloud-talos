@@ -20,6 +20,7 @@ data "talos_machine_configuration" "control_plane" {
     local.cluster_config_patches,
     [
       templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
+        node_ipv4 = hcloud_primary_ip.control_planes[count.index].ip_address
       })
     ]
   )
@@ -38,6 +39,7 @@ data "talos_machine_configuration" "worker" {
     local.cluster_config_patches,
     [
       templatefile("${path.module}/patches/machine-patch.yaml.tmpl", {
+        node_ipv4 = hcloud_primary_ip.workers[count.index].ip_address
       })
     ]
   )

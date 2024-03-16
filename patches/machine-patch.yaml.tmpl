@@ -6,3 +6,15 @@ machine:
       - ntp2.hetzner.com
       - ntp3.hetzner.net
       - time.cloudflare.com
+  network:
+    interfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - ${node_ipv4}/32
+        routes:
+          - network: 172.31.1.1/32
+          - network: 0.0.0.0/0
+            gateway: 172.31.1.1
+      - interface: eth1
+        dhcp: true
