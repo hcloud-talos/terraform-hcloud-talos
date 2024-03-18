@@ -40,7 +40,7 @@ provider "hcloud" {
 
 provider "helm" {
   kubernetes {
-    host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.k8s_service_port}" : ""
+    host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}" : ""
     client_certificate     = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate : "")
     client_key             = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key : "")
     cluster_ca_certificate = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate : "")
@@ -48,7 +48,7 @@ provider "helm" {
 }
 
 provider "kubectl" {
-  host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.k8s_service_port}" : ""
+  host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}" : ""
   client_certificate     = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate : "")
   client_key             = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key : "")
   cluster_ca_certificate = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate : "")
