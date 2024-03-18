@@ -7,7 +7,6 @@ locals {
           "rotate-server-certificates" = true
         }
         clusterDNS = concat(
-          ["169.254.2.53"],
           [cidrhost(local.service_ipv4_cidr, 10)]
         )
         nodeIP = {
@@ -17,14 +16,6 @@ locals {
         }
       }
       network = {
-        interfaces = [
-          {
-            interface = "dummy0"
-            addresses = [
-              "169.254.2.53/32"
-            ]
-          }
-        ]
         extraHostEntries = local.extra_host_entries
       }
       sysctls = {
