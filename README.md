@@ -38,13 +38,13 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ### Packer
 
-Create the talos os images (AMD and x86) via packer through running the [create.sh](packer/create.sh).
+Create the talos os images (AMD and x86) via packer through running the [create.sh](_packer/create.sh).
 It is using the `HCLOUD_TOKEN` environment variable to authenticate against the Hetzner Cloud API and uses the project
 of the token to store the images.
-The talos os version is defined in the variable `talos_version`  in [talos-hcloud.pkr.hcl](packer/talos-hcloud.pkr.hcl).
+The talos os version is defined in the variable `talos_version`  in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
 
 ```bash
-./packer/create.sh
+./_packer/create.sh
 ```
 
 ### Terraform
