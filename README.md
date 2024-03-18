@@ -1,6 +1,9 @@
-# terraform-hcloud-talos
-
-![GitHub Release](https://img.shields.io/github/v/release/hcloud-talos/terraform-hcloud-talos)
+<div align="center">
+  <br>
+  <img src=".idea/icon.png" alt="Terraform - Hcloud - Talos" width="200"/>
+  <h1 style="margin-top: 0; padding-top: 0;">Terraform - Hcloud - Talos</h1>
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hcloud-talos/terraform-hcloud-talos?logo=github">
+</div>
 
 ---
 
@@ -8,6 +11,8 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 - Talos is a modern OS for Kubernetes. It is designed to be secure, immutable, and minimal.
 - Hetzner Cloud is a cloud hosting provider with nice terraform support and cheap prices.
+
+---
 
 ## Goals 🚀
 
