@@ -2,6 +2,7 @@ machine:
   kubelet:
     extraArgs:
       cloud-provider: external
+      rotate-server-certificates: true
     clusterDNS:
       - 169.254.2.53
       - ${cidrhost(split(",",serviceSubnets)[0], 10)}
