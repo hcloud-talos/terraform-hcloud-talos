@@ -101,3 +101,11 @@ data "talos_cluster_kubeconfig" "this" {
     talos_machine_bootstrap.this
   ]
 }
+
+locals {
+  kubeconfig = replace(
+    data.talos_cluster_kubeconfig.this[0].kubeconfig_raw,
+    local.cluster_api_url_kube_prism,
+    "https://${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+  )
+}
