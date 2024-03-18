@@ -16,11 +16,13 @@ locals {
     local.control_plane_private_ipv4_list,
     [local.cluster_api_host]
   )
-  extra_host_entries = concat(
-    [
-      "127.0.0.1:${local.cluster_api_host}"
+  interfaces = []
+  extra_host_entries = [{
+    ip = "127.0.0.1"
+    aliases = [
+      local.cluster_api_host
     ]
-  )
+  }]
 }
 
 data "talos_machine_configuration" "control_plane" {
@@ -31,25 +33,9 @@ data "talos_machine_configuration" "control_plane" {
   cluster_endpoint = local.cluster_api_url_kube_prism
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches = concat(
-    [
-      templatefile("${path.module}/patches/controlplane.yaml.tpl", {
-        allowSchedulingOnControlPlanes = var.worker_count <= 0,
-        domain                         = local.cluster_domain
-        apiDomain                      = local.cluster_api_host
-        certSANs                       = join(",", local.cert_SANs)
-        nodeSubnets                    = local.node_ipv4_cidr
-        nodeCidrMaskSizeIpv4           = local.node_ipv4_cidr_mask_size
-        podSubnets                     = local.pod_ipv4_cidr
-        serviceSubnets                 = local.service_ipv4_cidr
-        hcloudNetwork                  = hcloud_network.this.id
-        hcloudToken                    = var.hcloud_token
-        extraHostEntries               = join(",", local.extra_host_entries)
-      })
-    ]
-  )
-  docs     = false
-  examples = false
+  config_patches   = [local.controlplane_yaml]
+  docs             = false
+  examples         = false
 }
 
 data "talos_machine_configuration" "worker" {
@@ -60,19 +46,9 @@ data "talos_machine_configuration" "worker" {
   cluster_endpoint = local.cluster_api_url_kube_prism
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches = concat(
-    [
-      templatefile("${path.module}/patches/worker.yaml.tpl", {
-        domain           = local.cluster_domain
-        nodeSubnets      = local.node_ipv4_cidr
-        serviceSubnets   = local.service_ipv4_cidr
-        podSubnets       = local.pod_ipv4_cidr
-        extraHostEntries = join(",", local.extra_host_entries)
-      })
-    ]
-  )
-  docs     = false
-  examples = false
+  config_patches   = [local.worker_yaml]
+  docs             = false
+  examples         = false
 }
 
 resource "talos_machine_bootstrap" "this" {
