@@ -40,11 +40,11 @@ data "helm_template" "cilium" {
   }
   set {
     name  = "k8sServiceHost"
-    value = local.k8s_service_host
+    value = local.cluster_api_host
   }
   set {
     name  = "k8sServicePort"
-    value = 7445 // Uses KubePrism's default port 7445 instead of KubeAPI's 6443
+    value = local.cluster_api_port_kube_prism
   }
   set {
     name  = "hubble.enabled"
