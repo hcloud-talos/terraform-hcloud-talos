@@ -3,6 +3,7 @@ machine:
   kubelet:
     extraArgs:
       cloud-provider: external
+      rotate-server-certificates: true
     clusterDNS:
       - 169.254.2.53
       - ${cidrhost(split(",",serviceSubnets)[0], 10)}
@@ -69,3 +70,5 @@ cluster:
           token: ${base64encode(hcloudToken)}
   externalCloudProvider:
     enabled: true
+    manifests:
+      - https://raw.githubusercontent.com/siderolabs/talos-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
