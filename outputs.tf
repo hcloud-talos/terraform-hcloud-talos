@@ -4,7 +4,7 @@ output "talosconfig" {
 }
 
 output "kubeconfig" {
-  value     = length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubeconfig_raw : null
+  value     = local.kubeconfig
   sensitive = true
 }
 
