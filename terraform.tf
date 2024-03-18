@@ -31,6 +31,11 @@ terraform {
       source  = "hashicorp/time"
       version = ">=0.11.1"
     }
+
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">=4.0.5"
+    }
   }
 }
 
@@ -40,18 +45,18 @@ provider "hcloud" {
 
 provider "helm" {
   kubernetes {
-    host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}" : ""
-    client_certificate     = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate : "")
-    client_key             = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key : "")
-    cluster_ca_certificate = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate : "")
+    host                   = "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+    client_certificate     = local.kubeconfig_data.client_certificate
+    client_key             = local.kubeconfig_data.client_key
+    cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
   }
 }
 
 provider "kubectl" {
-  host                   = length(local.control_plane_public_ipv4_list) > 0 ? "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}" : ""
-  client_certificate     = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate : "")
-  client_key             = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key : "")
-  cluster_ca_certificate = base64decode(length(data.talos_cluster_kubeconfig.this) > 0 ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate : "")
+  host                   = "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+  client_certificate     = local.kubeconfig_data.client_certificate
+  client_key             = local.kubeconfig_data.client_key
+  cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
   load_config_file       = false
   apply_retry_count      = 3
 }

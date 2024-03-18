@@ -103,9 +103,20 @@ data "talos_cluster_kubeconfig" "this" {
 }
 
 locals {
-  kubeconfig = replace(
-    data.talos_cluster_kubeconfig.this[0].kubeconfig_raw,
-    local.cluster_api_url_kube_prism,
-    "https://${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+  kubeconfig_server_address = var.enable_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].ip_address : (
+    can(local.control_plane_public_ipv4_list[0]) ? local.control_plane_public_ipv4_list[0] : "unknown"
   )
+
+  kubeconfig = replace(
+    can(data.talos_cluster_kubeconfig.this[0].kubeconfig_raw) ? data.talos_cluster_kubeconfig.this[0].kubeconfig_raw : "",
+    local.cluster_api_url_kube_prism, "https://${local.kubeconfig_server_address}:${local.cluster_api_port_k8s}"
+  )
+
+  kubeconfig_data = {
+    host                   = local.kubeconfig_server_address
+    cluster_name           = var.cluster_name
+    cluster_ca_certificate = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate : tls_self_signed_cert.dummy_ca[0].cert_pem
+    client_certificate     = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate : tls_locally_signed_cert.dummy_issuer[0].cert_pem
+    client_key             = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key) ? data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key : tls_private_key.dummy_issuer[0].private_key_pem
+  }
 }

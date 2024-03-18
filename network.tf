@@ -20,7 +20,7 @@ resource "hcloud_network_subnet" "nodes" {
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv4" {
-  count         = var.control_plane_count
+  count         = var.control_plane_count > 0 ? var.control_plane_count : 1 # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
   name          = "control-plane-${count.index + 1}-ipv4"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv4"

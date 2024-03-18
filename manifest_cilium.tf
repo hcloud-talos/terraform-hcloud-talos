@@ -57,12 +57,12 @@ data "kubectl_file_documents" "cilium" {
 }
 
 resource "kubectl_manifest" "apply_cilium" {
-  for_each   = data.kubectl_file_documents.cilium.manifests
+  for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.cilium.manifests : {}
   yaml_body  = each.value
   depends_on = [time_sleep.talos_settle_down]
 }
 
 resource "time_sleep" "talos_settle_down" {
-  create_duration = "1m"
+  create_duration = var.control_plane_count > 0 ? "1m" : "0s"
   depends_on      = [data.talos_cluster_kubeconfig.this]
 }
