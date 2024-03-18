@@ -59,6 +59,13 @@ variable "firewall_talos_api_source" {
   EOF
 }
 
+# Network
+variable "enable_floating_ip" {
+  type        = bool
+  default     = false
+  description = "If true, a floating IP will be created and assigned to the control plane nodes."
+}
+
 # Server
 variable "talos_version" {
   type        = string

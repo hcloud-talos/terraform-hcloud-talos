@@ -16,7 +16,16 @@ locals {
     local.control_plane_private_ipv4_list,
     [local.cluster_api_host]
   )
-  interfaces = []
+  interfaces = length(hcloud_floating_ip.control_plane_ipv4) > 0 ? [{
+    interface = "eth0"
+    dhcp      = true
+    vip = {
+      ip = hcloud_floating_ip.control_plane_ipv4[0].ip_address
+      hcloud = {
+        apiToken = var.hcloud_token
+      }
+    }
+  }] : []
   extra_host_entries = [{
     ip = "127.0.0.1"
     aliases = [

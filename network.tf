@@ -19,6 +19,15 @@ resource "hcloud_network_subnet" "nodes" {
   ip_range     = local.node_ipv4_cidr
 }
 
+resource "hcloud_floating_ip" "control_plane_ipv4" {
+  count             = var.enable_floating_ip ? 1 : 0
+  name              = "control-plane-ipv4"
+  type              = "ipv4"
+  home_location     = data.hcloud_location.this.name
+  description       = "Control Plane VIP"
+  delete_protection = false
+}
+
 resource "hcloud_primary_ip" "control_plane_ipv4" {
   count         = var.control_plane_count > 0 ? var.control_plane_count : 1 # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
   name          = "control-plane-${count.index + 1}-ipv4"
