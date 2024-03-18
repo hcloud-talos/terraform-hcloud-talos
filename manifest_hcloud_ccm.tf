@@ -24,5 +24,5 @@ data "kubectl_file_documents" "hcloud_ccm" {
 resource "kubectl_manifest" "apply_hcloud_ccm" {
   for_each   = data.kubectl_file_documents.hcloud_ccm.manifests
   yaml_body  = each.value
-  depends_on = [data.talos_cluster_health.this]
+  depends_on = [data.helm_template.cilium]
 }
