@@ -1,5 +1,9 @@
 # terraform-hcloud-talos
 
+![GitHub Release](https://img.shields.io/github/v/release/hcloud-talos/terraform-hcloud-talos)
+
+---
+
 This repository contains a Terraform module for creating a Kubernetes cluster with Talos in the Hetzner Cloud.
 
 - Talos is a modern OS for Kubernetes. It is designed to be secure, immutable, and minimal.
@@ -41,7 +45,8 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 Create the talos os images (AMD and x86) via packer through running the [create.sh](_packer/create.sh).
 It is using the `HCLOUD_TOKEN` environment variable to authenticate against the Hetzner Cloud API and uses the project
 of the token to store the images.
-The talos os version is defined in the variable `talos_version`  in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
+The talos os version is defined in the variable `talos_version`
+in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
 
 ```bash
 ./_packer/create.sh
@@ -98,7 +103,9 @@ cp ~/.talos/config ~/.talos/config.bak
 talosctl config merge ./talosconfig
 rm ./talosconfig
 ```
+
 ## Future Plans
+
 - Addition module to bootstrap ArgoCD
 
 ## Credits
