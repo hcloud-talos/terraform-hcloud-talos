@@ -56,12 +56,6 @@ resource "hcloud_server" "control_planes" {
     hcloud_primary_ip.control_plane_ipv6,
     data.talos_machine_configuration.control_plane
   ]
-
-  lifecycle {
-    ignore_changes = [
-      user_data
-    ]
-  }
 }
 
 resource "hcloud_server" "workers" {
