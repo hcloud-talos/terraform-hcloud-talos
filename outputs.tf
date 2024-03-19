@@ -17,3 +17,9 @@ output "talos_machine_configuration_example_worker" {
   value     = data.talos_machine_configuration.worker[0].machine_configuration
   sensitive = true
 }
+
+output "kubeconfig_data" {
+  description = "Structured kubeconfig data to supply to other providers"
+  value       = local.kubeconfig_data
+  sensitive   = true
+}
