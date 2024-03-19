@@ -24,5 +24,5 @@ data "kubectl_file_documents" "hcloud_ccm" {
 resource "kubectl_manifest" "apply_hcloud_ccm" {
   for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.hcloud_ccm.manifests : {}
   yaml_body  = each.value
-  depends_on = [data.helm_template.cilium]
+  depends_on = [time_sleep.cilium_settle_down]
 }
