@@ -52,8 +52,6 @@ resource "hcloud_server" "control_planes" {
 
   depends_on = [
     hcloud_network_subnet.nodes,
-    hcloud_primary_ip.control_plane_ipv4,
-    hcloud_primary_ip.control_plane_ipv6,
     data.talos_machine_configuration.control_plane
   ]
 }
@@ -90,8 +88,6 @@ resource "hcloud_server" "workers" {
 
   depends_on = [
     hcloud_network_subnet.nodes,
-    hcloud_primary_ip.worker_ipv4,
-    hcloud_primary_ip.worker_ipv6,
     data.talos_machine_configuration.worker
   ]
 }
