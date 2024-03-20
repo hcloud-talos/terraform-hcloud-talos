@@ -38,13 +38,6 @@ locals {
   }]
 }
 
-#- interface: eth1
-#dhcp: true
-#vip:
-#ip: ${alias_addr}
-#hcloud:
-#apiToken: ${hcloud_token}
-
 data "talos_machine_configuration" "control_plane" {
   // enable although we have no control planes to be able to debug the output
   count            = var.control_plane_count > 0 ? var.control_plane_count : 1
