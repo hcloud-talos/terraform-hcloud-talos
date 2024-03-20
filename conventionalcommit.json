@@ -1,60 +1,78 @@
 {
   "types": {
     "refactor": {
-      "description": "Changes which neither fix a bug nor add a feature"
+      "description": "Changes which neither fix a bug nor add a feature."
     },
     "fix": {
-      "description": "Changes which patch a bug"
+      "description": "Changes which patch a bug in the codebase."
     },
     "feat": {
-      "description": "Changes which introduce a new feature"
+      "description": "Changes which introduce a new feature to the codebase."
     },
     "build": {
-      "description": "Changes which affect the build system or external dependencies.<br>Example scopes: gradle, yarn",
+      "description": "Changes which affect the build system or external dependencies.",
       "scopes": {
-        "gradle": {},
-        "yarn": {}
+        "gradle": {
+          "description": "Changes which affect the Gradle build system."
+        },
+        "yarn": {
+          "description": "Changes which affect the Yarn build system."
+        }
       }
     },
     "chore": {
-      "description": "Changes which are not user-facing, such as intelliJ configuration files, gitignore or other non-code changes",
+      "description": "Changes which are not user-facing, such as IntelliJ configuration files, gitignore, other repo configs, updating dependencies, copyrights or other non-code changes.",
       "scopes": {
+        "project": {
+          "description": "Changes which affect project configuration files."
+        },
         "deps": {
-          "description": "Changes which update dependencies"
+          "description": "Changes which update dependencies."
         }
       }
     },
     "style": {
-      "description": "Changes which do not affect code logic, such as whitespaces, formatting, missing semicolons"
+      "description": "Changes which do not affect code logic, such as whitespaces, formatting, missing semicolons etc."
     },
     "test": {
-      "description": "Changes which add missing tests or fix existing ones"
+      "description": "Changes which add missing tests or fix existing ones."
     },
     "docs": {
-      "description": "Changes which affect documentation",
+      "description": "Changes which affect documentation.",
       "scopes": {
         "business": {
-          "description": "Changes which update or add business documentation"
+          "description": "Changes which update or add business documentation."
+        },
+        "technical": {
+          "description": "Changes which update or add technical documentation."
+        },
+        "readme": {
+          "description": "Changes which update or add the README file."
         }
       }
     },
     "perf": {
-      "description": "Changes which improve performance"
+      "description": "Changes which improve performance."
     },
     "ci": {
-      "description": "Changes which affect CI configuration files and scripts.<br>Example scopes: github-actions"
+      "description": "Changes which affect CI configuration files and scripts.",
+      "scopes": {
+        "github-actions": {
+          "description": "Changes which affect GitHub Actions configuration files."
+        }
+      }
     },
     "revert": {
-      "description": "Changes which revert a previous commit"
+      "description": "Changes which revert a previous commit."
     },
     "wip": {
-      "description": "Changes which are work in progress"
+      "description": "Changes which are work in progress."
     }
   },
   "footerTypes": [
     {
       "name": "BREAKING CHANGE",
-      "description": "The commit introduces breaking API changes"
+      "description": "The commit introduces breaking API changes."
     },
     {
       "name": "Closes",
@@ -66,11 +84,11 @@
     },
     {
       "name": "Author",
-      "description": "The commit's author"
+      "description": "The commit author"
     },
     {
       "name": "Co-authored-by",
-      "description": "The specified person co-authored the commit's changes"
+      "description": "The specified person co-authored the commit changes"
     },
     {
       "name": "Signed-off-by",
@@ -78,19 +96,19 @@
     },
     {
       "name": "Acked-by",
-      "description": "The specified person liked the commit's changes"
+      "description": "The specified person liked the commit changes"
     },
     {
       "name": "Reviewed-by",
-      "description": "The specified person reviewed and is completely satisfied with the commit's changes"
+      "description": "The specified person reviewed and is completely satisfied with the commit changes"
     },
     {
       "name": "Tested-by",
-      "description": "The specified person applied the commit's changes and found them to have the desired effect"
+      "description": "The specified person applied the commit changes and found them to have the desired effect"
     },
     {
       "name": "Refs",
-      "description": "The commit references another commit by its hash ID.<br>For multiple hash IDs, use a comma as separator"
+      "description": "The commit references another commit by its hash ID. For multiple hash IDs, use a comma as a separator"
     }
   ]
 }
