@@ -41,8 +41,8 @@ resource "hcloud_server" "control_planes" {
   public_net {
     ipv4_enabled = true
     ipv4         = hcloud_primary_ip.control_plane_ipv4[count.index].id
-    ipv6_enabled = true
-    ipv6         = hcloud_primary_ip.control_plane_ipv6[count.index].id
+    ipv6_enabled = var.enable_ipv6
+    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[count.index].id : null
   }
 
   network {
@@ -77,8 +77,8 @@ resource "hcloud_server" "workers" {
   public_net {
     ipv4_enabled = true
     ipv4         = hcloud_primary_ip.worker_ipv4[count.index].id
-    ipv6_enabled = true
-    ipv6         = hcloud_primary_ip.worker_ipv6[count.index].id
+    ipv6_enabled = var.enable_ipv6
+    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[count.index].id : null
   }
 
   network {
@@ -90,4 +90,10 @@ resource "hcloud_server" "workers" {
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.worker
   ]
+
+  lifecycle {
+    ignore_changes = [
+      user_data
+    ]
+  }
 }

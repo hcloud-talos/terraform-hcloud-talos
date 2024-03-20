@@ -2,6 +2,11 @@ locals {
   controlplane_yaml = [
     for index in range(0, var.control_plane_count) : yamlencode({
       machine = {
+        install = {
+          extraKernelArgs = [
+            "ipv6.disable=${var.enable_ipv6 ? 0 : 1}",
+          ]
+        }
         certSANs = local.cert_SANs
         kubelet = {
           extraArgs = {
@@ -23,9 +28,10 @@ locals {
               interface = "eth0"
               dhcp      = false
               addresses : compact([
-                local.control_plane_public_ipv4_list[index]
+                local.control_plane_public_ipv4_list[index],
+                var.enable_ipv6 ? local.control_plane_public_ipv6_list[index] : null
               ])
-              routes = [
+              routes = concat([
                 {
                   network = "172.31.1.1/32"
                 },
@@ -33,7 +39,14 @@ locals {
                   network = "0.0.0.0/0"
                   gateway : "172.31.1.1"
                 }
-              ]
+                ],
+                var.enable_ipv6 ? [
+                  {
+                    network = local.control_plane_public_ipv6_subnet_list[index]
+                    gateway : "fe80::1"
+                  }
+                ] : []
+              )
               vip = var.enable_floating_ip ? {
                 ip = hcloud_floating_ip.control_plane_ipv4[0].ip_address
                 hcloud = {

@@ -66,6 +66,15 @@ variable "enable_floating_ip" {
   description = "If true, a floating IP will be created and assigned to the control plane nodes."
 }
 
+variable "enable_ipv6" {
+  type        = bool
+  default     = false
+  description = <<EOF
+    If true, the servers will have an IPv6 address.
+    IPv4/IPv6 dual-stack is actually not supported, it keeps being an IPv4 single stack. PRs welcome!
+  EOF
+}
+
 # Server
 variable "talos_version" {
   type        = string
