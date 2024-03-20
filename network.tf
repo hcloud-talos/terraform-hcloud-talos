@@ -28,6 +28,11 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
   delete_protection = false
 }
 
+resource "hcloud_floating_ip_assignment" "this" {
+  floating_ip_id = hcloud_floating_ip.control_plane_ipv4[0].id
+  server_id      = hcloud_server.control_planes[0].id
+}
+
 resource "hcloud_primary_ip" "control_plane_ipv4" {
   count         = var.control_plane_count > 0 ? var.control_plane_count : 1 # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
   name          = "control-plane-${count.index + 1}-ipv4"
@@ -70,6 +75,9 @@ locals {
   ]
   control_plane_public_ipv6_list = [
     for ipv6 in hcloud_primary_ip.control_plane_ipv6 : ipv6.ip_address
+  ]
+  worker_public_ipv4_list = [
+    for ipv4 in hcloud_primary_ip.worker_ipv4 : ipv4.ip_address
   ]
 
   # https://docs.hetzner.com/cloud/networks/faq/#are-any-ip-addresses-reserved

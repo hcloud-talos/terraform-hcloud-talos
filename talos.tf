@@ -14,28 +14,22 @@ locals {
     local.control_plane_public_ipv4_list,
     local.control_plane_public_ipv6_list,
     local.control_plane_private_ipv4_list,
-    [local.cluster_api_host]
+    compact([
+      local.cluster_api_host,
+      # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
+      #      local.control_plane_private_ipv4_vip,
+      var.enable_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
+    ])
   )
 
-  interfaces = [
+  extra_host_entries = [
     {
-      interface = "eth0"
-      dhcp      = true
-      vip = var.enable_floating_ip ? {
-        ip = hcloud_floating_ip.control_plane_ipv4[0].ip_address
-        hcloud = {
-          apiToken = var.hcloud_token
-        }
-      } : null
+      ip = "127.0.0.1"
+      aliases = [
+        local.cluster_api_host
+      ]
     }
   ]
-
-  extra_host_entries = [{
-    ip = "127.0.0.1"
-    aliases = [
-      local.cluster_api_host
-    ]
-  }]
 }
 
 data "talos_machine_configuration" "control_plane" {
@@ -46,7 +40,7 @@ data "talos_machine_configuration" "control_plane" {
   cluster_endpoint = local.cluster_api_url_kube_prism
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches   = [local.controlplane_yaml]
+  config_patches   = [local.controlplane_yaml[count.index]]
   docs             = false
   examples         = false
 }
@@ -59,7 +53,7 @@ data "talos_machine_configuration" "worker" {
   cluster_endpoint = local.cluster_api_url_kube_prism
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches   = [local.worker_yaml]
+  config_patches   = [local.worker_yaml[count.index]]
   docs             = false
   examples         = false
 }

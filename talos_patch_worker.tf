@@ -1,5 +1,5 @@
 locals {
-  worker_yaml = yamlencode({
+  worker_yaml = [for index in range(0, var.control_plane_count) : yamlencode({
     machine = {
       kubelet = {
         extraArgs = {
@@ -16,6 +16,24 @@ locals {
         }
       }
       network = {
+        interfaces = [
+          {
+            interface = "eth0"
+            dhcp      = false
+            addresses : [
+              local.worker_public_ipv4_list[index],
+            ]
+            routes = [
+              {
+                network = "172.31.1.1/32"
+              },
+              {
+                network = "0.0.0.0/0"
+                gateway : "172.31.1.1"
+              }
+            ]
+          }
+        ]
         extraHostEntries = local.extra_host_entries
       }
       sysctls = {
@@ -45,5 +63,6 @@ locals {
         disabled = true
       }
     }
-  })
+    })
+  ]
 }
