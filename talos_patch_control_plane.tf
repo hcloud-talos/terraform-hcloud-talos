@@ -54,6 +54,16 @@ locals {
                 }
               } : null
             },
+            {
+              interface = "eth1"
+              dhcp      = true
+              vip = {
+                ip = local.control_plane_private_ipv4_vip
+                hcloud = {
+                  apiToken = var.hcloud_token
+                }
+              }
+            }
           ]
           extraHostEntries = local.extra_host_entries
         }

@@ -48,6 +48,7 @@ resource "hcloud_server" "control_planes" {
   network {
     network_id = hcloud_network_subnet.nodes.network_id
     ip         = local.control_plane_private_ipv4_list[count.index]
+    alias_ips  = count.index == 0 ? [local.control_plane_private_ipv4_vip] : [] // only the first control plane gets the VIP
   }
 
   depends_on = [
