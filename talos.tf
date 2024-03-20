@@ -3,12 +3,12 @@ resource "talos_machine_secrets" "this" {}
 locals {
   // TODO: Possible to make domain and api_domain configurable?
   // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
-  cluster_domain       = "cluster.local"
-  cluster_api_host     = "api.${local.cluster_domain}"
-  cluster_api_port_k8s = 6443
-  #  cluster_api_url_k8s         = "https://${local.cluster_api_host}:${local.cluster_api_port_k8s}"
+  cluster_domain              = "cluster.local"
+  cluster_api_host            = "api.${local.cluster_domain}"
+  cluster_api_port_k8s        = 6443
   cluster_api_port_kube_prism = 7445
-  cluster_api_url_kube_prism  = "https://${local.cluster_api_host}:${local.cluster_api_port_kube_prism}"
+  #  cluster_api_url_k8s         = "https://${local.cluster_api_host}:${local.cluster_api_port_k8s}"
+  cluster_api_url_kube_prism = "https://${local.cluster_api_host}:${local.cluster_api_port_kube_prism}"
   // ************
   cert_SANs = concat(
     local.control_plane_public_ipv4_list,
@@ -102,10 +102,10 @@ locals {
   )
 
   kubeconfig_data = {
-    host                   = local.kubeconfig_server_address
+    host                   = "https://${local.kubeconfig_server_address}:${local.cluster_api_port_k8s}"
     cluster_name           = var.cluster_name
-    cluster_ca_certificate = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) : tls_self_signed_cert.dummy_ca[0].cert_pem
-    client_certificate     = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) : tls_locally_signed_cert.dummy_issuer[0].cert_pem
-    client_key             = can(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key) ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key) : tls_private_key.dummy_issuer[0].private_key_pem
+    cluster_ca_certificate = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) : tls_self_signed_cert.dummy_ca[0].cert_pem
+    client_certificate     = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) : tls_locally_signed_cert.dummy_issuer[0].cert_pem
+    client_key             = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key) : tls_private_key.dummy_issuer[0].private_key_pem
   }
 }

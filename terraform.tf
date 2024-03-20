@@ -45,7 +45,7 @@ provider "hcloud" {
 
 provider "helm" {
   kubernetes {
-    host                   = "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+    host                   = local.kubeconfig_data.host
     client_certificate     = local.kubeconfig_data.client_certificate
     client_key             = local.kubeconfig_data.client_key
     cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
@@ -53,7 +53,7 @@ provider "helm" {
 }
 
 provider "kubectl" {
-  host                   = "${local.control_plane_public_ipv4_list[0]}:${local.cluster_api_port_k8s}"
+  host                   = local.kubeconfig_data.host
   client_certificate     = local.kubeconfig_data.client_certificate
   client_key             = local.kubeconfig_data.client_key
   cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
