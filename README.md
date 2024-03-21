@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src=".idea/icon.png" alt="Terraform - Hcloud - Talos" width="200"/>
+  <img src="https://github.com/hcloud-talos/terraform-hcloud-talos/blob/main/.idea/icon.png?raw=true" alt="Terraform - Hcloud - Talos" width="200"/>
   <h1 style="margin-top: 0; padding-top: 0;">Terraform - Hcloud - Talos</h1>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hcloud-talos/terraform-hcloud-talos?logo=github">
 </div>
