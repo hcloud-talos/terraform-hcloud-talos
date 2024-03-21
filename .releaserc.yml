@@ -35,6 +35,8 @@ analyzeCommits:
       - type: "chore"
         scope: "deps"
         release: "patch"
+      - type: "docs"
+        release: "patch"
 
 generateNotes:
   - path: "@semantic-release/release-notes-generator"
