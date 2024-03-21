@@ -16,12 +16,35 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Goals 🚀
 
-| Goals                                                              | Status | Description                                                                                                                                                                       |
-|--------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Production ready cluster in minutes                                | ❌      | Actually not production ready                                                                                                                                                     |
-| Use private networks for the internal communication of the cluster | ✅      |                                                                                                                                                                                   |
-| Do not expose the Kubernetes and Talos API to the public internet  | ❌      | Actually, the APIs are exposed to the public internet, but it is secured via the `firewall_use_current_ip` flag and a firewall rule that only allows traffic from one IP address. |
-| Possibility to change alls CIDRs of the networks                   | ⁉️     | Needs to be tested.                                                                                                                                                               |
+| Goals                                                                               | Status | Description                                                                                                                                                                                         |
+|-------------------------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Production ready                                                                    | ✅      | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.** |
+| Use private networks for the internal communication of the cluster                  | ✅      |                                                                                                                                                                                                     |
+| Do not expose the Kubernetes and Talos API to the public internet via Load-Balancer | ✅      | Actually, the APIs are exposed to the public internet, but secured via the `firewall_use_current_ip` flag and a firewall rule that only allows traffic from one IP address.                         |
+| Possibility to change alls CIDRs of the networks                                    | ⁉️     | Needs to be tested.                                                                                                                                                                                 |
+| Configure the Cluster as good as possible to run in the Hetzner Cloud               | ✅      | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                |
+
+## Information about the Module
+
+- You can configure the module to create a cluster with 1, 3 or 5 control planes and n workers or only the control
+  planes.
+- It uses [Cilium](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) as the CNI instead of the
+  default Flannel.
+- It allows scheduling pods on the control planes if no workers are created.
+- It has [Multihoming](https://www.talos.dev/v1.6/introduction/prodnotes/#multihoming) configuration (etcd and kubelet
+  listen on public and private IP).
+- It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
+  as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
+- It enables
+- Additional installed software in the cluster:
+    - [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
+        - Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
+          Datacenter, Server ID, IPs.
+        - Cleans up stale `Node` objects when the server is deleted in the API.
+        - Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
+        - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
+          Nodes as targets for the Load Balancer.
+    -
 
 ## Prerequisites
 
