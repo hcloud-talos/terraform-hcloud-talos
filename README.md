@@ -44,7 +44,6 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
         - Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
         - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
           Nodes as targets for the Load Balancer.
-    -
 
 ## Prerequisites
 
