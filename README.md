@@ -28,22 +28,36 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 - You can configure the module to create a cluster with 1, 3 or 5 control planes and n workers or only the control
   planes.
-- It uses [Cilium](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) as the CNI instead of the
-  default Flannel.
 - It allows scheduling pods on the control planes if no workers are created.
 - It has [Multihoming](https://www.talos.dev/v1.6/introduction/prodnotes/#multihoming) configuration (etcd and kubelet
   listen on public and private IP).
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
   as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
-- It enables
-- Additional installed software in the cluster:
-    - [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
-        - Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
-          Datacenter, Server ID, IPs.
-        - Cleans up stale `Node` objects when the server is deleted in the API.
-        - Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
-        - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
-          Nodes as targets for the Load Balancer.
+
+## Additional installed software in the cluster
+- 
+
+### [Cilium](https://cilium.io/)
+
+- Cilium is a modern, efficient, and secure networking and security solution for Kubernetes.
+- It is used [Cilium as the CNI instead of the
+  default Flannel](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) instead of the
+  default Flannel.
+- It provides a lot of features like Network Policies, Load Balancing, and more.
+
+### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
+
+- Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
+  Datacenter, Server ID, IPs.
+- Cleans up stale `Node` objects when the server is deleted in the API.
+- Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
+- Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
+  Nodes as targets for the Load Balancer.
+
+### [Talos Cloud Controller Manager](https://github.com/siderolabs/talos-cloud-controller-manager)
+- [Applies labels to the nodes](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-initialize).
+- [Validates and approves node CSRs](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-certificate-approval).
+- In DaemonSet mode: CCM will use hostNetwork and current node to access kubernetes/talos API
 
 ## Prerequisites
 
