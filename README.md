@@ -119,7 +119,20 @@ module "talos" {
 }
 ```
 
-You can then run the following commands to export the kubeconfig and talosconfig:
+You need to pipe the outputs of the module:
+```hcl
+output "talosconfig" {
+  value     = module.talos.talosconfig
+  sensitive = true
+}
+
+output "kubeconfig" {
+  value     = module.talos.kubeconfig
+  sensitive = true
+}
+```
+
+Then you can then run the following commands to export the kubeconfig and talosconfig:
 
 ```bash
 terraform output --raw kubeconfig > ./kubeconfig
