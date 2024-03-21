@@ -20,7 +20,7 @@ resource "hcloud_network_subnet" "nodes" {
 }
 
 resource "hcloud_floating_ip" "control_plane_ipv4" {
-  count             = var.enable_floating_ip ? 1 : 0
+  count             = var.enable_floating_ip && var.floating_ip_id == null ? 1 : 0
   name              = "control-plane-ipv4"
   type              = "ipv4"
   home_location     = data.hcloud_location.this.name
@@ -28,13 +28,19 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
   delete_protection = false
 }
 
+data "hcloud_floating_ip" "control_plane_ipv4" {
+  count = var.enable_floating_ip ? 1 : 0
+  id    = var.floating_ip_id != null ? var.floating_ip_id : hcloud_floating_ip.control_plane_ipv4[0].id
+}
+
 resource "hcloud_floating_ip_assignment" "this" {
-  floating_ip_id = hcloud_floating_ip.control_plane_ipv4[0].id
+  floating_ip_id = data.hcloud_floating_ip.control_plane_ipv4[0].id
   server_id      = hcloud_server.control_planes[0].id
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv4" {
-  count         = var.control_plane_count > 0 ? var.control_plane_count : 1 # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
+  count = var.control_plane_count > 0 ? var.control_plane_count : 1
+  # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
   name          = "control-plane-${count.index + 1}-ipv4"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv4"

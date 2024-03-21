@@ -66,6 +66,15 @@ variable "enable_floating_ip" {
   description = "If true, a floating IP will be created and assigned to the control plane nodes."
 }
 
+variable "floating_ip_id" {
+  type        = number
+  default     = null
+  description = <<EOF
+      The Floating IP (ID) to use for the control plane nodes.
+      If null (default), a new floating IP will be created.
+  EOF
+}
+
 variable "enable_ipv6" {
   type        = bool
   default     = false

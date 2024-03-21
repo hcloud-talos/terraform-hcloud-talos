@@ -18,7 +18,7 @@ locals {
       local.cluster_api_host,
       # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
       #      local.control_plane_private_ipv4_vip,
-      var.enable_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
+      var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
     ])
   )
 
@@ -86,7 +86,7 @@ data "talos_cluster_kubeconfig" "this" {
 }
 
 locals {
-  kubeconfig_server_address = var.enable_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].ip_address : (
+  kubeconfig_server_address = var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : (
     can(local.control_plane_public_ipv4_list[0]) ? local.control_plane_public_ipv4_list[0] : "unknown"
   )
 

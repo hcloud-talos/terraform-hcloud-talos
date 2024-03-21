@@ -48,7 +48,7 @@ locals {
                 ] : []
               )
               vip = var.enable_floating_ip ? {
-                ip = hcloud_floating_ip.control_plane_ipv4[0].ip_address
+                ip = data.hcloud_floating_ip.control_plane_ipv4[0].ip_address
                 hcloud = {
                   apiToken = var.hcloud_token
                 }
