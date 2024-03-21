@@ -19,8 +19,12 @@ resource "hcloud_network_subnet" "nodes" {
   ip_range     = local.node_ipv4_cidr
 }
 
+locals {
+  create_floating_ip = var.enable_floating_ip && var.floating_ip == null
+}
+
 resource "hcloud_floating_ip" "control_plane_ipv4" {
-  count             = var.enable_floating_ip ? 1 : 0
+  count             = local.create_floating_ip ? 1 : 0
   name              = "control-plane-ipv4"
   type              = "ipv4"
   home_location     = data.hcloud_location.this.name
@@ -30,12 +34,15 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
 
 data "hcloud_floating_ip" "control_plane_ipv4" {
   count = var.enable_floating_ip ? 1 : 0
-  id    = coalesce(var.floating_ip_id, hcloud_floating_ip.control_plane_ipv4[0].id)
+  id    = coalesce(var.floating_ip.id, local.create_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].id : null)
 }
 
 resource "hcloud_floating_ip_assignment" "this" {
   floating_ip_id = data.hcloud_floating_ip.control_plane_ipv4[0].id
   server_id      = hcloud_server.control_planes[0].id
+  depends_on = [
+    hcloud_server.control_planes,
+  ]
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv4" {
