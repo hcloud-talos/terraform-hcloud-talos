@@ -103,9 +103,11 @@ variable "talos_version" {
 variable "ssh_public_key" {
   description = <<EOF
     The public key to be set in the servers. It is not used in any way.
+    If you don't set it, a dummy key will be generated and used.
     Unfortunately, it is still required, otherwise the Hetzner will sen E-Mails with login credentials.
   EOF
   type        = string
+  default     = null
   sensitive   = true
 }
 

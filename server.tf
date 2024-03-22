@@ -15,9 +15,14 @@ locals {
   worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
 }
 
+resource "tls_private_key" "ssh_key" {
+  count     = var.ssh_public_key == null ? 1 : 0
+  algorithm = "ED25519"
+}
+
 resource "hcloud_ssh_key" "this" {
   name       = "default"
-  public_key = var.ssh_public_key
+  public_key = coalesce(var.ssh_public_key, can(tls_private_key.ssh_key[0].public_key_openssh) ? tls_private_key.ssh_key[0].public_key_openssh : null)
 }
 
 resource "hcloud_server" "control_planes" {
