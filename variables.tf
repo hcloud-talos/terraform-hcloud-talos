@@ -10,6 +10,12 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "cluster_domain" {
+  type        = string
+  default     = "cluster.local"
+  description = "The domain name of the cluster."
+}
+
 variable "datacenter_name" {
   type        = string
   description = <<EOF

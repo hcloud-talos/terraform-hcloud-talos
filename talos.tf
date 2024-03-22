@@ -3,8 +3,7 @@ resource "talos_machine_secrets" "this" {}
 locals {
   // TODO: Possible to make domain and api_domain configurable?
   // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
-  cluster_domain              = "cluster.local"
-  cluster_api_host            = "api.${local.cluster_domain}"
+  cluster_api_host            = "api.${var.cluster_domain}"
   cluster_api_port_k8s        = 6443
   cluster_api_port_kube_prism = 7445
   #  cluster_api_url_k8s         = "https://${local.cluster_api_host}:${local.cluster_api_port_k8s}"

@@ -65,7 +65,7 @@ locals {
       }
       cluster = {
         network = {
-          dnsDomain = local.cluster_domain
+          dnsDomain = var.cluster_domain
           podSubnets = [
             local.pod_ipv4_cidr
           ]

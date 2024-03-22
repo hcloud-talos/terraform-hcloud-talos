@@ -84,7 +84,7 @@ locals {
       cluster = {
         allowSchedulingOnControlPlanes = var.worker_count <= 0
         network = {
-          dnsDomain = local.cluster_domain
+          dnsDomain = var.cluster_domain
           podSubnets = [
             local.pod_ipv4_cidr
           ]
