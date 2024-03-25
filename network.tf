@@ -57,7 +57,7 @@ resource "hcloud_primary_ip" "control_plane_ipv4" {
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv6" {
-  count         = var.control_plane_count > 0 && var.enable_ipv6 ? var.control_plane_count : 0
+  count         = var.enable_ipv6 ? var.control_plane_count > 0 ? var.control_plane_count : 1 : 0
   name          = "control-plane-${count.index + 1}-ipv6"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv6"
@@ -75,7 +75,7 @@ resource "hcloud_primary_ip" "worker_ipv4" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv6" {
-  count         = var.worker_count > 0 && var.enable_ipv6 ? var.worker_count : 0
+  count         = var.enable_ipv6 ? var.worker_count > 0 ? var.worker_count : 1 : 0
   name          = "worker-${count.index + 1}-ipv6"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv6"
