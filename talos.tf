@@ -2,11 +2,12 @@ resource "talos_machine_secrets" "this" {}
 
 locals {
   // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
-  cluster_api_host            = "api.${var.cluster_domain}"
+  local_api_host              = "api.${var.cluster_domain}"
+  cluster_api_host            = var.cluster_api_host != null ? var.cluster_api_host : local.local_api_host
   cluster_api_port_k8s        = 6443
   cluster_api_port_kube_prism = 7445
   #  cluster_api_url_k8s         = "https://${local.cluster_api_host}:${local.cluster_api_port_k8s}"
-  cluster_api_url_kube_prism = "https://${local.cluster_api_host}:${local.cluster_api_port_kube_prism}"
+  cluster_api_url_kube_prism = "https://${local.local_api_host}:${local.cluster_api_port_kube_prism}"
   cluster_endpoint           = local.cluster_api_url_kube_prism
   // ************
   cert_SANs = concat(
@@ -14,6 +15,7 @@ locals {
     local.control_plane_public_ipv6_list,
     local.control_plane_private_ipv4_list,
     compact([
+      local.local_api_host,
       local.cluster_api_host,
       # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
       #      local.control_plane_private_ipv4_vip,
@@ -25,7 +27,7 @@ locals {
     {
       ip = "127.0.0.1"
       aliases = [
-        local.cluster_api_host
+        local.local_api_host
       ]
     }
   ]
