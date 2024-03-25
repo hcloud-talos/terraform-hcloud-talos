@@ -32,7 +32,7 @@ locals {
 }
 
 data "talos_machine_configuration" "control_plane" {
-  // enable although we have no control planes to be able to debug the output
+  // enable although we have no control planes, to be able to debug the output
   count            = var.control_plane_count > 0 ? var.control_plane_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name
@@ -45,7 +45,7 @@ data "talos_machine_configuration" "control_plane" {
 }
 
 data "talos_machine_configuration" "worker" {
-  // enable although we have no control planes to be able to debug the output
+  // enable although we have no worker, to be able to debug the output
   count            = var.worker_count > 0 ? var.worker_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name

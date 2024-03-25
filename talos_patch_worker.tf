@@ -1,6 +1,6 @@
 locals {
   worker_yaml = [
-    for index in range(0, var.control_plane_count) : yamlencode({
+    for index in range(0, var.worker_count > 0 ? var.worker_count : 1) : yamlencode({
       machine = {
         install = {
           extraKernelArgs = [

@@ -66,7 +66,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv4" {
-  count         = var.worker_count
+  count         = var.worker_count > 0 ? var.worker_count : 1
   name          = "worker-${count.index + 1}-ipv4"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv4"
@@ -110,9 +110,9 @@ locals {
   # - The special private IP address 172.31.1.1. This IP address is being used as a default gateway of your server's public network interface.
   #  control_plane_private_vip_ipv4 = cidrhost(hcloud_network_subnet.nodes.ip_range, 100)
   control_plane_private_ipv4_list = [
-    for index in range(var.control_plane_count) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 101)
+    for index in range(var.control_plane_count > 0 ? var.control_plane_count : 1) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 101)
   ]
   worker_private_ipv4_list = [
-    for index in range(var.worker_count) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 201)
+    for index in range(var.worker_count > 0 ? var.worker_count : 1) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 201)
   ]
 }
