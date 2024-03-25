@@ -99,6 +99,12 @@ variable "enable_ipv6" {
   EOF
 }
 
+variable "enable_kube_span" {
+  type        = bool
+  default     = false
+  description = "If true, the KubeSpan Feature (with \"Kubernetes registry\" mode) will be enabled."
+}
+
 # Server
 variable "talos_version" {
   type        = string
