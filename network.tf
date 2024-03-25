@@ -38,6 +38,7 @@ data "hcloud_floating_ip" "control_plane_ipv4" {
 }
 
 resource "hcloud_floating_ip_assignment" "this" {
+  count          = local.create_floating_ip ? 1 : 0
   floating_ip_id = data.hcloud_floating_ip.control_plane_ipv4[0].id
   server_id      = hcloud_server.control_planes[0].id
   depends_on = [
