@@ -10,7 +10,7 @@ packer {
 
 variable "talos_version" {
   type    = string
-  default = "v1.6.6"
+  default = "v1.6.7"
 }
 
 variable "server_location" {
