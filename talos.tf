@@ -8,6 +8,7 @@ locals {
   cluster_api_port_kube_prism = 7445
   #  cluster_api_url_k8s         = "https://${local.cluster_api_host}:${local.cluster_api_port_k8s}"
   cluster_api_url_kube_prism = "https://${local.cluster_api_host}:${local.cluster_api_port_kube_prism}"
+  cluster_endpoint           = local.cluster_api_url_kube_prism
   // ************
   cert_SANs = concat(
     local.control_plane_public_ipv4_list,
@@ -36,7 +37,7 @@ data "talos_machine_configuration" "control_plane" {
   count            = var.control_plane_count > 0 ? var.control_plane_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name
-  cluster_endpoint = local.cluster_api_url_kube_prism
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches   = [local.controlplane_yaml[count.index]]
@@ -49,7 +50,7 @@ data "talos_machine_configuration" "worker" {
   count            = var.worker_count > 0 ? var.worker_count : 1
   talos_version    = var.talos_version
   cluster_name     = var.cluster_name
-  cluster_endpoint = local.cluster_api_url_kube_prism
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches   = [local.worker_yaml[count.index]]
