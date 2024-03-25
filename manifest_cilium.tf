@@ -40,7 +40,7 @@ data "helm_template" "cilium" {
   }
   set {
     name  = "k8sServiceHost"
-    value = local.cluster_api_host
+    value = local.local_api_host
   }
   set {
     name  = "k8sServicePort"

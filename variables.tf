@@ -16,6 +16,12 @@ variable "cluster_domain" {
   description = "The domain name of the cluster."
 }
 
+variable "cluster_api_host" {
+  type        = string
+  description = "The entrypoint of the cluster. Must be a valid domain name. If not set, 'api.[cluster_domain]' will be used."
+  default     = null
+}
+
 variable "datacenter_name" {
   type        = string
   description = <<EOF
