@@ -91,7 +91,7 @@ locals {
 
   kubeconfig = replace(
     can(data.talos_cluster_kubeconfig.this[0].kubeconfig_raw) ? data.talos_cluster_kubeconfig.this[0].kubeconfig_raw : "",
-    local.cluster_api_url_kube_prism, "https://${local.kubeconfig_server_address}:${local.cluster_api_port_k8s}"
+    local.cluster_endpoint, "https://${local.kubeconfig_server_address}:${local.cluster_api_port_k8s}"
   )
 
   kubeconfig_data = {
