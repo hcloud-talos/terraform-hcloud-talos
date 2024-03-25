@@ -70,6 +70,9 @@ locals {
             #            }
           ]
           extraHostEntries = local.extra_host_entries
+          kubespan = {
+            enabled = var.enable_kube_span
+          }
         }
         sysctls = {
           "net.core.somaxconn"          = "65535"
