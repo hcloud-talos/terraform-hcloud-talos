@@ -54,6 +54,20 @@ locals {
                 }
               } : null
             },
+            #            Waiting for https://github.com/siderolabs/talos/pull/8493
+            #            {
+            #              interface = "eth1"
+            #              dhcp      = true
+            #              addresses = [
+            #                local.control_plane_private_ipv4_list[index]
+            #              ]
+            #              vip = {
+            #                ip = local.control_plane_private_ipv4_vip
+            #                hcloud = {
+            #                  apiToken = var.hcloud_token
+            #                }
+            #              }
+            #            }
           ]
           extraHostEntries = local.extra_host_entries
         }
