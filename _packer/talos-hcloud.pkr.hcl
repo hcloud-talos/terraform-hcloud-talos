@@ -13,14 +13,24 @@ variable "talos_version" {
   default = "v1.6.7"
 }
 
+variable "image_url_arm" {
+  type    = string
+  default = null
+}
+
+variable "image_url_x86" {
+  type    = string
+  default = null
+}
+
 variable "server_location" {
   type    = string
   default = "fsn1"
 }
 
 locals {
-  image_arm = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-arm64.raw.xz"
-  image_x86 = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-amd64.raw.xz"
+  image_arm = var.image_url_arm != null ? var.image_url_arm : "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-arm64.raw.xz"
+  image_x86 = var.image_url_x86 != null ? var.image_url_x86 : "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-amd64.raw.xz"
 
   # Add local variables for inline shell commands
   download_image = "wget --timeout=5 --waitretry=5 --tries=5 --retry-connrefused --inet4-only -O /tmp/talos.raw.xz "
