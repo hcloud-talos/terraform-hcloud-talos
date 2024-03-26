@@ -50,6 +50,14 @@ data "helm_template" "cilium" {
     name  = "hubble.enabled"
     value = "false"
   }
+  set {
+    name  = "prometheus.enabled"
+    value = "true"
+  }
+  set {
+    name  = "operator.prometheus.enabled"
+    value = "true"
+  }
 }
 
 data "kubectl_file_documents" "cilium" {

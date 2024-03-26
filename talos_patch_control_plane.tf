@@ -122,6 +122,7 @@ locals {
           extraArgs = {
             "cloud-provider"           = "external"
             "node-cidr-mask-size-ipv4" = local.node_ipv4_cidr_mask_size
+            "bind-address" : "0.0.0.0"
           }
         }
         etcd = {
@@ -134,7 +135,7 @@ locals {
         }
         scheduler = {
           extraArgs = {
-            "bind-address" = "0.0.0.0:10259"
+            "bind-address" = "0.0.0.0"
           }
         }
         inlineManifests = [
