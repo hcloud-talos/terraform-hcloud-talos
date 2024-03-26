@@ -132,6 +132,11 @@ locals {
             "listen-metrics-urls" = "http://0.0.0.0:2381"
           }
         }
+        scheduler = {
+          extraArgs = {
+            "bind-address" = "0.0.0.0:10259"
+          }
+        }
         inlineManifests = [
           {
             name = "hcloud-secret"
