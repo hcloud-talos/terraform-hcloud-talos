@@ -75,9 +75,9 @@ locals {
           serviceSubnets = [
             local.service_ipv4_cidr
           ]
-        }
-        proxy = {
-          disabled = true
+          cni = {
+            name = "none"
+          }
         }
       }
     })
