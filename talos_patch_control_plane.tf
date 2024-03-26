@@ -11,7 +11,7 @@ locals {
         kubelet = {
           extraArgs = {
             "cloud-provider"             = "external"
-            "rotate-server-certificates" = "true"
+            "rotate-server-certificates" = true
           }
           clusterDNS = concat(
             [cidrhost(local.service_ipv4_cidr, 10)]
