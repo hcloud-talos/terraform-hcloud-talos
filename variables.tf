@@ -18,7 +18,10 @@ variable "cluster_domain" {
 
 variable "cluster_api_host" {
   type        = string
-  description = "The entrypoint of the cluster. Must be a valid domain name. If not set, 'api.[cluster_domain]' will be used."
+  description = <<EOF
+    The entrypoint of the cluster. Must be a valid domain name. If not set, 'api.[cluster_domain]' will be used.
+    You should create a DNS record pointing to the IPs of the control plane node private IPs!
+  EOF
   default     = null
 }
 

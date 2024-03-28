@@ -12,6 +12,11 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - Talos is a modern OS for Kubernetes. It is designed to be secure, immutable, and minimal.
 - Hetzner Cloud is a cloud hosting provider with nice terraform support and cheap prices.
 
+> [!WARNING]  
+> It's under active development. Not all features are compatible with each other yet.
+> Known issues are listed in the [Known Issues](#known-issues) section.
+> If you find a bug or have a feature request, please open an issue.
+
 ---
 
 ## Goals 🚀
@@ -34,6 +39,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
   as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
 - It prepares for the kube-prometheus-stack by enabling listening and enabling service monitors in cilium.
+- If `cluster_api_host` is set, you should create a DNS record, pointing to the Control Plane node private IPs.
 
 ## Additional installed software in the cluster
 
@@ -95,27 +101,31 @@ in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
 
 ### Terraform
 
-Use the module as shown in the following example:
+Use the module as shown in the following working example:
+
+> [!NOTE]
+> Actually, your current IP address has to have access to the nodes during the creation of the cluster.
 
 ```hcl
 module "talos" {
   source  = "hcloud-talos/talos/hcloud"
-  version = "1.0.0"
+  version = "1.8.2"
 
-  hcloud_token = "" // Your hcloud token
+  hcloud_token = "your-hcloud-token"
 
-  cluster_name    = "talos-cluster"
-  datacenter_name = "fsn1-dc14"
+  cluster_name     = "dummy.com"
+  cluster_domain   = "cluster.dummy.com.local"
+  cluster_api_host = "kube.dummy.com"
 
-  ssh_public_key = "" // e.g. file("~/.ssh/id_rsa.pub")
+  firewall_use_current_ip = true
+  
+  datacenter_name  = "fsn1-dc14"
 
-  firewall_use_current_ip = true // allow traffic only from the current IP address
+  control_plane_count       = 3
+  control_plane_server_type = "cax11"
 
-  control_plane_count       = 3 // number of control planes to create
-  control_plane_server_type = "cax21" // server type for the control plane
-
-  worker_count       = 3 // number of worker to create (if 0, allow_scheduling_on_control_planes will be set to true)
-  worker_server_type = "cax21" // server type for the worker
+  worker_count       = 3
+  worker_server_type = "cax21"
 }
 ```
 
@@ -139,28 +149,16 @@ terraform output --raw kubeconfig > ./kubeconfig
 terraform output --raw talosconfig > ./talosconfig
 ```
 
-If you want to merge the kubeconfig with your existing kubeconfig, you can use the following commands. (backup
-file `~/.kube/config.bak` is created)
+Move these files to the correct location and use them with `kubectl` and `talosctl`.
 
-```bash
-terraform output --raw kubeconfig > ./kubeconfig
-mv ~/.kube/config ~/.kube/config.bak
-KUBECONFIG=./kubeconfig:~/.kube/config.bak kubectl config view --flatten > ~/.kube/config
-rm ./kubeconfig
-```
-
-And for the talosconfig:
-
-```bash
-terraform output --raw talosconfig > ./talosconfig
-cp ~/.talos/config ~/.talos/config.bak
-talosctl config merge ./talosconfig
-rm ./talosconfig
-```
+## Known Issues
+- IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any effect.
+- `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
 
 ## Future Plans
 
-- Addition module to bootstrap ArgoCD
+- [ ] Add Alias IP support (Required PR to get merged: https://github.com/siderolabs/talos/pull/8493)
+- [ ] Add Hetzner Cloud CSI Driver
 
 ## Credits
 
