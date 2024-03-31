@@ -1,10 +1,10 @@
 locals {
   # https://github.com/hetznercloud/hcloud-cloud-controller-manager/blob/main/docs/deploy_with_networks.md#considerations-on-the-ip-ranges
-  network_ipv4_cidr        = "10.0.0.0/16"
-  node_ipv4_cidr           = "10.0.1.0/24"
+  network_ipv4_cidr        = var.network_ipv4_cidr
+  node_ipv4_cidr           = var.node_ipv4_cidr
   node_ipv4_cidr_mask_size = split("/", local.node_ipv4_cidr)[1] # 24
-  pod_ipv4_cidr            = "10.0.16.0/20"
-  service_ipv4_cidr        = "10.0.8.0/21"
+  pod_ipv4_cidr            = var.pod_ipv4_cidr
+  service_ipv4_cidr        = var.service_ipv4_cidr
 }
 
 resource "hcloud_network" "this" {

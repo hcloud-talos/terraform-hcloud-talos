@@ -108,6 +108,30 @@ variable "enable_kube_span" {
   description = "If true, the KubeSpan Feature (with \"Kubernetes registry\" mode) will be enabled."
 }
 
+variable "network_ipv4_cidr" {
+  description = "The main network cidr that all subnets will be created upon."
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "node_ipv4_cidr" {
+  description = "Node CIDR, used for the nodes (control plane and worker nodes) in the cluster."
+  type        = string
+  default     = "10.0.1.0/24"
+}
+
+variable "pod_ipv4_cidr" {
+  description = "Pod CIDR, used for the pods in the cluster."
+  type        = string
+  default     = "10.0.16.0/20"
+}
+
+variable "service_ipv4_cidr" {
+  description = "Service CIDR, used for the services in the cluster."
+  type        = string
+  default     = "10.0.8.0/21"
+}
+
 # Server
 variable "talos_version" {
   type        = string
