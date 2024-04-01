@@ -200,14 +200,16 @@ kernel_modules_to_load = [
   not be applied to existing nodes, because it would force a recreation of the nodes.
 
 ## Known Issues
-
+- `enable_alias_ip` can lead to error messages occurring during the first bootstrap.
+  More about this here: https://github.com/siderolabs/talos/pull/8493
+  If these error messages occur, one control plane must be restarted after complete initialisation once.
+  This should resolve the error.
 - IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any
   effect.
 - `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
 
 ## Future Plans
 
-- [ ] Add Alias IP support (Required PR to get merged: https://github.com/siderolabs/talos/pull/8493)
 - [ ] Add Hetzner Cloud CSI Driver
 
 ## Credits
