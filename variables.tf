@@ -93,6 +93,12 @@ variable "floating_ip" {
   EOF
 }
 
+variable "enable_alias_ip" {
+  type        = bool
+  default     = false
+  description = "If true, an alias IP (cidrhost(node_ipv4_cidr, 100)) will be created and assigned to the control plane nodes."
+}
+
 variable "enable_ipv6" {
   type        = bool
   default     = false

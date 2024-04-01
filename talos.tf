@@ -17,8 +17,7 @@ locals {
     compact([
       local.local_api_host,
       local.cluster_api_host,
-      # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
-      #      local.control_plane_private_ipv4_vip,
+      var.enable_alias_ip ? local.control_plane_private_ipv4_vip : null,
       var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
     ])
   )
