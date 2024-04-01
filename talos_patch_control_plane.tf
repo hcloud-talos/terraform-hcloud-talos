@@ -35,17 +35,16 @@ locals {
                 }
               } : null
             },
-            #            Waiting for https://github.com/siderolabs/talos/pull/8493
-            #            {
-            #              interface = "eth1"
-            #              dhcp      = true
-            #              vip = {
-            #                ip = local.control_plane_private_vip_ipv4
-            #                hcloud = {
-            #                  apiToken = var.hcloud_token
-            #                }
-            #              }
-            #            }
+            {
+              interface = "eth1"
+              dhcp      = true
+              vip = var.enable_alias_ip ? {
+                ip = local.control_plane_private_vip_ipv4
+                hcloud = {
+                  apiToken = var.hcloud_token
+                }
+              } : null
+            }
           ]
           extraHostEntries = local.extra_host_entries
           kubespan = {

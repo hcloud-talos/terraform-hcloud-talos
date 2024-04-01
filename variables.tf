@@ -87,6 +87,18 @@ variable "enable_floating_ip" {
   description = "If true, a floating IP will be created and assigned to the control plane nodes."
 }
 
+variable "enable_alias_ip" {
+  type        = bool
+  default     = false
+  description = <<EOF
+      If true, an alias IP (cidrhost(node_ipv4_cidr, 100)) will be created and assigned to the control plane nodes.
+      This can lead to error messages occurring during the first bootstrap.
+      More about this here: https://github.com/siderolabs/talos/pull/8493
+      If these error messages occur, one control plane must be restarted after complete initialisation once.
+      This should resolve the error.
+  EOF
+}
+
 variable "floating_ip" {
   type = object({
     id = number,
