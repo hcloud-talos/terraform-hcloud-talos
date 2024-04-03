@@ -97,6 +97,7 @@ locals {
             "time.cloudflare.com"
           ]
         }
+        registries = var.registries
       }
       cluster = {
         allowSchedulingOnControlPlanes = var.worker_count <= 0

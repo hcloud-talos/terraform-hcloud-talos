@@ -214,3 +214,30 @@ variable "kube_api_extra_args" {
   default     = {}
   description = "Additional arguments to pass to the kube-apiserver."
 }
+
+variable "registries" {
+  type = object({
+    mirrors = map(object({
+      endpoints    = list(string)
+      overridePath = optional(bool)
+    }))
+  })
+  default     = null
+  description = <<EOF
+    List of registry mirrors to use.
+    Example:
+    ```
+    registries = {
+      mirrors = {
+        "docker.io" = {
+          endpoints = [
+            "http://localhost:5000",
+            "https://docker.io"
+          ]
+        }
+      }
+    }
+    ```
+    https://www.talos.dev/v1.6/reference/configuration/v1alpha1/config/#Config.machine.registries
+  EOF
+}
