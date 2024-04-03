@@ -207,3 +207,10 @@ variable "worker_server_type" {
     error_message = "Invalid worker server type."
   }
 }
+
+# Talos
+variable "kube_api_extra_args" {
+  type        = map(string)
+  default     = {}
+  description = "Additional arguments to pass to the kube-apiserver."
+}

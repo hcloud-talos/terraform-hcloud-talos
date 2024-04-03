@@ -116,7 +116,8 @@ locals {
           disabled = true
         }
         apiServer = {
-          certSANs = local.cert_SANs
+          certSANs  = local.cert_SANs
+          extraArgs = var.kube_api_extra_args
         }
         controllerManager = {
           extraArgs = {
