@@ -65,6 +65,7 @@ locals {
             "time.cloudflare.com"
           ]
         }
+        registries = var.registries
       }
       cluster = {
         network = {
