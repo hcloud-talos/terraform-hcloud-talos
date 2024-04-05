@@ -61,6 +61,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
   Nodes as targets for the Load Balancer.
 
 ### [Talos Cloud Controller Manager](https://github.com/siderolabs/talos-cloud-controller-manager)
+
 - [Applies labels to the nodes](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-initialize).
 - [Validates and approves node CSRs](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-certificate-approval).
 - In DaemonSet mode: CCM will use hostNetwork and current node to access kubernetes/talos API
@@ -79,6 +80,10 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
 ### Hetzner Cloud
+
+> [!TIP]
+> If you don't have a Hetzner account yet, you are welcome to use this [Hetzner Cloud Referral Link](https://hetzner.cloud/?ref=6Q6Q6Q6Q6Q6Q) to claim 20€ credit and support
+> this project.
 
 - Create a new project in the Hetzner Cloud Console
 - Create a new API token in the project
@@ -118,8 +123,8 @@ module "talos" {
   cluster_api_host = "kube.dummy.com"
 
   firewall_use_current_ip = true
-  
-  datacenter_name  = "fsn1-dc14"
+
+  datacenter_name = "fsn1-dc14"
 
   control_plane_count       = 3
   control_plane_server_type = "cax11"
@@ -130,6 +135,7 @@ module "talos" {
 ```
 
 You need to pipe the outputs of the module:
+
 ```hcl
 output "talosconfig" {
   value     = module.talos.talosconfig
@@ -152,7 +158,9 @@ terraform output --raw talosconfig > ./talosconfig
 Move these files to the correct location and use them with `kubectl` and `talosctl`.
 
 ## Known Issues
-- IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any effect.
+
+- IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any
+  effect.
 - `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
 
 ## Future Plans
