@@ -215,6 +215,15 @@ variable "kube_api_extra_args" {
   description = "Additional arguments to pass to the kube-apiserver."
 }
 
+variable "kernel_modules_to_load" {
+  type = list(object({
+    name       = string
+    parameters = optional(list(string))
+  }))
+  default     = null
+  description = "List of kernel modules to load."
+}
+
 variable "registries" {
   type = object({
     mirrors = map(object({

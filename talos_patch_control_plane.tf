@@ -74,6 +74,9 @@ locals {
             enabled = var.enable_kube_span
           }
         }
+        kernel = {
+          modules = var.kernel_modules_to_load
+        }
         sysctls = {
           "net.core.somaxconn"          = "65535"
           "net.core.netdev_max_backlog" = "4096"
