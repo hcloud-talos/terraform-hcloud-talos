@@ -9,10 +9,13 @@ locals {
         }
         certSANs = local.cert_SANs
         kubelet = {
-          extraArgs = {
-            "cloud-provider"             = "external"
-            "rotate-server-certificates" = true
-          }
+          extraArgs = merge(
+            {
+              "cloud-provider"             = "external"
+              "rotate-server-certificates" = true
+            },
+            var.kubelet_extra_args
+          )
           clusterDNS = concat(
             [cidrhost(local.service_ipv4_cidr, 10)]
           )

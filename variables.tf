@@ -209,6 +209,12 @@ variable "worker_server_type" {
 }
 
 # Talos
+variable "kubelet_extra_args" {
+  type        = map(string)
+  default     = {}
+  description = "Additional arguments to pass to kubelet."
+}
+
 variable "kube_api_extra_args" {
   type        = map(string)
   default     = {}
