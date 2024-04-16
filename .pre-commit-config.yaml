@@ -7,4 +7,3 @@ repos:
       - id: terraform_tflint
       - id: terraform_checkov
         exclude: ^.demo/
-      - id: tfupdate
