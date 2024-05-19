@@ -11,6 +11,7 @@ data "hcloud_image" "x86" {
 }
 
 locals {
+  cluster_prefix         = var.cluster_prefix ? "${var.cluster_name}-" : ""
   control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
   worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
 }
@@ -21,14 +22,14 @@ resource "tls_private_key" "ssh_key" {
 }
 
 resource "hcloud_ssh_key" "this" {
-  name       = "default"
+  name       = "${local.cluster_prefix}default"
   public_key = coalesce(var.ssh_public_key, can(tls_private_key.ssh_key[0].public_key_openssh) ? tls_private_key.ssh_key[0].public_key_openssh : null)
 }
 
 resource "hcloud_server" "control_planes" {
   count              = var.control_plane_count
   datacenter         = data.hcloud_datacenter.this.name
-  name               = "control-plane-${count.index + 1}"
+  name               = "${local.cluster_prefix}control-plane-${count.index + 1}"
   image              = local.control_plane_image_id
   server_type        = var.control_plane_server_type
   user_data          = data.talos_machine_configuration.control_plane[count.index].machine_configuration
@@ -64,7 +65,7 @@ resource "hcloud_server" "control_planes" {
 resource "hcloud_server" "workers" {
   count              = var.worker_count
   datacenter         = data.hcloud_datacenter.this.name
-  name               = "worker-${count.index + 1}"
+  name               = "${local.cluster_prefix}worker-${count.index + 1}"
   image              = local.worker_image_id
   server_type        = var.worker_server_type
   user_data          = data.talos_machine_configuration.worker[count.index].machine_configuration
