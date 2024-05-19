@@ -16,6 +16,12 @@ variable "cluster_domain" {
   description = "The domain name of the cluster."
 }
 
+variable "cluster_prefix" {
+  type        = bool
+  default     = false
+  description = "Prefix Hetzner Cloud resources with the cluster name."
+}
+
 variable "cluster_api_host" {
   type        = string
   description = <<EOF

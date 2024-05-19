@@ -1,9 +1,9 @@
 resource "hcloud_placement_group" "control_plane" {
-  name = "control-plane"
+  name = "${local.cluster_prefix}control-plane"
   type = "spread"
 }
 
 resource "hcloud_placement_group" "worker" {
-  name = "worker"
+  name = "${local.cluster_prefix}worker"
   type = "spread"
 }
