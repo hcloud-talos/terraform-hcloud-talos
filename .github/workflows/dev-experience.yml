@@ -1,0 +1,145 @@
+name: Developer Experience
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+permissions: read-all
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  terraform-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      pull-requests: write # for GitHub/script to create comments
+    steps:
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - name: Configure Terraform plugin cache
+        run: |
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+          mkdir -p ~/.terraform.d/plugin-cache
+      - name: Cache Terraform
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: "${{ runner.os }}-terraform-${{ hashFiles(format('{0}/.terraform.lock.hcl', matrix.module)) }}"
+          restore-keys: "${{ runner.os }}-terraform-"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Setup Node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: 20
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -recursive -check -diff
+        continue-on-error: true
+      - name: Terraform Init
+        id: init
+        run: terraform init -no-color
+        continue-on-error: true
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        continue-on-error: true
+      - name: Print Results and set environment variables
+        run: |
+          echo "Terraform Format: ${{ steps.fmt.outcome }}"
+          echo "Terraform Init: ${{ steps.init.outcome }}"
+          echo "Terraform Validate: ${{ steps.validate.outcome }}"
+          echo "TF_FMT_OUTCOME_SYMBOL=${{ steps.fmt.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
+          echo "TF_INIT_OUTCOME_SYMBOL=${{ steps.init.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
+          echo "TF_VALIDATE_OUTCOME_SYMBOL=${{ steps.validate.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
+          echo "TF_OVERALL_OUTCOME=${{ 
+            steps.fmt.outcome == 'success'
+            && steps.init.outcome == 'success'
+            && steps.validate.outcome == 'success'
+            && 'success' || 'failure' 
+          }}" >> $GITHUB_ENV
+          echo "TF_OVERALL_OUTCOME_SYMBOL=${{ 
+            steps.fmt.outcome == 'success'
+            && steps.init.outcome == 'success'
+            && steps.validate.outcome == 'success'
+            && '✅' || '❌' 
+          }}" >> $GITHUB_ENV
+      - name: Publish Results
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes("${{ matrix.module }}")
+            })
+
+            // 2. Prepare format of the comment
+            const output = `### Module ${{ matrix.module }}: ${ process.env.TF_OVERALL_OUTCOME_SYMBOL }
+
+            <details><summary>🖌 Terraform Format: ${ process.env.TF_FMT_OUTCOME_SYMBOL }</summary>
+
+            \`\`\`\n
+            ${{ steps.fmt.outputs.stdout }}
+
+            ${{ steps.fmt.outputs.stderr }}
+            \`\`\`
+
+            </details>
+
+            <details><summary>⚙️ Terraform Init: ${ process.env.TF_INIT_OUTCOME_SYMBOL }</summary>
+
+            \`\`\`\n
+            ${{ steps.init.outputs.stdout }}
+
+            ${{ steps.init.outputs.stderr }}
+            \`\`\`
+
+            </details>
+
+            <details><summary>🤖 Terraform Validate: ${ process.env.TF_VALIDATE_OUTCOME_SYMBOL }</summary>
+
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+
+            ${{ steps.validate.outputs.stderr }}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ matrix.module }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+      - name: Fail on error
+        if: ${{ env.TF_OVERALL_OUTCOME != 'success' }}
+        run: |
+          exit 1
