@@ -227,6 +227,12 @@ variable "kube_api_extra_args" {
   description = "Additional arguments to pass to the kube-apiserver."
 }
 
+variable "sysctls_extra_args" {
+  type        = map(string)
+  default     = {}
+  description = "Additional sysctls to set."
+}
+
 variable "kernel_modules_to_load" {
   type = list(object({
     name       = string
