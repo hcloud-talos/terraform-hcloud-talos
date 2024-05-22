@@ -4,7 +4,7 @@ data "helm_template" "cilium" {
 
   repository = "https://helm.cilium.io"
   chart      = "cilium"
-  version    = "1.15.5"
+  version    = var.cilium_version
 
   set {
     name  = "ipam.mode"
