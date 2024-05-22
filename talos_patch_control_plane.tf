@@ -1,6 +1,6 @@
 locals {
-  controlplane_yaml = [
-    for index in range(0, var.control_plane_count > 0 ? var.control_plane_count : 1) : yamlencode({
+  controlplane_yaml = {
+    for control_plane in local.control_planes : control_plane.name => {
       machine = {
         install = {
           extraKernelArgs = [
@@ -31,8 +31,8 @@ locals {
               interface = "eth0"
               dhcp      = false
               addresses : compact([
-                local.control_plane_public_ipv4_list[index],
-                var.enable_ipv6 ? local.control_plane_public_ipv6_list[index] : null
+                control_plane.ipv4,
+                control_plane.ipv6
               ])
               routes = concat([
                 {
@@ -45,7 +45,7 @@ locals {
                 ],
                 var.enable_ipv6 ? [
                   {
-                    network = local.control_plane_public_ipv6_subnet_list[index]
+                    network = control_plane.ipv6_subnet
                     gateway : "fe80::1"
                   }
                 ] : []
@@ -174,6 +174,6 @@ locals {
           ]
         }
       }
-    })
-  ]
+    }
+  }
 }
