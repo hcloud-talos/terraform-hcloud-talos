@@ -59,10 +59,13 @@ locals {
         kernel = {
           modules = var.kernel_modules_to_load
         }
-        sysctls = {
-          "net.core.somaxconn"          = "65535"
-          "net.core.netdev_max_backlog" = "4096"
-        }
+        sysctls = merge(
+          {
+            "net.core.somaxconn"          = "65535"
+            "net.core.netdev_max_backlog" = "4096"
+          },
+          var.sysctls_extra_args
+        )
         time = {
           servers = [
             "ntp1.hetzner.de",
