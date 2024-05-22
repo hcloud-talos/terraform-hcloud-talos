@@ -60,6 +60,13 @@ resource "hcloud_server" "control_planes" {
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.control_plane
   ]
+
+  lifecycle {
+    ignore_changes = [
+      user_data,
+      image
+    ]
+  }
 }
 
 resource "hcloud_server" "workers" {
@@ -99,7 +106,8 @@ resource "hcloud_server" "workers" {
 
   lifecycle {
     ignore_changes = [
-      user_data
+      user_data,
+      image
     ]
   }
 }
