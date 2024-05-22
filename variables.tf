@@ -268,3 +268,10 @@ variable "registries" {
     https://www.talos.dev/v1.6/reference/configuration/v1alpha1/config/#Config.machine.registries
   EOF
 }
+
+# Deployments
+variable "cilium_version" {
+  type        = string
+  default     = "1.15.5"
+  description = "The version of Cilium to deploy."
+}
