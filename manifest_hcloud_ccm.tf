@@ -4,7 +4,7 @@ data "helm_template" "hcloud_ccm" {
 
   repository = "https://charts.hetzner.cloud"
   chart      = "hcloud-cloud-controller-manager"
-  version    = "1.19.0"
+  version    = var.hcloud_ccm_version
 
   set {
     name  = "networking.enabled"

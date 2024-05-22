@@ -289,3 +289,9 @@ variable "cilium_values" {
         ```
     EOF
 }
+
+variable "hcloud_ccm_version" {
+  type        = string
+  default     = "1.19.0"
+  description = "The version of the Hetzner Cloud Controller Manager to deploy."
+}
