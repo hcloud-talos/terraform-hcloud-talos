@@ -35,28 +35,30 @@ locals {
 
 data "talos_machine_configuration" "control_plane" {
   // enable although we have no control planes, to be able to debug the output
-  count            = var.control_plane_count > 0 ? var.control_plane_count : 1
-  talos_version    = var.talos_version
-  cluster_name     = var.cluster_name
-  cluster_endpoint = local.cluster_endpoint
-  machine_type     = "controlplane"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches   = [local.controlplane_yaml[count.index]]
-  docs             = false
-  examples         = false
+  count              = var.control_plane_count > 0 ? var.control_plane_count : 1
+  talos_version      = var.talos_version
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  kubernetes_version = var.kubernetes_version != null ? var.kubernetes_version : null
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  config_patches     = [local.controlplane_yaml[count.index]]
+  docs               = false
+  examples           = false
 }
 
 data "talos_machine_configuration" "worker" {
   // enable although we have no worker, to be able to debug the output
-  count            = var.worker_count > 0 ? var.worker_count : 1
-  talos_version    = var.talos_version
-  cluster_name     = var.cluster_name
-  cluster_endpoint = local.cluster_endpoint
-  machine_type     = "worker"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
-  config_patches   = [local.worker_yaml[count.index]]
-  docs             = false
-  examples         = false
+  count              = var.worker_count > 0 ? var.worker_count : 1
+  talos_version      = var.talos_version
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  kubernetes_version = var.kubernetes_version != null ? var.kubernetes_version : null
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  config_patches     = [local.worker_yaml[count.index]]
+  docs               = false
+  examples           = false
 }
 
 resource "talos_machine_bootstrap" "this" {
