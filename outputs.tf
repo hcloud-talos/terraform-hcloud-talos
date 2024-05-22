@@ -8,13 +8,13 @@ output "kubeconfig" {
   sensitive = true
 }
 
-output "talos_machine_configuration_example_control_plane" {
-  value     = data.talos_machine_configuration.control_plane[0].machine_configuration
+output "talos_machine_configurations_control_plane" {
+  value     = data.talos_machine_configuration.control_plane
   sensitive = true
 }
 
-output "talos_machine_configuration_example_worker" {
-  value     = data.talos_machine_configuration.worker[0].machine_configuration
+output "talos_machine_configurations_worker" {
+  value     = data.talos_machine_configuration.worker
   sensitive = true
 }
 
