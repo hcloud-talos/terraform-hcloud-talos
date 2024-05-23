@@ -1,10 +1,11 @@
-data "helm_template" "cilium" {
+data "helm_template" "cilium_default" {
+  count     = var.cilium_values == null ? 1 : 0
   name      = "cilium"
   namespace = "kube-system"
 
   repository = "https://helm.cilium.io"
   chart      = "cilium"
-  version    = "1.15.2"
+  version    = var.cilium_version
 
   set {
     name  = "ipam.mode"
@@ -60,8 +61,22 @@ data "helm_template" "cilium" {
   }
 }
 
+data "helm_template" "cilium_from_values" {
+  count     = var.cilium_values != null ? 1 : 0
+  name      = "cilium"
+  namespace = "kube-system"
+
+  repository = "https://helm.cilium.io"
+  chart      = "cilium"
+  version    = var.cilium_version
+  values     = var.cilium_values
+}
+
 data "kubectl_file_documents" "cilium" {
-  content = data.helm_template.cilium.manifest
+  content = coalesce(
+    can(data.helm_template.cilium_from_values[0].manifest) ? data.helm_template.cilium_from_values[0].manifest : null,
+    can(data.helm_template.cilium_default[0].manifest) ? data.helm_template.cilium_default[0].manifest : null
+  )
 }
 
 resource "kubectl_manifest" "apply_cilium" {

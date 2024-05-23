@@ -1,6 +1,6 @@
 locals {
-  worker_yaml = [
-    for index in range(0, var.worker_count > 0 ? var.worker_count : 1) : yamlencode({
+  worker_yaml = {
+    for worker in local.workers : worker.name => {
       machine = {
         install = {
           extraKernelArgs = [
@@ -30,8 +30,8 @@ locals {
               interface = "eth0"
               dhcp      = false
               addresses : [
-                local.worker_public_ipv4_list[index],
-                var.enable_ipv6 ? local.worker_public_ipv6_list[index] : null
+                worker.ipv4,
+                worker.ipv6
               ]
               routes = concat([
                 {
@@ -44,7 +44,7 @@ locals {
                 ],
                 var.enable_ipv6 ? [
                   {
-                    network = local.worker_public_ipv6_subnet_list[index]
+                    network = worker.ipv6_subnet
                     gateway : "fe80::1"
                   }
                 ] : []
@@ -59,10 +59,13 @@ locals {
         kernel = {
           modules = var.kernel_modules_to_load
         }
-        sysctls = {
-          "net.core.somaxconn"          = "65535"
-          "net.core.netdev_max_backlog" = "4096"
-        }
+        sysctls = merge(
+          {
+            "net.core.somaxconn"          = "65535"
+            "net.core.netdev_max_backlog" = "4096"
+          },
+          var.sysctls_extra_args
+        )
         time = {
           servers = [
             "ntp1.hetzner.de",
@@ -87,6 +90,6 @@ locals {
           }
         }
       }
-    })
-  ]
+    }
+  }
 }

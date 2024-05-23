@@ -227,10 +227,10 @@ variable "kube_api_extra_args" {
   description = "Additional arguments to pass to the kube-apiserver."
 }
 
-variable "kubernetes_version" {
-  type        = string
-  default     = null
-  description = "The Kubernetes version to use. If not set, the latest version supported by Talos is used."
+variable "sysctls_extra_args" {
+  type        = map(string)
+  default     = {}
+  description = "Additional sysctls to set."
 }
 
 variable "kernel_modules_to_load" {
@@ -267,4 +267,31 @@ variable "registries" {
     ```
     https://www.talos.dev/v1.6/reference/configuration/v1alpha1/config/#Config.machine.registries
   EOF
+}
+
+# Deployments
+variable "cilium_version" {
+  type        = string
+  default     = "1.15.5"
+  description = "The version of Cilium to deploy."
+}
+
+variable "cilium_values" {
+  type        = list(string)
+  default     = null
+  description = <<EOF
+        The values.yaml file to use for the Cilium Helm chart.
+        If null (default), the default values will be used.
+        Otherwise, the provided values will be used.
+        Example:
+        ```
+        cilium_values  = [templatefile("cilium/values.yaml", {})]
+        ```
+    EOF
+}
+
+variable "hcloud_ccm_version" {
+  type        = string
+  default     = "1.19.0"
+  description = "The version of the Hetzner Cloud Controller Manager to deploy."
 }

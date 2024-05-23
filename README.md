@@ -82,7 +82,8 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ### Hetzner Cloud
 
 > [!TIP]
-> If you don't have a Hetzner account yet, you are welcome to use this [Hetzner Cloud Referral Link](https://hetzner.cloud/?ref=6Q6Q6Q6Q6Q6Q) to claim 20€ credit and support
+> If you don't have a Hetzner account yet, you are welcome to use
+> this [Hetzner Cloud Referral Link](https://hetzner.cloud/?ref=6Q6Q6Q6Q6Q6Q) to claim 20€ credit and support
 > this project.
 
 - Create a new project in the Hetzner Cloud Console
@@ -156,6 +157,11 @@ terraform output --raw talosconfig > ./talosconfig
 ```
 
 Move these files to the correct location and use them with `kubectl` and `talosctl`.
+
+## Known Limitations
+
+- Changes in the `user_data` (e.g. `talos_machine_configuration`) and `image` (e.g. version upgrades with `packer`) will
+  not be applied to existing nodes, because it would force a recreation of the nodes.
 
 ## Known Issues
 

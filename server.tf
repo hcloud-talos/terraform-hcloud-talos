@@ -14,6 +14,20 @@ locals {
   cluster_prefix         = var.cluster_prefix ? "${var.cluster_name}-" : ""
   control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
   worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
+  control_planes = [for i in range(var.control_plane_count) : {
+    index       = i
+    name        = "${local.cluster_prefix}control-plane-${i + 1}"
+    ipv4        = local.control_plane_public_ipv4_list[i],
+    ipv6        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
+    ipv6_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
+  }]
+  workers = [for i in range(var.worker_count) : {
+    index       = i
+    name        = "${local.cluster_prefix}worker-${i + 1}"
+    ipv4        = local.worker_public_ipv4_list[i],
+    ipv6        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
+    ipv6_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
+  }]
 }
 
 resource "tls_private_key" "ssh_key" {
@@ -27,12 +41,12 @@ resource "hcloud_ssh_key" "this" {
 }
 
 resource "hcloud_server" "control_planes" {
-  count              = var.control_plane_count
+  for_each           = { for index, control_plane in local.control_planes : control_plane.name => { name = control_plane.name, index = index } }
   datacenter         = data.hcloud_datacenter.this.name
-  name               = "${local.cluster_prefix}control-plane-${count.index + 1}"
+  name               = each.value.name
   image              = local.control_plane_image_id
   server_type        = var.control_plane_server_type
-  user_data          = data.talos_machine_configuration.control_plane[count.index].machine_configuration
+  user_data          = data.talos_machine_configuration.control_plane[each.value.name].machine_configuration
   ssh_keys           = [hcloud_ssh_key.this.id]
   placement_group_id = hcloud_placement_group.control_plane.id
 
@@ -46,29 +60,36 @@ resource "hcloud_server" "control_planes" {
 
   public_net {
     ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.control_plane_ipv4[count.index].id
+    ipv4         = hcloud_primary_ip.control_plane_ipv4[each.value.index].id
     ipv6_enabled = var.enable_ipv6
-    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[count.index].id : null
+    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[each.value.index].id : null
   }
 
   network {
     network_id = hcloud_network_subnet.nodes.network_id
-    ip         = local.control_plane_private_ipv4_list[count.index]
+    ip         = local.control_plane_private_ipv4_list[each.value.index]
   }
 
   depends_on = [
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.control_plane
   ]
+
+  lifecycle {
+    ignore_changes = [
+      user_data,
+      image
+    ]
+  }
 }
 
 resource "hcloud_server" "workers" {
-  count              = var.worker_count
+  for_each           = { for index, worker in local.workers : worker.name => { name = worker.name, index = index } }
   datacenter         = data.hcloud_datacenter.this.name
-  name               = "${local.cluster_prefix}worker-${count.index + 1}"
+  name               = each.value.name
   image              = local.worker_image_id
   server_type        = var.worker_server_type
-  user_data          = data.talos_machine_configuration.worker[count.index].machine_configuration
+  user_data          = data.talos_machine_configuration.worker[each.value.name].machine_configuration
   ssh_keys           = [hcloud_ssh_key.this.id]
   placement_group_id = hcloud_placement_group.worker.id
 
@@ -82,14 +103,14 @@ resource "hcloud_server" "workers" {
 
   public_net {
     ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.worker_ipv4[count.index].id
+    ipv4         = hcloud_primary_ip.worker_ipv4[each.value.index].id
     ipv6_enabled = var.enable_ipv6
-    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[count.index].id : null
+    ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[each.value.index].id : null
   }
 
   network {
     network_id = hcloud_network_subnet.nodes.network_id
-    ip         = local.worker_private_ipv4_list[count.index]
+    ip         = local.worker_private_ipv4_list[each.value.index]
   }
 
   depends_on = [
@@ -99,7 +120,8 @@ resource "hcloud_server" "workers" {
 
   lifecycle {
     ignore_changes = [
-      user_data
+      user_data,
+      image
     ]
   }
 }

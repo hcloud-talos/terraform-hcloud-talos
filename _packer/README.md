@@ -20,7 +20,7 @@ extensions.
 
 You can create a file `hcloud.auto.pkrvars.hcl` to overwrite the default values. The file should look like this:
 ```hcl
-talos_version = "v1.6.7"
-image_url_arm = "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v1.6.7/hcloud-arm64.raw.xz"
-image_url_x86 = "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v1.6.7/hcloud-amd64.raw.xz"
+talos_version = "v1.7.2"
+image_url_arm = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.7.2/hcloud-arm64.raw.xz"
+image_url_x86 = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.7.2/hcloud-amd64.raw.xz"
 ```
