@@ -227,6 +227,12 @@ variable "kube_api_extra_args" {
   description = "Additional arguments to pass to the kube-apiserver."
 }
 
+variable "kubernetes_version" {
+  type        = string
+  default     = null
+  description = "The Kubernetes version to use. If not set, the latest version supported by Talos is used."
+}
+
 variable "sysctls_extra_args" {
   type        = map(string)
   default     = {}
