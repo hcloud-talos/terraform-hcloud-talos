@@ -36,10 +36,6 @@ jobs:
         uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-      - name: Setup Node
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
-        with:
-          node-version: 20
       - name: Terraform Format
         id: fmt
         run: terraform fmt -recursive -check -diff
@@ -52,94 +48,62 @@ jobs:
         id: validate
         run: terraform validate -no-color
         continue-on-error: true
-      - name: Print Results and set environment variables
-        run: |
-          echo "Terraform Format: ${{ steps.fmt.outcome }}"
-          echo "Terraform Init: ${{ steps.init.outcome }}"
-          echo "Terraform Validate: ${{ steps.validate.outcome }}"
-          echo "TF_FMT_OUTCOME_SYMBOL=${{ steps.fmt.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
-          echo "TF_INIT_OUTCOME_SYMBOL=${{ steps.init.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
-          echo "TF_VALIDATE_OUTCOME_SYMBOL=${{ steps.validate.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_ENV
-          echo "TF_OVERALL_OUTCOME=${{ 
-            steps.fmt.outcome == 'success'
-            && steps.init.outcome == 'success'
-            && steps.validate.outcome == 'success'
-            && 'success' || 'failure' 
-          }}" >> $GITHUB_ENV
-          echo "TF_OVERALL_OUTCOME_SYMBOL=${{ 
-            steps.fmt.outcome == 'success'
-            && steps.init.outcome == 'success'
-            && steps.validate.outcome == 'success'
-            && '✅' || '❌' 
-          }}" >> $GITHUB_ENV
-      - name: Publish Results
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-        if: github.event_name == 'pull_request'
+      - name: Find Comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            })
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes("${{ matrix.module }}")
-            })
-
-            // 2. Prepare format of the comment
-            const output = `### Module ${{ matrix.module }}: ${ process.env.TF_OVERALL_OUTCOME_SYMBOL }
-
-            <details><summary>🖌 Terraform Format: ${ process.env.TF_FMT_OUTCOME_SYMBOL }</summary>
-
-            \`\`\`\n
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            Terraform-Check:
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ### Terraform-Check: ${{ steps.fmt.outcome == 'success' && steps.init.outcome == 'success' && steps.validate.outcome == 'success' && '✅' || '❌' }}
+            
+            <details><summary>🖌 Terraform Format: ${{ steps.fmt.outcome == 'success' && '✅' || '❌' }}</summary>
+            
+            ```
+            # Outputs:
             ${{ steps.fmt.outputs.stdout }}
-
+            
+            # Errors:
             ${{ steps.fmt.outputs.stderr }}
-            \`\`\`
-
+            ```
+            
             </details>
-
-            <details><summary>⚙️ Terraform Init: ${ process.env.TF_INIT_OUTCOME_SYMBOL }</summary>
-
-            \`\`\`\n
+            
+            <details><summary>⚙️ Terraform Init: ${{ steps.init.outcome == 'success' && '✅' || '❌' }}</summary>
+            
+            ```
+            # Outputs:
             ${{ steps.init.outputs.stdout }}
-
+            
+            # Errors:
             ${{ steps.init.outputs.stderr }}
-            \`\`\`
-
+            ```
             </details>
-
-            <details><summary>🤖 Terraform Validate: ${ process.env.TF_VALIDATE_OUTCOME_SYMBOL }</summary>
-
-            \`\`\`\n
+            
+            <details><summary>🤖 Terraform Validate: ${{ steps.validate.outcome == 'success' && '✅' || '❌' }}</summary>
+            
+            ```
+            # Outputs:
             ${{ steps.validate.outputs.stdout }}
-
+            
+            # Errors:
             ${{ steps.validate.outputs.stderr }}
-            \`\`\`
-
+            ```
+            
             </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ matrix.module }}\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            // 3. If we have a comment, update it, otherwise create a new one
-            if (botComment) {
-              github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
-              })
-            } else {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
-            }
       - name: Fail on error
-        if: ${{ env.TF_OVERALL_OUTCOME != 'success' }}
+        if: ${{
+          steps.fmt.outcome != 'success'
+          || steps.init.outcome != 'success'
+          || steps.validate.outcome != 'success'
+          }}
         run: |
           exit 1
