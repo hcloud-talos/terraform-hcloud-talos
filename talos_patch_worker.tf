@@ -7,6 +7,7 @@ locals {
             "ipv6.disable=${var.enable_ipv6 ? 0 : 1}",
           ]
         }
+        certSANs = local.cert_SANs
         kubelet = {
           extraArgs = merge(
             {
