@@ -98,6 +98,11 @@ locals {
               "kube-system"
             ]
           }
+          hostDNS = {
+            enabled              = true
+            forwardKubeDNSToHost = true
+            resolveMemberNames   = true
+          }
         }
         time = {
           servers = [
