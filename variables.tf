@@ -141,8 +141,7 @@ variable "service_ipv4_cidr" {
 # Server
 variable "talos_version" {
   type        = string
-  default     = "v1.7.2"
-  description = "The version of Talos to use for the cluster."
+  description = "The version of talos features to use in generated machine configurations."
 }
 
 variable "ssh_public_key" {
