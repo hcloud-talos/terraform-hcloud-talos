@@ -17,9 +17,6 @@ locals {
             },
             var.kubelet_extra_args
           )
-          clusterDNS = concat(
-            [cidrhost(local.service_ipv4_cidr, 10)]
-          )
           nodeIP = {
             validSubnets = [
               local.node_ipv4_cidr
