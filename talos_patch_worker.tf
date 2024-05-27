@@ -3,6 +3,7 @@ locals {
     for worker in local.workers : worker.name => {
       machine = {
         install = {
+          image = "ghcr.io/siderolabs/installer:${var.talos_version}"
           extraKernelArgs = [
             "ipv6.disable=${var.enable_ipv6 ? 0 : 1}",
           ]

@@ -3,6 +3,7 @@ locals {
     for control_plane in local.control_planes : control_plane.name => {
       machine = {
         install = {
+          image = "ghcr.io/siderolabs/installer:${var.talos_version}"
           extraKernelArgs = [
             "ipv6.disable=${var.enable_ipv6 ? 0 : 1}",
           ]
