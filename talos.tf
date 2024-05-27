@@ -1,4 +1,6 @@
-resource "talos_machine_secrets" "this" {}
+resource "talos_machine_secrets" "this" {
+  talos_version = var.talos_version
+}
 
 locals {
   // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
