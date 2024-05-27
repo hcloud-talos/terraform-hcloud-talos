@@ -66,15 +66,6 @@ locals {
           var.sysctls_extra_args
         )
         features = {
-          kubernetesTalosAPIAccess = {
-            enabled = true
-            allowedRoles = [
-              "os:reader"
-            ]
-            allowedKubernetesNamespaces = [
-              "kube-system"
-            ]
-          }
           hostDNS = {
             enabled              = true
             forwardKubeDNSToHost = true
