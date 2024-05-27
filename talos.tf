@@ -12,17 +12,19 @@ locals {
   cluster_api_url_kube_prism = "https://${local.local_api_host}:${local.cluster_api_port_kube_prism}"
   cluster_endpoint           = local.cluster_api_url_kube_prism
   // ************
-  cert_SANs = concat(
-    local.control_plane_public_ipv4_list,
-    local.control_plane_public_ipv6_list,
-    local.control_plane_private_ipv4_list,
-    compact([
-      local.local_api_host,
-      local.cluster_api_host,
-      # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
-      #      local.control_plane_private_ipv4_vip,
-      var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
-    ])
+  cert_SANs = distinct(
+    concat(
+      local.control_plane_public_ipv4_list,
+      local.control_plane_public_ipv6_list,
+      local.control_plane_private_ipv4_list,
+      compact([
+        local.local_api_host,
+        local.cluster_api_host,
+        # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
+        #      local.control_plane_private_ipv4_vip,
+        var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
+      ])
+    )
   )
 
   extra_host_entries = [
