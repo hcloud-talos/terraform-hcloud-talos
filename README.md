@@ -167,7 +167,6 @@ Move these files to the correct location and use them with `kubectl` and `talosc
 
 - IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any
   effect.
-- `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
 
 ## Future Plans
 
