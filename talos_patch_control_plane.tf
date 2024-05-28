@@ -27,27 +27,7 @@ locals {
           interfaces = [
             {
               interface = "eth0"
-              dhcp      = false
-              addresses : compact([
-                control_plane.ipv4,
-                control_plane.ipv6
-              ])
-              routes = concat([
-                {
-                  network = "172.31.1.1/32"
-                },
-                {
-                  network = "0.0.0.0/0"
-                  gateway : "172.31.1.1"
-                }
-                ],
-                var.enable_ipv6 ? [
-                  {
-                    network = control_plane.ipv6_subnet
-                    gateway : "fe80::1"
-                  }
-                ] : []
-              )
+              dhcp      = true
               vip = var.enable_floating_ip ? {
                 ip = data.hcloud_floating_ip.control_plane_ipv4[0].ip_address
                 hcloud = {
@@ -59,11 +39,8 @@ locals {
             #            {
             #              interface = "eth1"
             #              dhcp      = true
-            #              addresses = [
-            #                local.control_plane_private_ipv4_list[index]
-            #              ]
             #              vip = {
-            #                ip = local.control_plane_private_ipv4_vip
+            #                ip = local.control_plane_private_vip_ipv4
             #                hcloud = {
             #                  apiToken = var.hcloud_token
             #                }

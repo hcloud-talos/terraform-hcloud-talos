@@ -23,6 +23,7 @@ locals {
         # TODO: not working atm https://github.com/siderolabs/talos/issues/3599
         #      local.control_plane_private_ipv4_vip,
         var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address : null,
+        #         local.control_plane_private_vip_ipv4,
       ])
     )
   )
