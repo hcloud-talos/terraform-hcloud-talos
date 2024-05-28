@@ -15,18 +15,20 @@ locals {
   control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
   worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
   control_planes = [for i in range(var.control_plane_count) : {
-    index       = i
-    name        = "${local.cluster_prefix}control-plane-${i + 1}"
-    ipv4        = local.control_plane_public_ipv4_list[i],
-    ipv6        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
-    ipv6_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
+    index              = i
+    name               = "${local.cluster_prefix}control-plane-${i + 1}"
+    ipv4_public        = local.control_plane_public_ipv4_list[i],
+    ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
+    ipv6_public_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
+    ipv4_private       = local.control_plane_private_ipv4_list[i]
   }]
   workers = [for i in range(var.worker_count) : {
-    index       = i
-    name        = "${local.cluster_prefix}worker-${i + 1}"
-    ipv4        = local.worker_public_ipv4_list[i],
-    ipv6        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
-    ipv6_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
+    index              = i
+    name               = "${local.cluster_prefix}worker-${i + 1}"
+    ipv4_public        = local.worker_public_ipv4_list[i],
+    ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
+    ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
+    ipv4_private       = local.worker_private_ipv4_list[i]
   }]
 }
 
@@ -41,7 +43,7 @@ resource "hcloud_ssh_key" "this" {
 }
 
 resource "hcloud_server" "control_planes" {
-  for_each           = { for index, control_plane in local.control_planes : control_plane.name => { name = control_plane.name, index = index } }
+  for_each           = { for control_plane in local.control_planes : control_plane.name => control_plane }
   datacenter         = data.hcloud_datacenter.this.name
   name               = each.value.name
   image              = local.control_plane_image_id
@@ -67,7 +69,8 @@ resource "hcloud_server" "control_planes" {
 
   network {
     network_id = hcloud_network_subnet.nodes.network_id
-    ip         = local.control_plane_private_ipv4_list[each.value.index]
+    ip         = each.value.ipv4_private
+    #     alias_ips  = each.value.index == 0 ? [local.control_plane_private_vip_ipv4] : []
   }
 
   depends_on = [
@@ -84,7 +87,7 @@ resource "hcloud_server" "control_planes" {
 }
 
 resource "hcloud_server" "workers" {
-  for_each           = { for index, worker in local.workers : worker.name => { name = worker.name, index = index } }
+  for_each           = { for worker in local.workers : worker.name => worker }
   datacenter         = data.hcloud_datacenter.this.name
   name               = each.value.name
   image              = local.worker_image_id
@@ -110,7 +113,7 @@ resource "hcloud_server" "workers" {
 
   network {
     network_id = hcloud_network_subnet.nodes.network_id
-    ip         = local.worker_private_ipv4_list[each.value.index]
+    ip         = each.value.ipv4_private
   }
 
   depends_on = [

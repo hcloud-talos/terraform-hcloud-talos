@@ -24,32 +24,6 @@ locals {
           }
         }
         network = {
-          interfaces = [
-            {
-              interface = "eth0"
-              dhcp      = false
-              addresses : [
-                worker.ipv4,
-                worker.ipv6
-              ]
-              routes = concat([
-                {
-                  network = "172.31.1.1/32"
-                },
-                {
-                  network = "0.0.0.0/0"
-                  gateway : "172.31.1.1"
-                }
-                ],
-                var.enable_ipv6 ? [
-                  {
-                    network = worker.ipv6_subnet
-                    gateway : "fe80::1"
-                  }
-                ] : []
-              )
-            }
-          ]
           extraHostEntries = local.extra_host_entries
           kubespan = {
             enabled = var.enable_kube_span
@@ -71,7 +45,7 @@ locals {
             forwardKubeDNSToHost = false # Disabled because of https://github.com/siderolabs/talos/issues/8763
             resolveMemberNames   = true
           }
-        },
+        }
         time = {
           servers = [
             "ntp1.hetzner.de",
