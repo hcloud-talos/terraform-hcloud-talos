@@ -50,6 +50,8 @@ locals {
           extraHostEntries = local.extra_host_entries
           kubespan = {
             enabled = var.enable_kube_span
+            advertiseKubernetesNetworks : false # Disabled because of cilium
+            mtu : 1370                          # Hcloud has a MTU of 1450 (KubeSpanMTU = UnderlyingMTU - 80)
           }
         }
         kernel = {
