@@ -68,7 +68,7 @@ locals {
         features = {
           hostDNS = {
             enabled              = true
-            forwardKubeDNSToHost = true
+            forwardKubeDNSToHost = false # Disabled because of https://github.com/siderolabs/talos/issues/8763
             resolveMemberNames   = true
           }
         },
