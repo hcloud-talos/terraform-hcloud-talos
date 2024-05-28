@@ -115,7 +115,9 @@ Use the module as shown in the following working example:
 ```hcl
 module "talos" {
   source  = "hcloud-talos/talos/hcloud"
-  version = "1.8.2"
+  version = "the-latest-version-of-the-module"
+
+  talos_version = "v1.7.2" # The version of talos features to use in generated machine configurations
 
   hcloud_token = "your-hcloud-token"
 
@@ -123,6 +125,8 @@ module "talos" {
   cluster_domain   = "cluster.dummy.com.local"
   cluster_api_host = "kube.dummy.com"
 
+  # If true, the current IP address will be used as the source for the firewall rules.
+  # ATTENTION: to determine the current IP, a request to a public service (https://ipv4.icanhazip.com) is made.
   firewall_use_current_ip = true
 
   datacenter_name = "fsn1-dc14"
@@ -157,6 +161,38 @@ terraform output --raw talosconfig > ./talosconfig
 ```
 
 Move these files to the correct location and use them with `kubectl` and `talosctl`.
+
+## Additional Configuration Examples
+### Kubelet Extra Args
+```hcl
+kubelet_extra_args = {
+    system-reserved            = "cpu=100m,memory=250Mi,ephemeral-storage=1Gi"
+    kube-reserved              = "cpu=100m,memory=200Mi,ephemeral-storage=1Gi"
+    eviction-hard              = "memory.available<100Mi,nodefs.available<10%"
+    eviction-soft              = "memory.available<200Mi,nodefs.available<15%"
+    eviction-soft-grace-period = "memory.available=2m30s,nodefs.available=4m"
+}
+```
+
+### Sysctls Extra Args
+```hcl
+sysctls_extra_args = {
+    # Fix for https://github.com/cloudflare/cloudflared/issues/1176
+    "net.core.rmem_default" = "26214400"
+    "net.core.wmem_default" = "26214400"
+    "net.core.rmem_max"     = "26214400"
+    "net.core.wmem_max"     = "26214400"
+  }
+```
+
+### Activate Kernel Modules
+```hcl
+kernel_modules_to_load = [
+  {
+    name = "binfmt_misc" # Required for QEMU
+  }
+]
+```
 
 ## Known Limitations
 
