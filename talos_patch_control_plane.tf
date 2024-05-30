@@ -76,7 +76,7 @@ locals {
           }
           hostDNS = {
             enabled              = true
-            forwardKubeDNSToHost = false # Disabled because of https://github.com/siderolabs/talos/issues/8763
+            forwardKubeDNSToHost = true
             resolveMemberNames   = true
           }
         }
