@@ -117,7 +117,7 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "the-latest-version-of-the-module"
 
-  talos_version = "v1.7.2" # The version of talos features to use in generated machine configurations
+  talos_version = "v1.7.3" # The version of talos features to use in generated machine configurations
 
   hcloud_token = "your-hcloud-token"
 
