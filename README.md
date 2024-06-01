@@ -31,6 +31,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Information about the Module
 
+- A lot of information can be found directly in the descriptions of the variables.
 - You can configure the module to create a cluster with 1, 3 or 5 control planes and n workers or only the control
   planes.
 - It allows scheduling pods on the control planes if no workers are created.
@@ -39,7 +40,10 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
   as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
 - It prepares for the kube-prometheus-stack by enabling listening and enabling service monitors in cilium.
-- If `cluster_api_host` is set, you should create a DNS record, pointing to the Control Plane node private IPs.
+- If `cluster_api_host` is set, then you should create a corresponding DNS record pointing to either one control plane, the load balancer,
+  floating IP, or alias IP.
+  If `cluster_api_host` is not set, then a record for `kube.[cluster_domain]` should be created.
+  It totally depends on your setup.
 
 ## Additional installed software in the cluster
 
@@ -163,29 +167,33 @@ terraform output --raw talosconfig > ./talosconfig
 Move these files to the correct location and use them with `kubectl` and `talosctl`.
 
 ## Additional Configuration Examples
+
 ### Kubelet Extra Args
+
 ```hcl
 kubelet_extra_args = {
-    system-reserved            = "cpu=100m,memory=250Mi,ephemeral-storage=1Gi"
-    kube-reserved              = "cpu=100m,memory=200Mi,ephemeral-storage=1Gi"
-    eviction-hard              = "memory.available<100Mi,nodefs.available<10%"
-    eviction-soft              = "memory.available<200Mi,nodefs.available<15%"
-    eviction-soft-grace-period = "memory.available=2m30s,nodefs.available=4m"
+  system-reserved            = "cpu=100m,memory=250Mi,ephemeral-storage=1Gi"
+  kube-reserved              = "cpu=100m,memory=200Mi,ephemeral-storage=1Gi"
+  eviction-hard              = "memory.available<100Mi,nodefs.available<10%"
+  eviction-soft              = "memory.available<200Mi,nodefs.available<15%"
+  eviction-soft-grace-period = "memory.available=2m30s,nodefs.available=4m"
 }
 ```
 
 ### Sysctls Extra Args
+
 ```hcl
 sysctls_extra_args = {
-    # Fix for https://github.com/cloudflare/cloudflared/issues/1176
-    "net.core.rmem_default" = "26214400"
-    "net.core.wmem_default" = "26214400"
-    "net.core.rmem_max"     = "26214400"
-    "net.core.wmem_max"     = "26214400"
-  }
+  # Fix for https://github.com/cloudflare/cloudflared/issues/1176
+  "net.core.rmem_default" = "26214400"
+  "net.core.wmem_default" = "26214400"
+  "net.core.rmem_max"     = "26214400"
+  "net.core.wmem_max"     = "26214400"
+}
 ```
 
 ### Activate Kernel Modules
+
 ```hcl
 kernel_modules_to_load = [
   {
@@ -200,6 +208,7 @@ kernel_modules_to_load = [
   not be applied to existing nodes, because it would force a recreation of the nodes.
 
 ## Known Issues
+
 - `enable_alias_ip` can lead to error messages occurring during the first bootstrap.
   More about this here: https://github.com/siderolabs/talos/pull/8493
   If these error messages occur, one control plane must be restarted after complete initialisation once.
