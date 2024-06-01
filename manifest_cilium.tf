@@ -8,6 +8,10 @@ data "helm_template" "cilium_default" {
   version    = var.cilium_version
 
   set {
+    name  = "operator.replicas"
+    value = var.control_plane_count > 1 ? 2 : 1
+  }
+  set {
     name  = "ipam.mode"
     value = "kubernetes"
   }
