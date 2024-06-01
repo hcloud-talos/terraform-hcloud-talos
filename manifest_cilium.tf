@@ -45,7 +45,7 @@ data "helm_template" "cilium_default" {
   }
   set {
     name  = "k8sServiceHost"
-    value = local.local_api_host
+    value = "127.0.0.1"
   }
   set {
     name  = "k8sServicePort"
