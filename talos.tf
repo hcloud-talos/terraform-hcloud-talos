@@ -24,14 +24,14 @@ locals {
     )
   )
 
-  extra_host_entries = [
+  extra_host_entries = var.enable_alias_ip ? [
     {
-      ip = "127.0.0.1"
+      ip = local.control_plane_private_vip_ipv4
       aliases = [
         local.local_api_host
       ]
     }
-  ]
+  ] : []
 }
 
 data "talos_machine_configuration" "control_plane" {
