@@ -4,7 +4,7 @@ resource "talos_machine_secrets" "this" {
 
 locals {
   // https://github.com/kubebn/talos-proxmox-kaas?tab=readme-ov-file#cilium-cni-configuration
-  local_api_host              = "api.${var.cluster_domain}"
+  local_api_host              = "kube.${var.cluster_domain}"
   cluster_api_host            = var.cluster_api_host != null ? var.cluster_api_host : local.local_api_host
   cluster_api_port_k8s        = 6443
   cluster_api_port_kube_prism = 7445

@@ -25,8 +25,9 @@ variable "cluster_prefix" {
 variable "cluster_api_host" {
   type        = string
   description = <<EOF
-    The entrypoint of the cluster. Must be a valid domain name. If not set, 'api.[cluster_domain]' will be used.
-    You should create a DNS record pointing to the IPs of the control plane node private IPs!
+    The entrypoint of the cluster. Must be a valid domain name. If not set, `kube.[cluster_domain]` will be used.
+    You should create a DNS record pointing to the IPs of the control plane node private IPs.
+    If you enable the alias IP, you should create a DNS record pointing to the alias IP.
   EOF
   default     = null
 }
