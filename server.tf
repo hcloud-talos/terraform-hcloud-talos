@@ -40,6 +40,9 @@ resource "tls_private_key" "ssh_key" {
 resource "hcloud_ssh_key" "this" {
   name       = "${local.cluster_prefix}default"
   public_key = coalesce(var.ssh_public_key, can(tls_private_key.ssh_key[0].public_key_openssh) ? tls_private_key.ssh_key[0].public_key_openssh : null)
+  labels = {
+    "cluster" = var.cluster_name
+  }
 }
 
 resource "hcloud_server" "control_planes" {
@@ -53,7 +56,8 @@ resource "hcloud_server" "control_planes" {
   placement_group_id = hcloud_placement_group.control_plane.id
 
   labels = {
-    "role" = "control-plane"
+    "cluster" = var.cluster_name,
+    "role"    = "control-plane"
   }
 
   firewall_ids = [
@@ -97,7 +101,8 @@ resource "hcloud_server" "workers" {
   placement_group_id = hcloud_placement_group.worker.id
 
   labels = {
-    "role" = "worker"
+    "cluster" = var.cluster_name,
+    "role"    = "worker"
   }
 
   firewall_ids = [

@@ -10,6 +10,9 @@ locals {
 resource "hcloud_network" "this" {
   name     = var.cluster_name
   ip_range = local.network_ipv4_cidr
+  labels = {
+    "cluster" = var.cluster_name
+  }
 }
 
 resource "hcloud_network_subnet" "nodes" {
@@ -30,6 +33,10 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
   home_location     = data.hcloud_location.this.name
   description       = "Control Plane VIP"
   delete_protection = false
+  labels = {
+    "cluster" = var.cluster_name,
+    "role"    = "control-plane"
+  }
 }
 
 data "hcloud_floating_ip" "control_plane_ipv4" {
@@ -54,6 +61,10 @@ resource "hcloud_primary_ip" "control_plane_ipv4" {
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
+  labels = {
+    "cluster" = var.cluster_name,
+    "role"    = "control-plane"
+  }
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv6" {
@@ -63,6 +74,10 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
+  labels = {
+    "cluster" = var.cluster_name,
+    "role"    = "control-plane"
+  }
 }
 
 resource "hcloud_primary_ip" "worker_ipv4" {
@@ -72,6 +87,10 @@ resource "hcloud_primary_ip" "worker_ipv4" {
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
+  labels = {
+    "cluster" = var.cluster_name,
+    "role"    = "worker"
+  }
 }
 
 resource "hcloud_primary_ip" "worker_ipv6" {
@@ -81,6 +100,10 @@ resource "hcloud_primary_ip" "worker_ipv6" {
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
+  labels = {
+    "cluster" = var.cluster_name,
+    "role"    = "worker"
+  }
 }
 
 locals {
