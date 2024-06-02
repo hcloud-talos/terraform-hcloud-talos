@@ -78,4 +78,7 @@ resource "hcloud_firewall" "this" {
       source_ips      = lookup(rule.value, "source_ips", [])
     }
   }
+  labels = {
+    "cluster" = var.cluster_name
+  }
 }
