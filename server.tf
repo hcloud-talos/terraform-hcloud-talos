@@ -1,10 +1,12 @@
 data "hcloud_image" "arm" {
+  count             = var.disable_arm ? 0 : 1
   with_selector     = "os=talos"
   with_architecture = "arm"
   most_recent       = true
 }
 
 data "hcloud_image" "x86" {
+  count             = var.disable_x86 ? 0 : 1
   with_selector     = "os=talos"
   with_architecture = "x86"
   most_recent       = true
@@ -12,8 +14,8 @@ data "hcloud_image" "x86" {
 
 locals {
   cluster_prefix         = var.cluster_prefix ? "${var.cluster_name}-" : ""
-  control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
-  worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm.id : data.hcloud_image.x86.id
+  control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm[0].id : data.hcloud_image.x86[0].id
+  worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm[0].id : data.hcloud_image.x86[0].id
   control_planes = [for i in range(var.control_plane_count) : {
     index              = i
     name               = "${local.cluster_prefix}control-plane-${i + 1}"

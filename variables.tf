@@ -225,6 +225,18 @@ variable "worker_server_type" {
   }
 }
 
+variable "disable_x86" {
+  type        = bool
+  default     = false
+  description = "If true, x86 images will not be used."
+}
+
+variable "disable_arm" {
+  type        = bool
+  default     = false
+  description = "If true, arm images will not be used."
+}
+
 # Talos
 variable "kubelet_extra_args" {
   type        = map(string)
