@@ -24,5 +24,6 @@ data "kubectl_file_documents" "hcloud_ccm" {
 resource "kubectl_manifest" "apply_hcloud_ccm" {
   for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.hcloud_ccm.manifests : {}
   yaml_body  = each.value
+  apply_only = true
   depends_on = [data.http.talos_health]
 }

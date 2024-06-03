@@ -49,7 +49,7 @@ data "helm_template" "cilium_default" {
   }
   set {
     name  = "k8sServicePort"
-    value = local.cluster_api_port_kube_prism
+    value = local.api_port_kube_prism
   }
   set {
     name  = "hubble.enabled"
@@ -90,6 +90,7 @@ data "kubectl_file_documents" "cilium" {
 resource "kubectl_manifest" "apply_cilium" {
   for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.cilium.manifests : {}
   yaml_body  = each.value
+  apply_only = true
   depends_on = [data.http.talos_health]
 }
 
@@ -110,5 +111,6 @@ resource "kubectl_manifest" "apply_prometheus_operator_crds" {
   for_each          = var.control_plane_count > 0 && var.deploy_prometheus_operator_crds ? data.kubectl_file_documents.prometheus_operator_crds[0].manifests : {}
   yaml_body         = each.value
   server_side_apply = true
+  apply_only        = true
   depends_on        = [data.http.talos_health]
 }
