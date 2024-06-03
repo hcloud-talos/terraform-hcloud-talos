@@ -41,13 +41,16 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
 
 data "hcloud_floating_ip" "control_plane_ipv4" {
   count = var.enable_floating_ip ? 1 : 0
-  id    = coalesce(var.floating_ip.id, local.create_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].id : null)
+  id = coalesce(
+    can(var.floating_ip.id) ? var.floating_ip.id : null,
+    local.create_floating_ip ? hcloud_floating_ip.control_plane_ipv4[0].id : null
+  )
 }
 
 resource "hcloud_floating_ip_assignment" "this" {
-  count          = local.create_floating_ip ? 1 : 0
+  count          = var.control_plane_count > 0 && local.create_floating_ip ? 1 : 0
   floating_ip_id = data.hcloud_floating_ip.control_plane_ipv4[0].id
-  server_id      = hcloud_server.control_planes[0].id
+  server_id      = hcloud_server.control_planes[local.control_planes[0].name].id
   depends_on = [
     hcloud_server.control_planes,
   ]
