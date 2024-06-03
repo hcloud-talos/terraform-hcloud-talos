@@ -6,21 +6,34 @@ locals {
   api_port_k8s        = 6443
   api_port_kube_prism = 7445
 
-  cluster_api_host_private = "kube.${var.cluster_domain}"
-  cluster_api_host_public = var.cluster_api_host != null ? var.cluster_api_host : (
-    var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address :
-    local.control_plane_public_ipv4_list[0]
+  best_public_ipv4 = (
+    var.enable_floating_ip ?
+    # Use floating IP
+    data.hcloud_floating_ip.control_plane_ipv4[0].ip_address :
+    # Use first public IP
+    can(local.control_plane_public_ipv4_list[0]) ? local.control_plane_public_ipv4_list[0] : "unknown"
   )
+
+  best_private_ipv4 = (
+    var.enable_alias_ip ?
+    # Use alias IP
+    local.control_plane_private_vip_ipv4 :
+    # Use first private IP
+    local.control_plane_private_ipv4_list[0]
+  )
+
+  cluster_api_host_private = "kube.${var.cluster_domain}"
+  cluster_api_host_public  = var.cluster_api_host != null ? var.cluster_api_host : local.best_public_ipv4
 
   # Use the best option available for the cluster endpoint
   # cluster_api_host_private (alias IP) > cluster_api_host > floating IP > first private IP
-  cluster_endpoint = var.enable_alias_ip ? local.cluster_api_host_private : (
+  cluster_endpoint_internal = var.enable_alias_ip ? local.cluster_api_host_private : (
     var.cluster_api_host != null ? var.cluster_api_host : (
       var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address :
       local.control_plane_private_ipv4_list[0]
     )
   )
-  cluster_endpoint_url = "https://${local.cluster_endpoint}:${local.api_port_k8s}"
+  cluster_endpoint_url_internal = "https://${local.cluster_endpoint_internal}:${local.api_port_k8s}"
 
   // ************
   cert_SANs = distinct(
@@ -52,7 +65,7 @@ data "talos_machine_configuration" "control_plane" {
   for_each           = { for control_plane in local.control_planes : control_plane.name => control_plane }
   talos_version      = var.talos_version
   cluster_name       = var.cluster_name
-  cluster_endpoint   = local.cluster_endpoint_url
+  cluster_endpoint   = local.cluster_endpoint_url_internal
   kubernetes_version = var.kubernetes_version
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
@@ -66,7 +79,7 @@ data "talos_machine_configuration" "worker" {
   for_each           = { for worker in local.workers : worker.name => worker }
   talos_version      = var.talos_version
   cluster_name       = var.cluster_name
-  cluster_endpoint   = local.cluster_endpoint_url
+  cluster_endpoint   = local.cluster_endpoint_url_internal
   kubernetes_version = var.kubernetes_version
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
@@ -90,25 +103,25 @@ data "talos_client_configuration" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
   endpoints = compact(
     var.output_mode_config_cluster_endpoint == "private_ip" ? (
-      # Use private IP in kubeconfig
+      # Use private IP in talosconfig
       var.enable_alias_ip ?
-      # Use alias IP in kubeconfig
+      # Use alias IP in talosconfig
       [local.control_plane_private_vip_ipv4] :
-      # Use first private IP in kubeconfig
+      # Use private IPs in talosconfig
       local.control_plane_private_ipv4_list
     ) :
 
     var.output_mode_config_cluster_endpoint == "public_ip" ? (
-      # Use public IP in kubeconfig
+      # Use public IP in talosconfig
       var.enable_floating_ip ?
-      # Use floating IP in kubeconfig
+      # Use floating IP in talosconfig
       [data.hcloud_floating_ip.control_plane_ipv4[0].ip_address] :
-      # Use first public IP in kubeconfig
+      # Use public IPs in talosconfig
       can(local.control_plane_public_ipv4_list) ? local.control_plane_public_ipv4_list : []
     ) :
 
     var.output_mode_config_cluster_endpoint == "cluster_endpoint" ? (
-      # Use cluster endpoint in kubeconfig
+      # Use cluster endpoint in talosconfig
       [local.cluster_api_host_public]
     ) : []
   )
@@ -125,40 +138,18 @@ data "talos_cluster_kubeconfig" "this" {
 
 locals {
   kubeconfig_host = (
-    var.output_mode_config_cluster_endpoint == "private_ip" ? (
-      # Use private IP in kubeconfig
-      var.enable_alias_ip ?
-      # Use alias IP in kubeconfig
-      local.control_plane_private_vip_ipv4 :
-      # Use first private IP in kubeconfig
-      local.control_plane_private_ipv4_list[0]
-    ) :
-
-    var.output_mode_config_cluster_endpoint == "public_ip" ? (
-      # Use public IP in kubeconfig
-      var.enable_floating_ip ?
-      # Use floating IP in kubeconfig
-      data.hcloud_floating_ip.control_plane_ipv4[0].ip_address :
-      # Use first public IP in kubeconfig
-      can(local.control_plane_public_ipv4_list[0]) ? local.control_plane_public_ipv4_list[0] : "unknown"
-    ) :
-
-    var.output_mode_config_cluster_endpoint == "cluster_endpoint" ? (
-      # Use cluster endpoint in kubeconfig
-      local.cluster_api_host_public
-    ) : "unknown"
+    var.output_mode_config_cluster_endpoint == "private_ip" ? local.best_private_ipv4 :
+    var.output_mode_config_cluster_endpoint == "public_ip" ? local.best_public_ipv4 :
+    var.output_mode_config_cluster_endpoint == "cluster_endpoint" ? local.cluster_api_host_public :
+    "unknown"
   )
-
-
-  kubeconfig_endpoint = "https://${local.kubeconfig_host}:${local.api_port_k8s}"
-
   kubeconfig = replace(
     can(data.talos_cluster_kubeconfig.this[0].kubeconfig_raw) ? data.talos_cluster_kubeconfig.this[0].kubeconfig_raw : "",
-    local.cluster_endpoint_url, local.kubeconfig_endpoint
+    local.cluster_endpoint_url_internal, "https://${local.kubeconfig_host}:${local.api_port_k8s}"
   )
 
   kubeconfig_data = {
-    host                   = local.kubeconfig_endpoint
+    host                   = "https://${local.best_public_ipv4}:${local.api_port_k8s}"
     cluster_name           = var.cluster_name
     cluster_ca_certificate = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) : tls_self_signed_cert.dummy_ca[0].cert_pem
     client_certificate     = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) : tls_locally_signed_cert.dummy_issuer[0].cert_pem

@@ -27,3 +27,8 @@ output "kubeconfig_data" {
   value       = local.kubeconfig_data
   sensitive   = true
 }
+
+output "public_ipv4_list" {
+  description = "List of public IPv4 addresses of all control plane nodes"
+  value       = local.control_plane_public_ipv4_list
+}
