@@ -39,7 +39,6 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
   listen on public and private IP).
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
   as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
-- It prepares for the kube-prometheus-stack by enabling listening and enabling service monitors in cilium.
 - If `cluster_api_host` is set, then you should create a corresponding DNS record pointing to either one control plane, the load balancer,
   floating IP, or alias IP.
   If `cluster_api_host` is not set, then a record for `kube.[cluster_domain]` should be created.

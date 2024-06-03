@@ -56,12 +56,16 @@ data "helm_template" "cilium_default" {
     value = "false"
   }
   set {
-    name  = "prometheus.enabled"
-    value = "true"
+    name  = "prometheus.serviceMonitor.enabled"
+    value = var.cilium_enable_service_monitors ? "true" : "false"
   }
   set {
-    name  = "operator.prometheus.enabled"
-    value = "true"
+    name  = "prometheus.serviceMonitor.trustCRDsExist"
+    value = var.cilium_enable_service_monitors ? "true" : "false"
+  }
+  set {
+    name  = "operator.prometheus.serviceMonitor.enabled"
+    value = var.cilium_enable_service_monitors ? "true" : "false"
   }
 }
 
@@ -87,4 +91,24 @@ resource "kubectl_manifest" "apply_cilium" {
   for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.cilium.manifests : {}
   yaml_body  = each.value
   depends_on = [data.http.talos_health]
+}
+
+
+data "helm_template" "prometheus_operator_crds" {
+  count      = var.deploy_prometheus_operator_crds ? 1 : 0
+  chart      = "prometheus-operator-crds"
+  name       = "prometheus-operator-crds"
+  repository = "https://prometheus-community.github.io/helm-charts"
+}
+
+data "kubectl_file_documents" "prometheus_operator_crds" {
+  count   = var.deploy_prometheus_operator_crds ? 1 : 0
+  content = data.helm_template.prometheus_operator_crds[0].manifest
+}
+
+resource "kubectl_manifest" "apply_prometheus_operator_crds" {
+  for_each          = var.control_plane_count > 0 && var.deploy_prometheus_operator_crds ? data.kubectl_file_documents.prometheus_operator_crds[0].manifests : {}
+  yaml_body         = each.value
+  server_side_apply = true
+  depends_on        = [data.http.talos_health]
 }

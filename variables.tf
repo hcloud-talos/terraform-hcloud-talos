@@ -307,6 +307,22 @@ variable "cilium_values" {
   EOF
 }
 
+variable "cilium_enable_service_monitors" {
+  type        = bool
+  default     = false
+  description = <<EOF
+    If true, the service monitors for Prometheus will be enabled.
+    Service Monitor requires monitoring.coreos.com/v1 CRDs.
+    You can use the deploy_prometheus_operator_crds variable to deploy them.
+  EOF
+}
+
+variable "deploy_prometheus_operator_crds" {
+  type        = bool
+  default     = false
+  description = "If true, the Prometheus Operator CRDs will be deployed."
+}
+
 variable "hcloud_ccm_version" {
   type        = string
   default     = "1.19.0"
