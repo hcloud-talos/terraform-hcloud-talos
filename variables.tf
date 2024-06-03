@@ -289,8 +289,8 @@ variable "registries" {
 # Deployments
 variable "cilium_version" {
   type        = string
-  default     = "1.15.5"
-  description = "The version of Cilium to deploy."
+  default     = null
+  description = "The version of Cilium to deploy. If not set, the latest version will be used."
 }
 
 variable "cilium_values" {
@@ -325,6 +325,6 @@ variable "deploy_prometheus_operator_crds" {
 
 variable "hcloud_ccm_version" {
   type        = string
-  default     = "1.19.0"
-  description = "The version of the Hetzner Cloud Controller Manager to deploy."
+  default     = null
+  description = "The version of the Hetzner Cloud Controller Manager to deploy. If not set, the latest version will be used."
 }
