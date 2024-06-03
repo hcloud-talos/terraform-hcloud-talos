@@ -91,11 +91,11 @@ variable "enable_alias_ip" {
   type        = bool
   default     = false
   description = <<EOF
-      If true, an alias IP (cidrhost(node_ipv4_cidr, 100)) will be created and assigned to the control plane nodes.
-      This can lead to error messages occurring during the first bootstrap.
-      More about this here: https://github.com/siderolabs/talos/pull/8493
-      If these error messages occur, one control plane must be restarted after complete initialisation once.
-      This should resolve the error.
+    If true, an alias IP (cidrhost(node_ipv4_cidr, 100)) will be created and assigned to the control plane nodes.
+    This can lead to error messages occurring during the first bootstrap.
+    More about this here: https://github.com/siderolabs/talos/pull/8493
+    If these error messages occur, one control plane must be restarted after complete initialisation once.
+    This should resolve the error.
   EOF
 }
 
@@ -105,9 +105,9 @@ variable "floating_ip" {
   })
   default     = null
   description = <<EOF
-      The Floating IP (ID) to use for the control plane nodes.
-      If null (default), a new floating IP will be created.
-      (using object because of https://github.com/hashicorp/terraform/issues/26755)
+    The Floating IP (ID) to use for the control plane nodes.
+    If null (default), a new floating IP will be created.
+    (using object because of https://github.com/hashicorp/terraform/issues/26755)
   EOF
 }
 
@@ -297,14 +297,14 @@ variable "cilium_values" {
   type        = list(string)
   default     = null
   description = <<EOF
-        The values.yaml file to use for the Cilium Helm chart.
-        If null (default), the default values will be used.
-        Otherwise, the provided values will be used.
-        Example:
-        ```
-        cilium_values  = [templatefile("cilium/values.yaml", {})]
-        ```
-    EOF
+    The values.yaml file to use for the Cilium Helm chart.
+    If null (default), the default values will be used.
+    Otherwise, the provided values will be used.
+    Example:
+    ```
+    cilium_values  = [templatefile("cilium/values.yaml", {})]
+    ```
+  EOF
 }
 
 variable "hcloud_ccm_version" {
