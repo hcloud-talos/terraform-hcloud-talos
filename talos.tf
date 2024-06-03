@@ -166,15 +166,3 @@ locals {
     client_key             = var.control_plane_count > 0 ? base64decode(data.talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_key) : tls_private_key.dummy_issuer[0].private_key_pem
   }
 }
-
-data "http" "talos_health" {
-  count    = var.control_plane_count > 0 ? 1 : 0
-  url      = "${local.cluster_api_url_public}/version"
-  insecure = true
-  retry {
-    attempts     = 60
-    min_delay_ms = 5000
-    max_delay_ms = 5000
-  }
-  depends_on = [talos_machine_bootstrap.this]
-}

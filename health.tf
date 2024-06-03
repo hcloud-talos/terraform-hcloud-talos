@@ -8,3 +8,14 @@
 #  worker_nodes         = local.worker_private_ipv4_list
 #}
 
+data "http" "talos_health" {
+  count    = var.control_plane_count > 0 ? 1 : 0
+  url      = "${local.cluster_api_url_public}/version"
+  insecure = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
+  depends_on = [talos_machine_bootstrap.this]
+}
