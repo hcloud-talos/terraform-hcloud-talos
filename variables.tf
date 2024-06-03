@@ -44,6 +44,19 @@ variable "datacenter_name" {
   }
 }
 
+variable "output_mode_config_cluster_endpoint" {
+  type    = string
+  default = "public_ip"
+  validation {
+    condition     = contains(["public_ip", "private_ip", "cluster_endpoint"], var.output_mode_config_cluster_endpoint)
+    error_message = "Invalid output mode for kube and talos config endpoint."
+  }
+  description = <<EOF
+    The output mode for the cluster endpoint in the talos and kube config outputs.
+    Possible values: public_ip, private_ip, cluster_endpoint
+  EOF
+}
+
 # Firewall
 variable "firewall_use_current_ip" {
   type        = bool
