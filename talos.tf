@@ -11,7 +11,6 @@ locals {
     var.enable_floating_ip ? data.hcloud_floating_ip.control_plane_ipv4[0].ip_address :
     local.control_plane_public_ipv4_list[0]
   )
-  cluster_api_url_public = "https://${local.cluster_api_host_public}:${local.api_port_k8s}"
 
   # Use the best option available for the cluster endpoint
   # cluster_api_host_private (alias IP) > cluster_api_host > floating IP > first private IP
