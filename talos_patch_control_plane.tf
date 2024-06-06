@@ -103,6 +103,9 @@ locals {
             name = "none"
           }
         }
+        coreDNS = {
+          disabled = var.disable_talos_coredns
+        }
         proxy = {
           disabled = true
         }

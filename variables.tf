@@ -353,3 +353,9 @@ variable "hcloud_ccm_version" {
   default     = null
   description = "The version of the Hetzner Cloud Controller Manager to deploy. If not set, the latest version will be used."
 }
+
+variable "disable_talos_coredns" {
+  type        = bool
+  default     = false
+  description = "If true, the CoreDNS delivered by Talos will not be deployed."
+}
