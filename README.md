@@ -216,10 +216,6 @@ kernel_modules_to_load = [
   effect.
 - `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
 
-## Future Plans
-
-- [ ] Add Hetzner Cloud CSI Driver
-
 ## Credits
 
 - [kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) For the inspiration and the great
