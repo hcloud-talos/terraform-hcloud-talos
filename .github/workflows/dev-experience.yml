@@ -2,8 +2,14 @@ name: Developer Experience
 on:
   workflow_dispatch:
   pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
     branches:
       - main
+
 permissions: read-all
 
 concurrency:
@@ -105,3 +111,36 @@ jobs:
           }}
         run: |
           exit 1
+
+  commitlint:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        env:
+          # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
+          # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
+          # -- note that actions/setup-node@3 [uses actions/cache@3.0.4](https://github.com/actions/setup-node/blob/a4fcaaf314b117a40d694a35ee36461f8ff3c6e6/package-lock.json#L41)
+          #    which has a [default timeout of 60 minutes](https://github.com/actions/toolkit/blob/457303960f03375db6f033e214b9f90d79c3fe5c/packages/cache/RELEASES.md#304),
+          #    not 10 minutes! Let's reduce it further.
+          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '2'
+      - name: Print versions
+        run: |
+          git --version
+          node --version
+          npm --version
+          npx commitlint --version
+      - name: Install commitlint
+        run: |
+          npm install conventional-changelog-conventionalcommits
+          npm install commitlint@latest
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: npx commitlint --last --verbose
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
