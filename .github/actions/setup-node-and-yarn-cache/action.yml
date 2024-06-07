@@ -1,0 +1,37 @@
+name: 'Setup Node and Yarn Cache'
+description: 'Setup Node and Yarn Cache'
+inputs:
+  cache-dependency-path:
+    description: 'The path to the dependency file to use for the Yarn cache'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+      env:
+        # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
+        # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
+        # -- note that actions/setup-node@3 [uses actions/cache@3.0.4](https://github.com/actions/setup-node/blob/a4fcaaf314b117a40d694a35ee36461f8ff3c6e6/package-lock.json#L41)
+        #    which has a [default timeout of 60 minutes](https://github.com/actions/toolkit/blob/457303960f03375db6f033e214b9f90d79c3fe5c/packages/cache/RELEASES.md#304),
+        #    not 10 minutes! Let's reduce it further.
+        SEGMENT_DOWNLOAD_TIMEOUT_MINS: '2'
+    - name: Install Yarn with corepack enabled
+      shell: bash
+      run: |
+        corepack enable
+        corepack prepare yarn@stable --activate
+    # Yarn dependencies cannot be cached until yarn is installed
+    # WORKAROUND: https://github.com/actions/setup-node/issues/531
+    - name: Extract cached dependencies
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+      with:
+        cache: yarn
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      env:
+        # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
+        # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
+        # -- note that actions/setup-node@3 [uses actions/cache@3.0.4](https://github.com/actions/setup-node/blob/a4fcaaf314b117a40d694a35ee36461f8ff3c6e6/package-lock.json#L41)
+        #    which has a [default timeout of 60 minutes](https://github.com/actions/toolkit/blob/457303960f03375db6f033e214b9f90d79c3fe5c/packages/cache/RELEASES.md#304),
+        #    not 10 minutes! Let's reduce it further.
+        SEGMENT_DOWNLOAD_TIMEOUT_MINS: '2'

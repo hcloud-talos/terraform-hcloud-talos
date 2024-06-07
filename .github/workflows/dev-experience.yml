@@ -2,8 +2,14 @@ name: Developer Experience
 on:
   workflow_dispatch:
   pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
     branches:
       - main
+
 permissions: read-all
 
 concurrency:
@@ -12,6 +18,7 @@ concurrency:
 
 jobs:
   terraform-check:
+    name: Terraform Check
     runs-on: ubuntu-latest
     permissions:
       contents: read # for actions/checkout to fetch code
@@ -105,3 +112,86 @@ jobs:
           }}
         run: |
           exit 1
+
+  commitlint:
+    name: Commitlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      issues: write # for create or update comment
+      pull-requests: write # for create or update comment
+    steps:
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node and Yarn Cache
+        uses: ./.github/actions/setup-node-and-yarn-cache
+        with:
+          cache-dependency-path: .github/commitlint/yarn.lock
+      - name: Yarn install
+        run: yarn install --immutable --immutable-cache
+        working-directory: ./.github/commitlint
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: yarn commitlint --last --verbose
+        working-directory: ./.github/commitlint
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request_target'
+        id: validate
+        run: |
+          yarn commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose > commitlint_output.txt
+        working-directory: ./.github/commitlint
+      - name: Print commitlint output
+        if: ${{ always() }}
+        run: |
+          echo $(cat ./.github/commitlint/commitlint_output.txt)
+      - name: Set commitlint output to env
+        if: ${{ always() }}
+        run: |
+          {
+            echo 'commitlint_output<<EOF'
+            cat ./.github/commitlint/commitlint_output.txt
+            echo EOF
+          } >> "$GITHUB_ENV"
+      - name: Find Comment
+        if: ${{ always() }}
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            Commitlint-Check
+      - name: Create or update commitlint comment on failure
+        if: ${{ failure() }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ### Commitlint-Check
+            Thanks for your contribution :heart:
+            
+            Unfortunately, [commitlint](https://commitlint.js.org) has detected that this PR has one ore more commit messages that do not follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :scream_cat:
+            
+            ```
+            ${{ env.commitlint_output }}
+            ```
+            
+            Please update the commit messages accordingly.
+          reactions: eyes
+      - name: Create or update commitlint comment on success
+        if: ${{ success() }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ### Commitlint-Check
+            Thanks for your contribution :heart:
+
+            :heart: [commitlint](https://commitlint.js.org) has detected that all commit messages in this PR follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/).
+          reactions: hooray
