@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
       - name: Configure Terraform plugin cache
         run: |
           echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
@@ -125,6 +127,7 @@ jobs:
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         with:
           fetch-depth: 0
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
       - name: Setup Node and Yarn Cache
         uses: ./.github/actions/setup-node-and-yarn-cache
         with:
@@ -193,5 +196,5 @@ jobs:
             ### Commitlint-Check
             Thanks for your contribution :heart:
 
-            :heart: [commitlint](https://commitlint.js.org) has detected that all commit messages in this PR follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/).
+            [commitlint](https://commitlint.js.org) has detected that all commit messages in this PR follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :tada:
           reactions: hooray
