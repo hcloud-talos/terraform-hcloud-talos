@@ -336,6 +336,12 @@ variable "cilium_values" {
   EOF
 }
 
+variable "cilium_enable_encryption" {
+  type        = bool
+  default     = false
+  description = "Enable transparent network encryption."
+}
+
 variable "cilium_enable_service_monitors" {
   type        = bool
   default     = false
