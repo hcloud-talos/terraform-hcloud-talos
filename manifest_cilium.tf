@@ -28,6 +28,22 @@ data "helm_template" "cilium_default" {
     value = "true"
   }
   set {
+    name  = "bpf.masquerade"
+    value = "true"
+  }
+  set {
+    name  = "loadBalancer.acceleration"
+    value = "native"
+  }
+  set {
+    name  = "encryption.enabled"
+    value = var.cilium_enable_encryption ? "true" : "false"
+  }
+  set {
+    name  = "encryption.type"
+    value = "wireguard"
+  }
+  set {
     name  = "securityContext.capabilities.ciliumAgent"
     value = "{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
   }
