@@ -113,17 +113,43 @@ in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
 
 ### Terraform
 
-Use the module as shown in the following working example:
+Use the module as shown in the following working minimal example:
 
 > [!NOTE]
 > Actually, your current IP address has to have access to the nodes during the creation of the cluster.
+
+```hcl
+module "terraform-hcloud-talos" {
+  source  = "hcloud-talos/talos/hcloud"
+  version = "the-latest-version-of-the-module"
+
+  talos_version = "v1.7.5" # The version of talos features to use in generated machine configurations
+
+  hcloud_token = "your-hcloud-token"
+  
+  # If true, the current IP address will be used as the source for the firewall rules.
+  # ATTENTION: to determine the current IP, a request to a public service (https://ipv4.icanhazip.com) is made.
+  # If false, you have to provide your public IP address (as list) in the variable `firewall_kube_api_source` and `firewall_talos_api_source`.
+  firewall_use_current_ip = true
+
+  cluster_name    = "dummy.com"
+  datacenter_name = "fsn1-dc14"
+
+  control_plane_count       = 1
+  control_plane_server_type = "cax11"
+}
+```
+
+Or a more advanced example:
 
 ```hcl
 module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "the-latest-version-of-the-module"
 
-  talos_version = "v1.7.5" # The version of talos features to use in generated machine configurations
+  talos_version = "v1.7.5"
+  kubernetes_version = "1.29.7"
+  cilium_version = "1.15.7"
 
   hcloud_token = "your-hcloud-token"
 
@@ -131,10 +157,9 @@ module "talos" {
   cluster_domain   = "cluster.dummy.com.local"
   cluster_api_host = "kube.dummy.com"
 
-  # If true, the current IP address will be used as the source for the firewall rules.
-  # ATTENTION: to determine the current IP, a request to a public service (https://ipv4.icanhazip.com) is made.
-  # If false, you have to provide your public IP address (as list) in the variable `firewall_kube_api_source` and `firewall_talos_api_source`.
-  firewall_use_current_ip = true
+  firewall_use_current_ip = false
+  firewall_kube_api_source = ["your-ip"]
+  firewall_talos_api_source = ["your-ip"]
 
   datacenter_name = "fsn1-dc14"
 
@@ -143,6 +168,11 @@ module "talos" {
 
   worker_count       = 3
   worker_server_type = "cax21"
+
+  network_ipv4_cidr = "10.0.0.0/16"
+  node_ipv4_cidr    = "10.0.1.0/24"
+  pod_ipv4_cidr     = "10.0.16.0/20"
+  service_ipv4_cidr = "10.0.8.0/21"
 }
 ```
 
