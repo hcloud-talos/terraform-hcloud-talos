@@ -210,3 +210,22 @@ jobs:
 
             [commitlint](https://commitlint.js.org) has detected that all commit messages in this PR follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :tada:
           reactions: hooray
+
+  dev_xperience_status_check:
+    name: DevXperience status check
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    needs:
+      - terraform-check
+      - commitlint
+    steps:
+      - name: Fail on error
+        # see https://stackoverflow.com/a/67532120/4907315 and https://github.com/orgs/community/discussions/26822#discussioncomment-3305794
+        if: >-
+          ${{
+               contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+          }}
+        run: |
+          echo There are failing or cancelled jobs
+          exit 1
