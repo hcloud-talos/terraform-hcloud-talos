@@ -209,6 +209,7 @@ variable "control_plane_server_type" {
 
 variable "worker_count" {
   type        = number
+  default     = 0
   description = "The number of worker nodes to create. Maximum 99."
   validation {
     condition     = var.worker_count <= 99
@@ -218,6 +219,7 @@ variable "worker_count" {
 
 variable "worker_server_type" {
   type        = string
+  default     = "cx11"
   description = <<EOF
     The server type to use for the worker nodes.
     Possible values: cx11, cx21, cx22, cx31, cx32, cx41, cx42, cx51, cx52, cpx11, cpx21, cpx31,
