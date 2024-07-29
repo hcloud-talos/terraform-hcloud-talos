@@ -3,12 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-     - main
+      - main
 
 permissions: read-all
 
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@61680d0e9b02ff86f5648ade99e01be17f0260a4 # v4.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_SEMANTIC_RELEASE }}
         with:
           semantic_version: 23.0.2
           extra_plugins: |
