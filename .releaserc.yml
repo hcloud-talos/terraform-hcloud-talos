@@ -35,6 +35,14 @@ analyzeCommits:
         release: "patch"
       - type: "docs"
         release: "patch"
+      # No release
+      - type: "style"
+        release: false
+      - type: "ci"
+        release: false
+      - type: "chore"
+        scope: "project"
+        release: false
 
 generateNotes:
   - path: "@semantic-release/release-notes-generator"
