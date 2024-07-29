@@ -133,6 +133,7 @@ module "talos" {
 
   # If true, the current IP address will be used as the source for the firewall rules.
   # ATTENTION: to determine the current IP, a request to a public service (https://ipv4.icanhazip.com) is made.
+  # If false, you have to provide your public IP address (as list) in the variable `firewall_kube_api_source` and `firewall_talos_api_source`.
   firewall_use_current_ip = true
 
   datacenter_name = "fsn1-dc14"
