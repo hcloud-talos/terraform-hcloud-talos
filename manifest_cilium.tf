@@ -3,9 +3,10 @@ data "helm_template" "cilium_default" {
   name      = "cilium"
   namespace = "kube-system"
 
-  repository = "https://helm.cilium.io"
-  chart      = "cilium"
-  version    = var.cilium_version
+  repository   = "https://helm.cilium.io"
+  chart        = "cilium"
+  version      = var.cilium_version
+  kube_version = var.kubernetes_version
 
   set {
     name  = "operator.replicas"
@@ -74,10 +75,11 @@ data "helm_template" "cilium_from_values" {
   name      = "cilium"
   namespace = "kube-system"
 
-  repository = "https://helm.cilium.io"
-  chart      = "cilium"
-  version    = var.cilium_version
-  values     = var.cilium_values
+  repository   = "https://helm.cilium.io"
+  chart        = "cilium"
+  version      = var.cilium_version
+  kube_version = var.kubernetes_version
+  values       = var.cilium_values
 }
 
 data "kubectl_file_documents" "cilium" {
@@ -96,10 +98,11 @@ resource "kubectl_manifest" "apply_cilium" {
 
 
 data "helm_template" "prometheus_operator_crds" {
-  count      = var.deploy_prometheus_operator_crds ? 1 : 0
-  chart      = "prometheus-operator-crds"
-  name       = "prometheus-operator-crds"
-  repository = "https://prometheus-community.github.io/helm-charts"
+  count        = var.deploy_prometheus_operator_crds ? 1 : 0
+  chart        = "prometheus-operator-crds"
+  name         = "prometheus-operator-crds"
+  repository   = "https://prometheus-community.github.io/helm-charts"
+  kube_version = var.kubernetes_version
 }
 
 data "kubectl_file_documents" "prometheus_operator_crds" {
