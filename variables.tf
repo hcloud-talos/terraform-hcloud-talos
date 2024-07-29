@@ -266,7 +266,10 @@ variable "kube_api_extra_args" {
 variable "kubernetes_version" {
   type        = string
   default     = null
-  description = "The Kubernetes version to use. If not set, the latest version supported by Talos is used."
+  description = <<EOF
+    The Kubernetes version to use. If not set, the latest version supported by Talos is used.
+    Needs to be compatible with the `cilium_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+  EOF
 }
 
 variable "sysctls_extra_args" {
@@ -314,8 +317,11 @@ variable "registries" {
 # Deployments
 variable "cilium_version" {
   type        = string
-  default     = null
-  description = "The version of Cilium to deploy. If not set, the latest version will be used."
+  default     = "1.16.0"
+  description = <<EOF
+    The version of Cilium to deploy. If not set, the `1.16.0` version will be used.
+    Needs to be compatible with the `kubernetes_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+  EOF
 }
 
 variable "cilium_values" {
