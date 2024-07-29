@@ -54,6 +54,9 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
   default Flannel.
 - It provides a lot of features like Network Policies, Load Balancing, and more.
 
+> [!IMPORTANT]  
+> The Cilium version (`cilium_version`) has to be compatible with the Kubernetes (`kubernetes_version`) version.
+
 ### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
 
 - Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
