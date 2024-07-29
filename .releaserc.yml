@@ -50,8 +50,14 @@ generateNotes:
     presetConfig:
       types:
         - type: "chore"
+          section: "🧹 Maintenance"
+          hidden: false
+        - type: "chore"
           scope: "deps"
           section: "📦‍ Dependencies"
+          hidden: false
+        - type: "ci"
+          section: "🛠 Continuous Integration"
           hidden: false
         - type: "docs"
           section: "📝 Documentation"
