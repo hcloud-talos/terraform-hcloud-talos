@@ -4,5 +4,13 @@
     "config:recommended"
   ],
   "prHourlyLimit": 0,
-  "rangeStrategy": "bump"
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "hashicorp/terraform"
+      ],
+      "rangeStrategy": "widen"
+    }
+  ]
 }
