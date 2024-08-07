@@ -69,14 +69,14 @@ generateNotes:
           section: "🧹 Maintenance"
           hidden: false
         - type: "chore"
+          scope: "project"
+          hidden: true
+        - type: "chore"
           scope: "deps"
-          section: "📦‍ Dependencies"
-          hidden: false
+          hidden: true
         - type: "revert"
-          section: "🔙 Reverts"
           hidden: false
         - type: "ci"
-          section: "🛠 Continuous Integration"
-          hidden: false
+          hidden: true
     writerOpts:
       commitsSort:
