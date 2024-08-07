@@ -8,6 +8,12 @@
   "rangeStrategy": "bump",
   "packageRules": [
     {
+      "matchManagers": [
+        "terraform"
+      ],
+      "semanticCommitType": "fix",
+    },
+    {
       "matchPackageNames": [
         "hashicorp/terraform"
       ],
