@@ -49,19 +49,6 @@ generateNotes:
     preset: "conventionalcommits"
     presetConfig:
       types:
-        - type: "chore"
-          section: "🧹 Maintenance"
-          hidden: false
-        - type: "chore"
-          scope: "deps"
-          section: "📦‍ Dependencies"
-          hidden: false
-        - type: "ci"
-          section: "🛠 Continuous Integration"
-          hidden: false
-        - type: "docs"
-          section: "📝 Documentation"
-          hidden: false
         - type: "feat"
           section: "✨ Features"
           hidden: false
@@ -72,9 +59,24 @@ generateNotes:
           scope: "deps"
           section: "📦‍ Dependencies"
           hidden: false
+        - type: "docs"
+          section: "📝 Documentation"
+          hidden: false
         - type: "perf"
           section: "⚡ Performance Improvements"
+          hidden: false
+        - type: "chore"
+          section: "🧹 Maintenance"
+          hidden: false
+        - type: "chore"
+          scope: "deps"
+          section: "📦‍ Dependencies"
           hidden: false
         - type: "revert"
           section: "🔙 Reverts"
           hidden: false
+        - type: "ci"
+          section: "🛠 Continuous Integration"
+          hidden: false
+    writerOpts:
+      commitsSort:
