@@ -32,9 +32,17 @@ analyzeCommits:
         release: "patch"
       - type: "chore"
         scope: "deps"
-        release: "patch"
+        release: false
       - type: "docs"
         release: "patch"
+      # No release
+      - type: "style"
+        release: false
+      - type: "ci"
+        release: false
+      - type: "chore"
+        scope: "project"
+        release: false
 
 generateNotes:
   - path: "@semantic-release/release-notes-generator"
@@ -42,8 +50,14 @@ generateNotes:
     presetConfig:
       types:
         - type: "chore"
+          section: "🧹 Maintenance"
+          hidden: false
+        - type: "chore"
           scope: "deps"
           section: "📦‍ Dependencies"
+          hidden: false
+        - type: "ci"
+          section: "🛠 Continuous Integration"
           hidden: false
         - type: "docs"
           section: "📝 Documentation"
@@ -53,6 +67,10 @@ generateNotes:
           hidden: false
         - type: "fix"
           section: "🐛 Bug Fixes"
+          hidden: false
+        - type: "fix"
+          scope: "deps"
+          section: "📦‍ Dependencies"
           hidden: false
         - type: "perf"
           section: "⚡ Performance Improvements"

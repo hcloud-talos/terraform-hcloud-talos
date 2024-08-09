@@ -1,25 +1,25 @@
 terraform {
-  required_version = ">=1.7.0"
+  required_version = ">=1.8.0"
 
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.47.0"
+      version = ">=1.48.0"
     }
 
     talos = {
       source  = "siderolabs/talos"
-      version = "0.5.0"
+      version = ">=0.5.0"
     }
 
     http = {
       source  = "hashicorp/http"
-      version = ">=3.4.2"
+      version = ">= 3.4.4"
     }
 
     helm = {
       source  = "hashicorp/helm"
-      version = ">=2.12.1"
+      version = ">= 2.14.0"
     }
 
     kubectl = {

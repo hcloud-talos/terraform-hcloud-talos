@@ -2,16 +2,18 @@ name: Checkov
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  pull_request:
+    branches:
+      - main
 
 permissions: read-all
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -29,10 +31,10 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so follow-up steps can access it
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@797b144cd39b0c07432d3aa7370bedefd38fd1b2 # v12
+        uses: bridgecrewio/checkov-action@d26020ae0b8dfdddfab43acf7fdcf3b1f7298246 # v12
         with:
           # This will add both a CLI output to the console and create a results.sarif file
           output_format: cli,sarif

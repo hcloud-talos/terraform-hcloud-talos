@@ -2,9 +2,10 @@ data "helm_template" "hcloud_ccm" {
   name      = "hcloud-cloud-controller-manager"
   namespace = "kube-system"
 
-  repository = "https://charts.hetzner.cloud"
-  chart      = "hcloud-cloud-controller-manager"
-  version    = var.hcloud_ccm_version
+  repository   = "https://charts.hetzner.cloud"
+  chart        = "hcloud-cloud-controller-manager"
+  version      = var.hcloud_ccm_version
+  kube_version = var.kubernetes_version
 
   set {
     name  = "networking.enabled"

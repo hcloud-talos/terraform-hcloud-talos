@@ -8,3 +8,8 @@
 /dataSources.local.xml
 # GitHub Copilot persisted chat sessions
 /copilot/chatSessions
+
+git_toolbox_blame.xml
+git_toolbox_prj.xml
+
+cody_history.xml

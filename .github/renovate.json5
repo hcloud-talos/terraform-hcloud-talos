@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "schedule:earlyMondays"
+  ],
+  "prHourlyLimit": 0,
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchManagers": [
+        "terraform"
+      ],
+      "semanticCommitType": "fix",
+    },
+    {
+      "matchPackageNames": [
+        "hashicorp/terraform"
+      ],
+      "rangeStrategy": "widen"
+    }
+  ]
+}
