@@ -30,7 +30,7 @@ data "helm_template" "cilium_default" {
   }
   set {
     name  = "bpf.masquerade"
-    value = "true"
+    value = "false"
   }
   set {
     name  = "loadBalancer.acceleration"
