@@ -242,13 +242,11 @@ kernel_modules_to_load = [
 
 ## Known Issues
 
-- `enable_alias_ip` can lead to error messages occurring during the first bootstrap.
-  More about this here: https://github.com/siderolabs/talos/pull/8493
-  If these error messages occur, one control plane must be restarted after complete initialisation once.
-  This should resolve the error.
 - IPv6 dual stack is not supported by Talos yet. You can activate IPv6 with `enable_ipv6`, but it should not have any
   effect.
 - `enable_kube_span` let's the cluster not get in ready state. It is not clear why yet. I have to investigate it.
+- `403 Forbidden user` in startup log: This is a known issue with Hetzner IPs.
+  See [#46](https://github.com/hcloud-talos/terraform-hcloud-talos/issues/46) and [registry.k8s.io #138](https://github.com/kubernetes/registry.k8s.io/issues/138)
 
 ## Credits
 
