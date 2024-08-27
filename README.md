@@ -13,7 +13,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - Hetzner Cloud is a cloud hosting provider with nice terraform support and cheap prices.
 
 > [!WARNING]  
-> It's under active development. Not all features are compatible with each other yet.
+> This module is under active development. Not all features are compatible with each other yet.
 > Known issues are listed in the [Known Issues](#known-issues) section.
 > If you find a bug or have a feature request, please open an issue.
 
@@ -49,9 +49,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ### [Cilium](https://cilium.io/)
 
 - Cilium is a modern, efficient, and secure networking and security solution for Kubernetes.
-- It is used [Cilium as the CNI instead of the
-  default Flannel](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) instead of the
-  default Flannel.
+- [Cilium is used as the CNI](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) instead of the default Flannel.
 - It provides a lot of features like Network Policies, Load Balancing, and more.
 
 > [!IMPORTANT]  
