@@ -19,5 +19,31 @@
       ],
       "rangeStrategy": "widen"
     }
+  ],
+  customManagers: [
+    {
+      description: "Update semantic-release in GitHub Action workflows",
+      customType: "regex",
+      fileMatch: [
+        "^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$"
+      ],
+      matchStrings: [
+        "semantic_version\\s*:\\s*(\"|')?(?<currentValue>.+)(\"|'|(\\s+)|\\n|$)",
+      ],
+      datasourceTemplate: "npm",
+      depNameTemplate: "semantic-release",
+    },
+    {
+      description: "Update conventional-changelog-conventionalcommits in GitHub Action workflows",
+      customType: "regex",
+      fileMatch: [
+        "^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$"
+      ],
+      matchStrings: [
+        ".*(?<depName>conventional-changelog-conventionalcommits)@(?<currentValue>.+?)(\"|\'|(\\s+)|\\n|$)",
+      ],
+      datasourceTemplate: "npm",
+      depNameTemplate: "conventional-changelog-conventionalcommits",
+    }
   ]
 }
