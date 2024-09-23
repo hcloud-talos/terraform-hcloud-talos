@@ -5,7 +5,7 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   # Triggers the workflow on push or pull request events but only for the "main" branch
-  pull_request:
+  pull_request_target:
     branches:
       - main
 
@@ -31,10 +31,10 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so follow-up steps can access it
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@6aa9bec7b321bfe25839494e1efc7f2faad84416 # v12
+        uses: bridgecrewio/checkov-action@d0e41abbcc8c1103c6ae7e451681d071f05e1c20 # v12.2873.0
         with:
           # This will add both a CLI output to the console and create a results.sarif file
           output_format: cli,sarif
@@ -42,7 +42,7 @@ jobs:
           download_external_modules: true
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.26.8
 
         # Results are generated only on a success or failure
         # this is required since GitHub by default won't run the next step
