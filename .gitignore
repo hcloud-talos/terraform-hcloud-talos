@@ -231,3 +231,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/helm,linux,macos,windows,intellij,terraform
 
 debug.tf
+
+.aider*
