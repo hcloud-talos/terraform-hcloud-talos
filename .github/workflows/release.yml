@@ -24,6 +24,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_SEMANTIC_RELEASE }}
         with:
-          semantic_version: 23.0.2
+          semantic_version: 24.1.1
           extra_plugins: |
             - conventional-changelog-conventionalcommits@8.0.0
