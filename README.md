@@ -121,7 +121,7 @@ module "terraform-hcloud-talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "the-latest-version-of-the-module"
 
-  talos_version = "v1.7.5" # The version of talos features to use in generated machine configurations
+  talos_version = "v1.8.1" # The version of talos features to use in generated machine configurations
 
   hcloud_token = "your-hcloud-token"
   
@@ -145,7 +145,7 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "the-latest-version-of-the-module"
 
-  talos_version = "v1.7.5"
+  talos_version = "v1.8.1"
   kubernetes_version = "1.29.7"
   cilium_version = "1.15.7"
 
