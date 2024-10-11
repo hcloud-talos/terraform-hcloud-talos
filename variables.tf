@@ -316,7 +316,7 @@ variable "registries" {
 # Deployments
 variable "cilium_version" {
   type        = string
-  default     = "1.16.0"
+  default     = "1.16.2"
   description = <<EOF
     The version of Cilium to deploy. If not set, the `1.16.0` version will be used.
     Needs to be compatible with the `kubernetes_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
