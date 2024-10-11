@@ -84,7 +84,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv4" {
-  count         = var.worker_count > 0 ? var.worker_count : 1
+  count         = var.worker_count
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv4"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv4"
