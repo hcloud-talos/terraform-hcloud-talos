@@ -103,21 +103,13 @@ data "talos_client_configuration" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
   endpoints = compact(
     var.output_mode_config_cluster_endpoint == "private_ip" ? (
-      # Use private IP in talosconfig
-      var.enable_alias_ip ?
-      # Use alias IP in talosconfig
-      [local.control_plane_private_vip_ipv4] :
       # Use private IPs in talosconfig
       local.control_plane_private_ipv4_list
     ) :
 
     var.output_mode_config_cluster_endpoint == "public_ip" ? (
-      # Use public IP in talosconfig
-      var.enable_floating_ip ?
-      # Use floating IP in talosconfig
-      [data.hcloud_floating_ip.control_plane_ipv4[0].ip_address] :
       # Use public IPs in talosconfig
-      can(local.control_plane_public_ipv4_list) ? local.control_plane_public_ipv4_list : []
+      local.control_plane_public_ipv4_list
     ) :
 
     var.output_mode_config_cluster_endpoint == "cluster_endpoint" ? (

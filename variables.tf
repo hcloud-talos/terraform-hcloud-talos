@@ -52,8 +52,9 @@ variable "output_mode_config_cluster_endpoint" {
     error_message = "Invalid output mode for kube and talos config endpoint."
   }
   description = <<EOF
-    The output mode for the cluster endpoint in the talos and kube config outputs.
+    Configure which IP addresses are to be used in Talos- and Kube-config output.
     Possible values: public_ip, private_ip, cluster_endpoint
+    ATTENTION: If 'cluster_endpoint' is selected, 'cluster_api_host' is used and should be set, too.
   EOF
 }
 
