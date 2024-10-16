@@ -11,4 +11,5 @@ if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
     export HCLOUD_TOKEN=$hcloud_token
 fi
 echo "Running packer build for talos-hcloud.pkr.hcl"
-packer init . && packer build .
+SCRIPT_DIR="$(dirname "$0")"
+packer init $SCRIPT_DIR && packer build $SCRIPT_DIR
