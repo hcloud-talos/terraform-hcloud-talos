@@ -117,7 +117,7 @@ Use the module as shown in the following working minimal example:
 > Actually, your current IP address has to have access to the nodes during the creation of the cluster.
 
 ```hcl
-module "terraform-hcloud-talos" {
+module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "the-latest-version-of-the-module"
 
