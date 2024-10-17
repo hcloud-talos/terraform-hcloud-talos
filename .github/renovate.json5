@@ -57,7 +57,7 @@
         'version[\\s]+=[\\s]+"(?<currentValue>\\S*)[\\s]+source[\\s]+=[\\s]+"github.com/(?<depName>\\S*)"',
       ],
       datasourceTemplate: 'github-tags',
-      depNameTemplate: '{{#if depName}}{{#if (containsString depName "hashicorp/")}}{{{replace "hashicorp/" "hashicorp/packer-plugin-" depName}}}{{else}}{{{depName}}}{{/if}}{{else}}hashicorp/packer{{/if}}',
+      depNameTemplate: '{{#if depName}}{{#if (containsString depName "hetznercloud/")}}{{{replace "hetznercloud/" "hetznercloud/packer-plugin-" depName}}}{{else}}{{{depName}}}{{/if}}{{else}}hashicorp/packer{{/if}}',
     }
   ]
 }
