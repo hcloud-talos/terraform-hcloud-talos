@@ -5,6 +5,9 @@
     "schedule:earlyMondays",
     ":automergePatch",
   ],
+  "assignees": [
+    "mrclrchtr"
+  ],
   "prHourlyLimit": 0,
   "rangeStrategy": "bump",
   "packageRules": [
