@@ -22,6 +22,13 @@
         "hashicorp/terraform"
       ],
       "rangeStrategy": "widen"
+    },
+    {
+      "matchPackageNames": [
+        "bridgecrewio/checkov-action"
+      ],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
     }
   ],
   customManagers: [
