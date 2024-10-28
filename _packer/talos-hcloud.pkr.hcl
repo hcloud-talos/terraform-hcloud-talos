@@ -2,7 +2,7 @@
 packer {
   required_plugins {
     hcloud = {
-      version = "v1.6.0
+      version = "v1.6.0"
       source  = "github.com/hetznercloud/hcloud"
     }
   }
