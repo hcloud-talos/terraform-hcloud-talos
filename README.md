@@ -76,6 +76,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 - [terraform](https://www.terraform.io/downloads.html)
 - [packer](https://www.packer.io/downloads)
+- [helm](https://helm.sh/docs/intro/install/)
 
 ### Recommended Software
 
