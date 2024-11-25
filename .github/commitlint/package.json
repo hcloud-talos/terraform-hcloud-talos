@@ -3,5 +3,5 @@
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.5.2"
 }
