@@ -37,3 +37,11 @@ output "hetzner_network_id" {
   description = "Network ID of the network created at cluster creation"
   value       = hcloud_network.this.id
 }
+
+output "talos_worker_ids" {
+  description = "Server IDs of the hetzner talos workers machines"
+  value = {
+    for id, server in hcloud_server.workers : id => server.id
+  }
+}
+
