@@ -15,6 +15,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v1.11.0 # v1.11.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -22,7 +28,7 @@ jobs:
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@b1b432f13acb7768e0c8efdec416d363a57546f2 # v4.1.1
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_SEMANTIC_RELEASE }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           semantic_version: 24.2.0
           extra_plugins: |
