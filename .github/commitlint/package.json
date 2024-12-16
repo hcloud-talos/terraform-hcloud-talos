@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "@commitlint/cli": "^19.6.0",
+    "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0"
   },
   "packageManager": "yarn@4.5.3"
