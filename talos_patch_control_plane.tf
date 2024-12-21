@@ -133,6 +133,7 @@ locals {
             "bind-address" = "0.0.0.0"
           }
         }
+        extraManifests = var.extraManifests
         inlineManifests = [
           {
             name = "hcloud-secret"
