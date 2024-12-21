@@ -370,3 +370,9 @@ variable "disable_talos_coredns" {
   default     = false
   description = "If true, the CoreDNS delivered by Talos will not be deployed."
 }
+
+variable "extraManifests" {
+  type        = list(string)
+  default     = null
+  description = "Additional manifests URL applied during Talos bootstrap."
+}
