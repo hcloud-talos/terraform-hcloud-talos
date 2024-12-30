@@ -365,6 +365,16 @@ variable "hcloud_ccm_version" {
   description = "The version of the Hetzner Cloud Controller Manager to deploy. If not set, the latest version will be used."
 }
 
+variable "hcloud_ccm_networking" {
+  type        = bool
+  default     = true
+  description = <<EOF
+    Enable Hetzner Cloud Controller Manager networking.
+    If false, pod routing must be handled in some other way. (cilium autoDirectNodeRoutes or BGP)
+    See https://github.com/hetznercloud/hcloud-cloud-controller-manager?tab=readme-ov-file#networks-support
+  EOF
+}
+
 variable "disable_talos_coredns" {
   type        = bool
   default     = false

@@ -9,7 +9,7 @@ data "helm_template" "hcloud_ccm" {
 
   set {
     name  = "networking.enabled"
-    value = "true"
+    value = tostring(var.hcloud_ccm_networking)
   }
 
   set {
