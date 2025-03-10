@@ -4,7 +4,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = ">= 1.49.1"
+      version = ">= 1.50.0"
     }
 
     talos = {
