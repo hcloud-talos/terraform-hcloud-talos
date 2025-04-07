@@ -288,10 +288,18 @@ variable "kernel_modules_to_load" {
 
 variable "registries" {
   type = object({
-    mirrors = map(object({
+    mirrors = optional(map(object({
       endpoints    = list(string)
       overridePath = optional(bool)
-    }))
+    })))
+    config = optional(map(object({
+      auth = object({
+        username      = optional(string)
+        password      = optional(string)
+        auth          = optional(string)
+        identityToken = optional(string)
+      })
+    })))
   })
   default     = null
   description = <<EOF
