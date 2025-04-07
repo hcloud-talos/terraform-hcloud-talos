@@ -33,7 +33,9 @@ locals {
       local.control_plane_private_ipv4_list[0]
     )
   )
-  cluster_endpoint_url_internal = "https://${local.cluster_endpoint_internal}:${local.api_port_k8s}"
+  # Define a safe default endpoint for when no control planes exist
+  dummy_cluster_endpoint        = "https://dummy.local:${local.api_port_k8s}"
+  cluster_endpoint_url_internal = var.control_plane_count > 0 ? "https://${local.cluster_endpoint_internal}:${local.api_port_k8s}" : local.dummy_cluster_endpoint
 
   // ************
   cert_SANs = distinct(
@@ -61,7 +63,6 @@ locals {
 }
 
 data "talos_machine_configuration" "control_plane" {
-  // enable although we have no control planes, to be able to debug the output
   for_each           = { for control_plane in local.control_planes : control_plane.name => control_plane }
   talos_version      = var.talos_version
   cluster_name       = var.cluster_name
@@ -75,7 +76,6 @@ data "talos_machine_configuration" "control_plane" {
 }
 
 data "talos_machine_configuration" "worker" {
-  // enable although we have no worker, to be able to debug the output
   for_each           = { for worker in local.workers : worker.name => worker }
   talos_version      = var.talos_version
   cluster_name       = var.cluster_name
@@ -84,6 +84,36 @@ data "talos_machine_configuration" "worker" {
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
   config_patches     = concat([yamlencode(local.worker_yaml[each.value.name])], var.talos_worker_extra_config_patches)
+  docs               = false
+  examples           = false
+}
+
+# Dummy configuration generated when control_plane_count is 0 for debugging purposes
+# tflint-ignore: terraform_unused_declarations
+data "talos_machine_configuration" "dummy_control_plane" {
+  count              = var.control_plane_count == 0 ? 1 : 0
+  talos_version      = var.talos_version
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = local.cluster_endpoint_url_internal # Uses dummy endpoint when count is 0
+  kubernetes_version = var.kubernetes_version
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  config_patches     = var.talos_control_plane_extra_config_patches # Use extra patches if provided
+  docs               = false
+  examples           = false
+}
+
+# Dummy configuration generated when worker_count is 0 for debugging purposes
+# tflint-ignore: terraform_unused_declarations
+data "talos_machine_configuration" "dummy_worker" {
+  count              = var.worker_count == 0 ? 1 : 0
+  talos_version      = var.talos_version
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = local.cluster_endpoint_url_internal # Uses dummy endpoint when count is 0
+  kubernetes_version = var.kubernetes_version
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  config_patches     = var.talos_worker_extra_config_patches # Use extra patches if provided
   docs               = false
   examples           = false
 }
