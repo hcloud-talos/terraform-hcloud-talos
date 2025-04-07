@@ -1,6 +1,20 @@
 locals {
+  # Define a dummy control plane entry for when count is 0
+  dummy_control_planes = var.control_plane_count == 0 ? [{
+    index              = 0
+    name               = "dummy-cp-0"
+    ipv4_public        = "0.0.0.0"                           # Fallback
+    ipv6_public        = null                                # Fallback
+    ipv6_public_subnet = null                                # Fallback
+    ipv4_private       = cidrhost(local.node_ipv4_cidr, 100) # Use a predictable dummy private IP
+  }] : []
+
+  # Combine real and dummy control planes
+  merged_control_planes = concat(local.control_planes, local.dummy_control_planes)
+
+  # Generate YAML for all (real or dummy) control planes
   controlplane_yaml = {
-    for control_plane in local.control_planes : control_plane.name => {
+    for control_plane in local.merged_control_planes : control_plane.name => {
       machine = {
         install = {
           image = "ghcr.io/siderolabs/installer:${var.talos_version}"

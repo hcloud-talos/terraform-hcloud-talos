@@ -1,6 +1,20 @@
 locals {
+  # Define a dummy worker entry for when count is 0
+  dummy_workers = var.worker_count == 0 ? [{
+    index              = 0
+    name               = "dummy-worker-0"
+    ipv4_public        = "0.0.0.0"                           # Fallback
+    ipv6_public        = null                                # Fallback
+    ipv6_public_subnet = null                                # Fallback
+    ipv4_private       = cidrhost(local.node_ipv4_cidr, 200) # Use a predictable dummy private IP
+  }] : []
+
+  # Combine real and dummy workers
+  merged_workers = concat(local.workers, local.dummy_workers)
+
+  # Generate YAML for all (real or dummy) workers
   worker_yaml = {
-    for worker in local.workers : worker.name => {
+    for worker in local.merged_workers : worker.name => {
       machine = {
         install = {
           image = "ghcr.io/siderolabs/installer:${var.talos_version}"
