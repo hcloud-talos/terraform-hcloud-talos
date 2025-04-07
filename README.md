@@ -116,19 +116,23 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Usage
 
-### Packer
+### 1. Build Talos Images with Packer
 
-Create the talos os images (ARM and x86) via packer through running the [create.sh](_packer/create.sh).
-It is using the `HCLOUD_TOKEN` environment variable to authenticate against the Hetzner Cloud API and uses the project
-of the token to store the images.
-The talos os version is defined in the variable `talos_version`
-in [talos-hcloud.pkr.hcl](_packer/talos-hcloud.pkr.hcl).
+Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. This module provides Packer configurations to build these images.
 
-```bash
-./_packer/create.sh
-```
+-   **Purpose:** Creates ARM and x86 Talos OS snapshots compatible with Hetzner Cloud.
+-   **Location:** All Packer-related files are in the `_packer/` directory.
+-   **Authentication:** Requires your Hetzner Cloud API token (set the `HCLOUD_TOKEN` environment variable or enter it when prompted by the build script).
+-   **Execution:** Run the `create.sh` script from the root of the repository:
+    ```bash
+    ./_packer/create.sh
+    ```
+-   **Customization:** You can build standard Talos images or create custom images with additional system extensions using the Talos Image Factory.
+-   **Versioning:** Ensure the `talos_version` used during the Packer build matches the `talos_version` variable set in your Terraform configuration to avoid potential incompatibilities.
 
-### Terraform
+> **Detailed Instructions:** For comprehensive steps on building default images, using the Image Factory for custom extensions, and managing Talos versions (including how to override the default version), please refer to the **[`_packer/README.md`](_packer/README.md)** file.
+
+### 2. Deploy the Cluster with Terraform
 
 Use the module as shown in the following working minimal example:
 
