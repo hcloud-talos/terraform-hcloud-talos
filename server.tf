@@ -13,25 +13,40 @@ data "hcloud_image" "x86" {
 }
 
 locals {
-  cluster_prefix         = var.cluster_prefix ? "${var.cluster_name}-" : ""
-  control_plane_image_id = substr(var.control_plane_server_type, 0, 3) == "cax" ? data.hcloud_image.arm[0].id : data.hcloud_image.x86[0].id
-  worker_image_id        = substr(var.worker_server_type, 0, 3) == "cax" ? data.hcloud_image.arm[0].id : data.hcloud_image.x86[0].id
-  control_planes = [for i in range(var.control_plane_count) : {
-    index              = i
-    name               = "${local.cluster_prefix}control-plane-${i + 1}"
-    ipv4_public        = local.control_plane_public_ipv4_list[i],
-    ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
-    ipv6_public_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
-    ipv4_private       = local.control_plane_private_ipv4_list[i]
-  }]
-  workers = [for i in range(var.worker_count) : {
-    index              = i
-    name               = "${local.cluster_prefix}worker-${i + 1}"
-    ipv4_public        = local.worker_public_ipv4_list[i],
-    ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
-    ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
-    ipv4_private       = local.worker_private_ipv4_list[i]
-  }]
+  cluster_prefix = var.cluster_prefix ? "${var.cluster_name}-" : ""
+  control_plane_image_id = (
+    substr(var.control_plane_server_type, 0, 3) == "cax" ?
+    (var.disable_arm ? null : data.hcloud_image.arm[0].id) : // Use ARM image if not disabled
+    (var.disable_x86 ? null : data.hcloud_image.x86[0].id)   // Use x86 image if not disabled
+  )
+  worker_image_id = (
+    var.worker_count > 0 ? # Only calculate if workers exist
+    (
+      substr(var.worker_server_type, 0, 3) == "cax" ?
+      (var.disable_arm ? null : data.hcloud_image.arm[0].id) : // Use ARM image if not disabled
+      (var.disable_x86 ? null : data.hcloud_image.x86[0].id)   // Use x86 image if not disabled
+    ) : null                                                   # No workers, no image needed
+  )
+  control_planes = [
+    for i in range(var.control_plane_count) : {
+      index              = i
+      name               = "${local.cluster_prefix}control-plane-${i + 1}"
+      ipv4_public        = local.control_plane_public_ipv4_list[i],
+      ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
+      ipv6_public_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
+      ipv4_private       = local.control_plane_private_ipv4_list[i]
+    }
+  ]
+  workers = [
+    for i in range(var.worker_count) : {
+      index              = i
+      name               = "${local.cluster_prefix}worker-${i + 1}"
+      ipv4_public        = local.worker_public_ipv4_list[i],
+      ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
+      ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
+      ipv4_private       = local.worker_private_ipv4_list[i]
+    }
+  ]
 }
 
 resource "tls_private_key" "ssh_key" {
