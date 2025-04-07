@@ -1,7 +1,7 @@
 # Add Extension to tho Talos Image
 
 You can use the image factory to achieve this. The image factory is a tool that allows you to create custom Talos
-images. You can find the documentation [here](https://www.talos.dev/v1.6/learn-more/image-factory/).
+images. You can find the documentation [here](https://www.talos.dev/latest/learn-more/image-factory/).
 
 You can also use the endpoint to generate images. To achieve this, you need to adjust the `schematic.yaml` file to
 include the extension you want to add to the image and then run the following command:
@@ -20,7 +20,7 @@ extensions.
 
 You can create a file `hcloud.auto.pkrvars.hcl` to overwrite the default values. The file should look like this:
 ```hcl
-talos_version = "v1.8.1"
-image_url_arm = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.8.1/hcloud-arm64.raw.xz"
-image_url_x86 = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.8.1/hcloud-amd64.raw.xz"
+talos_version = "v1.9.5"
+image_url_arm = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.9.5/hcloud-arm64.raw.xz"
+image_url_x86 = "https://factory.talos.dev/image/98b430833db447e791fa9fecb915073eb8a6d85ccf80ca3f67cd3bf56c527f49/v1.9.5/hcloud-amd64.raw.xz"
 ```
