@@ -38,12 +38,28 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - It has [Multihoming](https://www.talos.dev/v1.6/introduction/prodnotes/#multihoming) configuration (etcd and kubelet
   listen on public and private IP).
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
-  as [cluster endpoint](https://www.talos.dev/v1.6/reference/cli/#synopsis-9).
-- If `cluster_api_host` is set, then you should create a corresponding DNS record pointing to either one control plane,
-  the load balancer,
-  floating IP, or alias IP.
-  If `cluster_api_host` is not set, then a record for `kube.[cluster_domain]` should be created.
-  The correct DNS configuration depends on your specific setup (Floating IP, Alias IP, Load Balancer, etc.).
+  for internal API server access (`127.0.0.1:7445`) from within the cluster nodes.
+- **Public API Endpoint:**
+    - You can define a stable public endpoint for your cluster using the `cluster_api_host` variable (
+      e.g., `kube.mydomain.com`).
+    - If you set `cluster_api_host`, you **must** create a DNS A record for this hostname pointing to the public IP
+      address you want clients to use. This could be:
+        - The Hetzner Floating IP (if `enable_floating_ip = true`).
+        - The IP of an external Load Balancer you configure separately.
+        - The public IP of a specific control plane node (less recommended for multi-node control planes).
+    - The generated `kubeconfig` and `talosconfig` will use this hostname
+      if `output_mode_config_cluster_endpoint = "cluster_endpoint"`.
+- **Internal API Endpoint:**
+    - For internal communication *between cluster nodes*, Talos often uses the hostname `kube.[cluster_domain]` (
+      e.g., `kube.cluster.local`).
+    - If `enable_alias_ip = true` (the default), this module automatically configures `/etc/hosts` entries on each node
+      to resolve `kube.[cluster_domain]` to the *private* alias IP (`10.0.1.100` by default). This ensures reliable
+      internal communication.
+- **Default Behavior (if `cluster_api_host` is not set):**
+    - If you don't set `cluster_api_host`, the generated `kubeconfig` and `talosconfig` will use an IP address directly
+      as the endpoint (controlled by `output_mode_config_cluster_endpoint`, defaulting to the first control plane's
+      public IP).
+    - Internal communication will still use `kube.[cluster_domain]` if `enable_alias_ip = true`.
 
 ## Additional installed software in the cluster
 

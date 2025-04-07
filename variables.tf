@@ -25,8 +25,11 @@ variable "cluster_prefix" {
 variable "cluster_api_host" {
   type        = string
   description = <<EOF
-    The entrypoint of the cluster. Must be a valid domain name. If not set, `kube.[cluster_domain]` will be used.
-    You should create a DNS record pointing to either the load balancer, floating IP, or alias IP.
+    Optional. A stable DNS hostname for the public Kubernetes API endpoint (e.g., `kube.mydomain.com`).
+    If set, you MUST configure a DNS A record for this hostname pointing to your desired public entrypoint (e.g., Floating IP, Load Balancer IP).
+    This hostname will be embedded in the cluster's certificates (SANs).
+    If not set, the generated kubeconfig/talosconfig will use an IP address based on `output_mode_config_cluster_endpoint`.
+    Internal cluster communication often uses `kube.[cluster_domain]`, which is handled automatically via /etc/hosts if `enable_alias_ip = true`.
   EOF
   default     = null
 }
@@ -52,9 +55,10 @@ variable "output_mode_config_cluster_endpoint" {
     error_message = "Invalid output mode for kube and talos config endpoint."
   }
   description = <<EOF
-    Configure which IP addresses are to be used in Talos- and Kube-config output.
-    Possible values: public_ip, private_ip, cluster_endpoint
-    ATTENTION: If 'cluster_endpoint' is selected, 'cluster_api_host' is used and should be set, too.
+    Configure which endpoint address is written into the generated `talosconfig` and `kubeconfig` files.
+    - `public_ip`: Use the public IP of the first control plane (or the Floating IP if enabled).
+    - `private_ip`: Use the private IP of the first control plane (or the private Alias IP if enabled). Useful if accessing only via VPN/private network.
+    - `cluster_endpoint`: Use the hostname defined in `cluster_api_host`. Requires `cluster_api_host` to be set.
   EOF
 }
 
@@ -105,7 +109,9 @@ variable "enable_alias_ip" {
   type        = bool
   default     = true
   description = <<EOF
-    If true, an alias IP (cidrhost(node_ipv4_cidr, 100)) will be created and assigned to the control plane nodes.
+    If true, a private alias IP (defaulting to the .100 address within `node_ipv4_cidr`) will be configured on the control plane nodes.
+    This enables a stable internal IP for the Kubernetes API server, reachable via `kube.[cluster_domain]`.
+    The module automatically configures `/etc/hosts` on nodes to resolve `kube.[cluster_domain]` to this alias IP.
   EOF
 }
 
