@@ -150,20 +150,18 @@ locals {
         extraManifests = var.extraManifests
         inlineManifests = [
           {
-            name = "hcloud-secret"
-            contents = replace(yamlencode({
-              apiVersion = "v1"
-              kind       = "Secret"
-              type       = "Opaque"
-              metadata = {
-                name      = "hcloud"
-                namespace = "kube-system"
-              }
-              data = {
-                network = base64encode(hcloud_network.this.id)
-                token   = base64encode(var.hcloud_token)
-              }
-            }), "\"", "")
+            name     = "hcloud-secret"
+            contents = <<-EOT
+              apiVersion: v1
+              kind: Secret
+              type: Opaque
+              metadata:
+                name: hcloud
+                namespace: kube-system
+              data:
+                network: ${base64encode(hcloud_network.this.id)}
+                token: ${base64encode(var.hcloud_token)}
+            EOT
           }
         ]
         externalCloudProvider = {
