@@ -174,9 +174,10 @@ variable "talos_version" {
 
 variable "ssh_public_key" {
   description = <<EOF
-    The public key to be set in the servers. It is not used in any way.
+    The public key to be set in the servers. This key is used by Hetzner Cloud for initial server provisioning
+    and for accessing the server in rescue mode. While Talos itself does not use this key for cluster operations,
+    providing one prevents Hetzner from sending login credentials via email.
     If you don't set it, a dummy key will be generated and used.
-    Unfortunately, it is still required, otherwise the Hetzner will sen E-Mails with login credentials.
   EOF
   type        = string
   default     = null
