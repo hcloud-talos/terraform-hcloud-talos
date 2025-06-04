@@ -22,12 +22,12 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ## Goals 🚀
 
 | Goals                                                              | Status | Description                                                                                                                                                                                           |
-|--------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Production ready                                                   | ✅      | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.**   |
-| Use private networks for the internal communication of the cluster | ✅      | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                              |
-| Secure API Exposure                                                | ✅      | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed. |
+| ------------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production ready                                                   | ✅     | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.**   |
+| Use private networks for the internal communication of the cluster | ✅     | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                              |
+| Secure API Exposure                                                | ✅     | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed. |
 | Possibility to change all CIDRs of the networks                    | ⁉️     | Needs to be tested.                                                                                                                                                                                   |
-| Configure the Cluster optimally to run in the Hetzner Cloud        | ✅      | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                  |
+| Configure the Cluster optimally to run in the Hetzner Cloud        | ✅     | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                  |
 
 ## Information about the Module
 
@@ -40,26 +40,26 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
   for internal API server access (`127.0.0.1:7445`) from within the cluster nodes.
 - **Public API Endpoint:**
-    - You can define a stable public endpoint for your cluster using the `cluster_api_host` variable (
-      e.g., `kube.mydomain.com`).
-    - If you set `cluster_api_host`, you **must** create a DNS A record for this hostname pointing to the public IP
-      address you want clients to use. This could be:
-        - The Hetzner Floating IP (if `enable_floating_ip = true`).
-        - The IP of an external Load Balancer you configure separately.
-        - The public IP of a specific control plane node (less recommended for multi-node control planes).
-    - The generated `kubeconfig` and `talosconfig` will use this hostname
-      if `output_mode_config_cluster_endpoint = "cluster_endpoint"`.
+  - You can define a stable public endpoint for your cluster using the `cluster_api_host` variable (
+    e.g., `kube.mydomain.com`).
+  - If you set `cluster_api_host`, you **must** create a DNS A record for this hostname pointing to the public IP
+    address you want clients to use. This could be:
+    - The Hetzner Floating IP (if `enable_floating_ip = true`).
+    - The IP of an external Load Balancer you configure separately.
+    - The public IP of a specific control plane node (less recommended for multi-node control planes).
+  - The generated `kubeconfig` and `talosconfig` will use this hostname
+    if `output_mode_config_cluster_endpoint = "cluster_endpoint"`.
 - **Internal API Endpoint:**
-    - For internal communication *between cluster nodes*, Talos often uses the hostname `kube.[cluster_domain]` (
-      e.g., `kube.cluster.local`).
-    - If `enable_alias_ip = true` (the default), this module automatically configures `/etc/hosts` entries on each node
-      to resolve `kube.[cluster_domain]` to the *private* alias IP (`10.0.1.100` by default). This ensures reliable
-      internal communication.
+  - For internal communication _between cluster nodes_, Talos often uses the hostname `kube.[cluster_domain]` (
+    e.g., `kube.cluster.local`).
+  - If `enable_alias_ip = true` (the default), this module automatically configures `/etc/hosts` entries on each node
+    to resolve `kube.[cluster_domain]` to the _private_ alias IP (`10.0.1.100` by default). This ensures reliable
+    internal communication.
 - **Default Behavior (if `cluster_api_host` is not set):**
-    - If you don't set `cluster_api_host`, the generated `kubeconfig` and `talosconfig` will use an IP address directly
-      as the endpoint (controlled by `output_mode_config_cluster_endpoint`, defaulting to the first control plane's
-      public IP).
-    - Internal communication will still use `kube.[cluster_domain]` if `enable_alias_ip = true`.
+  - If you don't set `cluster_api_host`, the generated `kubeconfig` and `talosconfig` will use an IP address directly
+    as the endpoint (controlled by `output_mode_config_cluster_endpoint`, defaulting to the first control plane's
+    public IP).
+  - Internal communication will still use `kube.[cluster_domain]` if `enable_alias_ip = true`.
 
 ## Additional installed software in the cluster
 
@@ -120,15 +120,15 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. This module provides Packer configurations to build these images.
 
--   **Purpose:** Creates ARM and x86 Talos OS snapshots compatible with Hetzner Cloud.
--   **Location:** All Packer-related files are in the `_packer/` directory.
--   **Authentication:** Requires your Hetzner Cloud API token (set the `HCLOUD_TOKEN` environment variable or enter it when prompted by the build script).
--   **Execution:** Run the `create.sh` script from the root of the repository:
-    ```bash
-    ./_packer/create.sh
-    ```
--   **Customization:** You can build standard Talos images or create custom images with additional system extensions using the Talos Image Factory.
--   **Versioning:** Ensure the `talos_version` used during the Packer build matches the `talos_version` variable set in your Terraform configuration to avoid potential incompatibilities.
+- **Purpose:** Creates ARM and x86 Talos OS snapshots compatible with Hetzner Cloud.
+- **Location:** All Packer-related files are in the `_packer/` directory.
+- **Authentication:** Requires your Hetzner Cloud API token (set the `HCLOUD_TOKEN` environment variable or enter it when prompted by the build script).
+- **Execution:** Run the `create.sh` script from the root of the repository:
+  ```bash
+  ./_packer/create.sh
+  ```
+- **Customization:** You can build standard Talos images or create custom images with additional system extensions using the Talos Image Factory.
+- **Versioning:** Ensure the `talos_version` used during the Packer build matches the `talos_version` variable set in your Terraform configuration to avoid potential incompatibilities.
 
 > **Detailed Instructions:** For comprehensive steps on building default images, using the Image Factory for custom extensions, and managing Talos versions (including how to override the default version), please refer to the **[`_packer/README.md`](_packer/README.md)** file.
 
@@ -265,17 +265,17 @@ kernel_modules_to_load = [
 
 ## Upgrading Kubernetes
 
-The `kubernetes_version` variable in this Terraform module is used for the *initial deployment* of your Kubernetes cluster.
+The `kubernetes_version` variable in this Terraform module is used for the _initial deployment_ of your Kubernetes cluster.
 It does **not** trigger in-place Kubernetes version upgrades on existing nodes.
 
 To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` command.
 
 **Important Considerations for `talosctl` commands:**
 
-* **Endpoint Resolution:** When running `talosctl` commands from outside your cluster (e.g., from your local machine),
+- **Endpoint Resolution:** When running `talosctl` commands from outside your cluster (e.g., from your local machine),
   you might encounter issues resolving internal hostnames like `kube.cluster.local`.
   This hostname is primarily for internal cluster communication.
-* **Using `--endpoint`:** To ensure reliable connectivity for `talosctl` operations (including `upgrade-k8s`,
+- **Using `--endpoint`:** To ensure reliable connectivity for `talosctl` operations (including `upgrade-k8s`,
   `version`, etc.), always specify the publicly accessible endpoint of your cluster using the `--endpoint` flag.
   This should be the `cluster_api_host` you configured,
   or the public IP address of your Floating IP/first control plane node.

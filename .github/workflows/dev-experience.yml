@@ -72,7 +72,7 @@ jobs:
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
+          comment-author: "github-actions[bot]"
           body-includes: |
             Terraform-Check (version: ${{ steps.terraform-version.outputs.TERRAFORM_VERSION }})
       - name: Create or update comment
@@ -83,40 +83,40 @@ jobs:
           edit-mode: replace
           body: |
             ### Terraform-Check (version: ${{ steps.terraform-version.outputs.TERRAFORM_VERSION }}): ${{ steps.fmt.outcome == 'success' && steps.init.outcome == 'success' && steps.validate.outcome == 'success' && '✅' || '❌' }}
-            
+
             <details><summary>🖌 Terraform Format: ${{ steps.fmt.outcome == 'success' && '✅' || '❌' }}</summary>
-            
+
             ```
             # Outputs:
             ${{ steps.fmt.outputs.stdout }}
-            
+
             # Errors:
             ${{ steps.fmt.outputs.stderr }}
             ```
-            
+
             </details>
-            
+
             <details><summary>⚙️ Terraform Init: ${{ steps.init.outcome == 'success' && '✅' || '❌' }}</summary>
-            
+
             ```
             # Outputs:
             ${{ steps.init.outputs.stdout }}
-            
+
             # Errors:
             ${{ steps.init.outputs.stderr }}
             ```
             </details>
-            
+
             <details><summary>🤖 Terraform Validate: ${{ steps.validate.outcome == 'success' && '✅' || '❌' }}</summary>
-            
+
             ```
             # Outputs:
             ${{ steps.validate.outputs.stdout }}
-            
+
             # Errors:
             ${{ steps.validate.outputs.stderr }}
             ```
-            
+
             </details>
       - name: Fail on error
         if: ${{
@@ -175,7 +175,7 @@ jobs:
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
+          comment-author: "github-actions[bot]"
           body-includes: |
             Commitlint-Check
       - name: Create or update commitlint comment on failure
@@ -188,13 +188,13 @@ jobs:
           body: |
             ### Commitlint-Check
             Thanks for your contribution :heart:
-            
+
             Unfortunately, [commitlint](https://commitlint.js.org) has detected that this PR has one ore more commit messages that do not follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :scream_cat:
-            
+
             ```
             ${{ env.commitlint_output }}
             ```
-            
+
             Please update the commit messages accordingly.
           reactions: eyes
       - name: Create or update commitlint comment on success

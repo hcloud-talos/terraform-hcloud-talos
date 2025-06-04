@@ -5,6 +5,7 @@ This directory contains Packer configuration to build Talos OS images suitable f
 > [!TIP]
 > It's good practice to **always** create a `_packer/hcloud.auto.pkrvars.hcl` file to explicitly set the `talos_version`. This ensures the Packer build uses the exact Talos version you intend to deploy with Terraform, preventing potential mismatches if the default value in `talos-hcloud.pkr.hcl` is outdated or if you are using custom images from the Image Factory.
 > Your `hcloud.auto.pkrvars.hcl` would simply contain:
+>
 > ```hcl
 > # _packer/hcloud.auto.pkrvars.hcl
 > talos_version = "v1.7.0" # Replace with your desired Talos version
@@ -23,6 +24,7 @@ To build the standard Talos images (ARM and x86) without any custom extensions, 
 ```
 
 This script will:
+
 1. Check if Packer is installed.
 2. Prompt for your Hetzner Cloud API token (`HCLOUD_TOKEN`) if it's not set as an environment variable.
 3. Initialize Packer.
@@ -44,6 +46,7 @@ If you need to include additional system extensions in your Talos images (e.g., 
     ```shell
     curl -X POST --data-binary @schematic.yaml https://factory.talos.dev/schematics
     ```
+
     This command will return a JSON response containing the schematic ID.
 
 3.  **Get Custom Image URLs:**
@@ -63,6 +66,7 @@ If you need to include additional system extensions in your Talos images (e.g., 
     image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
     image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
     ```
+
     Replace the placeholders with your actual schematic ID and Talos version. Remember to also set the `talos_version` variable in this file, as recommended in the tip at the beginning of this document.
 
 5.  **Build the Images:**

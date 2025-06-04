@@ -6,25 +6,25 @@
 - **fix**: Changes which patch a bug in the codebase.
 - **feat**: Changes which introduce a new feature to the codebase.
 - **build**: Changes which affect the build system or external dependencies.
-    - **scopes**:
-        - **gradle**: Changes which affect the Gradle build system.
-        - **yarn**: Changes which affect the Yarn build system.
+  - **scopes**:
+    - **gradle**: Changes which affect the Gradle build system.
+    - **yarn**: Changes which affect the Yarn build system.
 - **chore**: Changes which are not user-facing, such as IntelliJ configuration files, gitignore, other repo configs,
   updating dependencies, copyrights or other non-code changes.
-    - **scopes**:
-        - **project**: Changes which affect project configuration files.
-        - **deps**: Changes which update dependencies.
+  - **scopes**:
+    - **project**: Changes which affect project configuration files.
+    - **deps**: Changes which update dependencies.
 - **style**: Changes which do not affect code logic, such as whitespaces, formatting, missing semicolons etc.
 - **test**: Changes which add missing tests or fix existing ones.
 - **docs**: Changes which affect documentation.
-    - **scopes**:
-        - **business**: Changes which update or add business documentation.
-        - **technical**: Changes which update or add technical documentation.
-        - **readme**: Changes which update or add the README file.
+  - **scopes**:
+    - **business**: Changes which update or add business documentation.
+    - **technical**: Changes which update or add technical documentation.
+    - **readme**: Changes which update or add the README file.
 - **perf**: Changes which improve performance.
 - **ci**: Changes which affect CI configuration files and scripts.
-    - **scopes**:
-        - **github-actions**: Changes which affect GitHub Actions configuration files.
+  - **scopes**:
+    - **github-actions**: Changes which affect GitHub Actions configuration files.
 - **revert**: Changes which revert a previous commit.
 - **wip**: Changes which are work in progress.
 
