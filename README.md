@@ -263,6 +263,25 @@ kernel_modules_to_load = [
 ]
 ```
 
+## Upgrading Kubernetes
+
+The `kubernetes_version` variable in this Terraform module is used for the *initial deployment* of your Kubernetes cluster.
+It does **not** trigger in-place Kubernetes version upgrades on existing nodes.
+
+To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` command.
+
+**Important Considerations for `talosctl` commands:**
+
+* **Endpoint Resolution:** When running `talosctl` commands from outside your cluster (e.g., from your local machine),
+  you might encounter issues resolving internal hostnames like `kube.cluster.local`.
+  This hostname is primarily for internal cluster communication.
+* **Using `--endpoint`:** To ensure reliable connectivity for `talosctl` operations (including `upgrade-k8s`,
+  `version`, etc.), always specify the publicly accessible endpoint of your cluster using the `--endpoint` flag.
+  This should be the `cluster_api_host` you configured,
+  or the public IP address of your Floating IP/first control plane node.
+
+Refer to the [official Talos documentation on upgrading Kubernetes](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/) for detailed steps and best practices.
+
 ## Known Limitations
 
 - Changes in the `user_data` (e.g. `talos_machine_configuration`) and `image` (e.g. version upgrades with `packer`) will
