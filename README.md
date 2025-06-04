@@ -22,12 +22,12 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ## Goals 🚀
 
 | Goals                                                              | Status | Description                                                                                                                                                                                           |
-| ------------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Production ready                                                   | ✅     | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.**   |
-| Use private networks for the internal communication of the cluster | ✅     | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                              |
-| Secure API Exposure                                                | ✅     | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed. |
-| Possibility to change all CIDRs of the networks                    | ⁉️     | Needs to be tested.                                                                                                                                                                                   |
-| Configure the Cluster optimally to run in the Hetzner Cloud        | ✅     | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                  |
+|--------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Production ready                                                   | ✅      | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.**   |
+| Use private networks for the internal communication of the cluster | ✅      | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                              |
+| Secure API Exposure                                                | ✅      | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed. |
+| Possibility to change all CIDRs of the networks                    | ✅      | All network CIDRs (network, node, pod, service) can be customized.                                                                                                                                    |
+| Configure the Cluster optimally to run in the Hetzner Cloud        | ✅      | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                  |
 
 ## Information about the Module
 
@@ -49,6 +49,9 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
     - The public IP of a specific control plane node (less recommended for multi-node control planes).
   - The generated `kubeconfig` and `talosconfig` will use this hostname
     if `output_mode_config_cluster_endpoint = "cluster_endpoint"`.
+  - **Note:** When using `talosctl` from outside the cluster, ensure you use the publicly resolvable endpoint (e.g.,
+    `cluster_api_host` or the Floating IP) with the `--endpoint` flag, as internal hostnames like
+    `kube.[cluster_domain]` are not externally resolvable.
 - **Internal API Endpoint:**
   - For internal communication _between cluster nodes_, Talos often uses the hostname `kube.[cluster_domain]` (
     e.g., `kube.cluster.local`).
@@ -141,7 +144,7 @@ Use the module as shown in the following working minimal example:
 
 ```hcl
 module "talos" {
-  source  = "hcloud-talos/talos/hcloud"
+  source = "hcloud-talos/talos/hcloud"
   # Find the latest version on the Terraform Registry:
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
@@ -182,8 +185,8 @@ module "talos" {
   cluster_domain   = "cluster.dummy.com.local"
   cluster_api_host = "kube.dummy.com"
 
-  firewall_use_current_ip   = false
-  firewall_kube_api_source  = ["your-ip"]
+  firewall_use_current_ip = false
+  firewall_kube_api_source = ["your-ip"]
   firewall_talos_api_source = ["your-ip"]
 
   datacenter_name = "fsn1-dc14"
@@ -279,6 +282,10 @@ To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` comm
   `version`, etc.), always specify the publicly accessible endpoint of your cluster using the `--endpoint` flag.
   This should be the `cluster_api_host` you configured,
   or the public IP address of your Floating IP/first control plane node.
+- **Firewall Access:**
+  Ensure your firewall rules (configured via `firewall_use_current_ip` or `firewall_talos_api_source`)
+  allow access to the Talos API port (default 50000) on your control plane nodes from where you are running `talosctl`.
+  Connectivity issues (e.g., `i/o timeout`) can occur if this port is blocked.
 
 Refer to the [official Talos documentation on upgrading Kubernetes](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/) for detailed steps and best practices.
 
