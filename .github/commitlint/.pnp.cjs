@@ -30,6 +30,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@commitlint/cli", "npm:19.8.1"],\
           ["@commitlint/config-conventional", "npm:19.8.1"],\
+          ["prettier", "npm:3.5.3"],\
           ["root-workspace-0b6124", "workspace:."]\
         ],\
         "linkType": "SOFT"\
@@ -965,6 +966,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["prettier", [\
+      ["npm:3.5.3", {\
+        "packageLocation": "./.yarn/unplugged/prettier-npm-3.5.3-787132ce04/node_modules/prettier/",\
+        "packageDependencies": [\
+          ["prettier", "npm:3.5.3"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["punycode", [\
       ["npm:2.3.1", {\
         "packageLocation": "./.yarn/cache/punycode-npm-2.3.1-97543c420d-febdc4362b.zip/node_modules/punycode/",\
@@ -1014,6 +1024,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@commitlint/cli", "npm:19.8.1"],\
           ["@commitlint/config-conventional", "npm:19.8.1"],\
+          ["prettier", "npm:3.5.3"],\
           ["root-workspace-0b6124", "workspace:."]\
         ],\
         "linkType": "SOFT"\
