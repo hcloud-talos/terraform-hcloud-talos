@@ -8,82 +8,84 @@ data "helm_template" "cilium_default" {
   version      = var.cilium_version
   kube_version = var.kubernetes_version
 
-  set {
-    name  = "operator.replicas"
-    value = var.control_plane_count > 1 ? 2 : 1
-  }
-  set {
-    name  = "ipam.mode"
-    value = "kubernetes"
-  }
-  set {
-    name  = "routingMode"
-    value = "native"
-  }
-  set {
-    name  = "ipv4NativeRoutingCIDR"
-    value = local.pod_ipv4_cidr
-  }
-  set {
-    name  = "kubeProxyReplacement"
-    value = "true"
-  }
-  set {
-    name  = "bpf.masquerade"
-    value = "false"
-  }
-  set {
-    name  = "loadBalancer.acceleration"
-    value = "native"
-  }
-  set {
-    name  = "encryption.enabled"
-    value = var.cilium_enable_encryption ? "true" : "false"
-  }
-  set {
-    name  = "encryption.type"
-    value = "wireguard"
-  }
-  set {
-    name  = "securityContext.capabilities.ciliumAgent"
-    value = "{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
-  }
-  set {
-    name  = "securityContext.capabilities.cleanCiliumState"
-    value = "{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
-  }
-  set {
-    name  = "cgroup.autoMount.enabled"
-    value = "false"
-  }
-  set {
-    name  = "cgroup.hostRoot"
-    value = "/sys/fs/cgroup"
-  }
-  set {
-    name  = "k8sServiceHost"
-    value = "127.0.0.1"
-  }
-  set {
-    name  = "k8sServicePort"
-    value = local.api_port_kube_prism
-  }
-  set {
-    name  = "hubble.enabled"
-    value = "false"
-  }
-  set {
-    name  = "prometheus.serviceMonitor.enabled"
-    value = var.cilium_enable_service_monitors ? "true" : "false"
-  }
-  set {
-    name  = "prometheus.serviceMonitor.trustCRDsExist"
-    value = var.cilium_enable_service_monitors ? "true" : "false"
-  }
-  set {
-    name  = "operator.prometheus.serviceMonitor.enabled"
-    value = var.cilium_enable_service_monitors ? "true" : "false"
-  }
+  set = [
+    {
+      name  = "operator.replicas"
+      value = var.control_plane_count > 1 ? 2 : 1
+    },
+    {
+      name  = "ipam.mode"
+      value = "kubernetes"
+    },
+    {
+      name  = "routingMode"
+      value = "native"
+    },
+    {
+      name  = "ipv4NativeRoutingCIDR"
+      value = local.pod_ipv4_cidr
+    },
+    {
+      name  = "kubeProxyReplacement"
+      value = "true"
+    },
+    {
+      name  = "bpf.masquerade"
+      value = "false"
+    },
+    {
+      name  = "loadBalancer.acceleration"
+      value = "native"
+    },
+    {
+      name  = "encryption.enabled"
+      value = var.cilium_enable_encryption ? "true" : "false"
+    },
+    {
+      name  = "encryption.type"
+      value = "wireguard"
+    },
+    {
+      name  = "securityContext.capabilities.ciliumAgent"
+      value = "{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
+    },
+    {
+      name  = "securityContext.capabilities.cleanCiliumState"
+      value = "{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
+    },
+    {
+      name  = "cgroup.autoMount.enabled"
+      value = "false"
+    },
+    {
+      name  = "cgroup.hostRoot"
+      value = "/sys/fs/cgroup"
+    },
+    {
+      name  = "k8sServiceHost"
+      value = "127.0.0.1"
+    },
+    {
+      name  = "k8sServicePort"
+      value = local.api_port_kube_prism
+    },
+    {
+      name  = "hubble.enabled"
+      value = "false"
+    },
+    {
+      name  = "prometheus.serviceMonitor.enabled"
+      value = var.cilium_enable_service_monitors ? "true" : "false"
+    },
+    {
+      name  = "prometheus.serviceMonitor.trustCRDsExist"
+      value = var.cilium_enable_service_monitors ? "true" : "false"
+    },
+    {
+      name  = "operator.prometheus.serviceMonitor.enabled"
+      value = var.cilium_enable_service_monitors ? "true" : "false"
+    }
+  ]
 }
 
 data "helm_template" "cilium_from_values" {

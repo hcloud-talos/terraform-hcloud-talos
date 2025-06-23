@@ -7,15 +7,16 @@ data "helm_template" "hcloud_ccm" {
   version      = var.hcloud_ccm_version
   kube_version = var.kubernetes_version
 
-  set {
-    name  = "networking.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "networking.clusterCIDR"
-    value = local.pod_ipv4_cidr
-  }
+  set = [
+    {
+      name  = "networking.enabled"
+      value = "true"
+    },
+    {
+      name  = "networking.clusterCIDR"
+      value = local.pod_ipv4_cidr
+    }
+  ]
 }
 
 data "kubectl_file_documents" "hcloud_ccm" {
