@@ -19,7 +19,7 @@ terraform {
 
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2"
+      version = "~> 3"
     }
 
     kubectl = {
@@ -39,7 +39,7 @@ provider "hcloud" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = local.kubeconfig_data.host
     client_certificate     = local.kubeconfig_data.client_certificate
     client_key             = local.kubeconfig_data.client_key
