@@ -32,4 +32,4 @@ jobs:
         with:
           semantic_version: 24.2.7
           extra_plugins: |
-            - conventional-changelog-conventionalcommits@9.0.0
+            - conventional-changelog-conventionalcommits@9.1.0
