@@ -9,7 +9,7 @@
 #}
 
 locals {
-  talos_health_endpoint = var.enable_ipv6_only ? "https://${local.control_plane_public_ipv6_list[0]}1:${local.api_port_k8s}": "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}"
+  talos_health_endpoint = var.enable_ipv6_only ? "https://[${local.control_plane_public_ipv6_list[0]}1]:${local.api_port_k8s}": "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}"
 }
 
 data "http" "talos_health" {
