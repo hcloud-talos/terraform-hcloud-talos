@@ -154,7 +154,7 @@ variable "ipv4_nameservers" {
 
 variable "ipv6_nameservers" {
   type = list(string)
-  default = ["2001:4860:4860::8888", "2001:4860:4860::8844"]
+  default = ["2a00:1098:2b::1", "2a00:1098:2c::1", "2a01:4f8:c2c:123f::1"] # https://nat64.net/ DNS64 Servers
 }
 
 variable "network_ipv4_cidr" {
