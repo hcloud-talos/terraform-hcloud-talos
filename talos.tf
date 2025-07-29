@@ -121,8 +121,8 @@ data "talos_machine_configuration" "dummy_worker" {
 resource "talos_machine_bootstrap" "this" {
   count                = var.control_plane_count > 0 ? 1 : 0
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint             = local.control_plane_public_ipv4_list[0]
-  node                 = local.control_plane_public_ipv4_list[0]
+  endpoint             = var.enable_ipv6_only? "${local.control_plane_public_ipv6_list[0]}1" : local.control_plane_public_ipv4_list[0]
+  node                 = var.enable_ipv6_only? "${local.control_plane_public_ipv6_list[0]}1" : local.control_plane_public_ipv4_list[0]
   depends_on = [
     hcloud_server.control_planes
   ]
@@ -152,7 +152,7 @@ data "talos_client_configuration" "this" {
 resource "talos_cluster_kubeconfig" "this" {
   count                = var.control_plane_count > 0 ? 1 : 0
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.control_plane_public_ipv4_list[0]
+  node                 = var.enable_ipv6_only ? "${local.control_plane_public_ipv6_list[0]}1" : local.control_plane_public_ipv4_list[0]
   depends_on = [
     talos_machine_bootstrap.this
   ]

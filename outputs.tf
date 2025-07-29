@@ -34,6 +34,11 @@ output "public_ipv4_list" {
   value       = local.control_plane_public_ipv4_list
 }
 
+output "public_ipv6_list" {
+  description = "List of public IPv4 addresses of all control plane nodes"
+  value       = local.control_plane_public_ipv6_list
+}
+
 output "hetzner_network_id" {
   description = "Network ID of the network created at cluster creation"
   value       = hcloud_network.this.id

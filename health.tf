@@ -8,12 +8,16 @@
 #  worker_nodes         = local.worker_private_ipv4_list
 #}
 
+locals {
+  talos_health_endpoint = var.enable_ipv6_only ? "https://${local.control_plane_public_ipv6_list[0]}1:${local.api_port_k8s}": "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}"
+}
+
 data "http" "talos_health" {
   count    = var.control_plane_count > 0 ? 1 : 0
-  url      = "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}/version"
+  url      = "${local.talos_health_endpoint}/version"
   insecure = true
   retry {
-    attempts     = 60
+    attempts     = 1
     min_delay_ms = 5000
     max_delay_ms = 5000
   }

@@ -136,6 +136,11 @@ variable "enable_ipv6" {
   EOF
 }
 
+variable "enable_ipv6_only" {
+  type = bool
+  default = false
+}
+
 variable "enable_kube_span" {
   type        = bool
   default     = false
