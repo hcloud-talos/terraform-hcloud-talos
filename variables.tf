@@ -147,6 +147,16 @@ variable "enable_kube_span" {
   description = "If true, the KubeSpan Feature (with \"Kubernetes registry\" mode) will be enabled."
 }
 
+variable "ipv4_nameservers" {
+  type = list(string)
+  default = ["4.4.4.4", "8.8.8.8"]
+}
+
+variable "ipv6_nameservers" {
+  type = list(string)
+  default = ["2001:4860:4860::8888", "2001:4860:4860::8844"]
+}
+
 variable "network_ipv4_cidr" {
   description = "The main network cidr that all subnets will be created upon."
   type        = string
