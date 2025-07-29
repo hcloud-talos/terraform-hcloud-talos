@@ -171,7 +171,7 @@ locals {
   )
 
   kubeconfig_data = {
-    host                   = "https://${local.best_public_ipv4}:${local.api_port_k8s}"
+    host                   = var.enable_ipv6_only ? local.talos_health_endpoint : "https://${local.best_public_ipv4}:${local.api_port_k8s}"
     cluster_name           = var.cluster_name
     cluster_ca_certificate = var.control_plane_count > 0 ? base64decode(talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.ca_certificate) : tls_self_signed_cert.dummy_ca[0].cert_pem
     client_certificate     = var.control_plane_count > 0 ? base64decode(talos_cluster_kubeconfig.this[0].kubernetes_client_configuration.client_certificate) : tls_locally_signed_cert.dummy_issuer[0].cert_pem
