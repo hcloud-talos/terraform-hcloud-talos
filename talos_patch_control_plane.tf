@@ -37,6 +37,11 @@ locals {
             ]
           }
         }
+        nodeLabels = var.worker_count <= 0 ? {
+          "node.kubernetes.io/exclude-from-external-load-balancers" = {
+            "$patch" = "delete"
+          }
+        } : {}
         network = {
           interfaces = [
             {
