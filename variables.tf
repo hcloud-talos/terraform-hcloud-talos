@@ -136,10 +136,25 @@ variable "enable_ipv6" {
   EOF
 }
 
+variable "enable_ipv6_only" {
+  type = bool
+  default = false
+}
+
 variable "enable_kube_span" {
   type        = bool
   default     = false
   description = "If true, the KubeSpan Feature (with \"Kubernetes registry\" mode) will be enabled."
+}
+
+variable "ipv4_nameservers" {
+  type = list(string)
+  default = ["4.4.4.4", "8.8.8.8"]
+}
+
+variable "ipv6_nameservers" {
+  type = list(string)
+  default = ["2a00:1098:2b::1", "2a00:1098:2c::1", "2a01:4f8:c2c:123f::1"] # https://nat64.net/ DNS64 Servers
 }
 
 variable "network_ipv4_cidr" {
