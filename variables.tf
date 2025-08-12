@@ -281,7 +281,7 @@ variable "worker_nodes" {
     error_message = "Invalid worker server type in worker_nodes."
   }
   validation {
-    condition = length(var.worker_nodes) <= 99
+    condition     = length(var.worker_nodes) <= 99
     error_message = "Total number of worker nodes must be less than 100."
   }
 }
