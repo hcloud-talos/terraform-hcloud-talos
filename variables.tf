@@ -218,7 +218,7 @@ variable "control_plane_server_type" {
 variable "worker_count" {
   type        = number
   default     = 0
-  description = "The number of worker nodes to create. Maximum 99."
+  description = "DEPRECATED: Use worker_nodes instead. The number of worker nodes to create. Maximum 99."
   validation {
     condition     = var.worker_count <= 99
     error_message = "The number of worker nodes must be less than 100."
@@ -229,7 +229,7 @@ variable "worker_server_type" {
   type        = string
   default     = "cx11"
   description = <<EOF
-    The server type to use for the worker nodes.
+    DEPRECATED: Use worker_nodes instead. The server type to use for the worker nodes.
     Possible values: cx11, cx21, cx22, cx31, cx32, cx41, cx42, cx51, cx52, cpx11, cpx21, cpx31,
     cpx41, cpx51, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63
   EOF
@@ -241,6 +241,48 @@ variable "worker_server_type" {
       "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63"
     ], var.worker_server_type)
     error_message = "Invalid worker server type."
+  }
+}
+
+variable "worker_nodes" {
+  type = list(object({
+    type   = string
+    labels = optional(map(string), {})
+  }))
+  default     = []
+  description = <<EOF
+    List of worker node configurations. Each object defines a group of worker nodes with the same configuration.
+    - type: Server type (cx11, cx21, cx22, cx31, cx32, cx41, cx42, cx51, cx52, cpx11, cpx21, cpx31, cpx41, cpx51, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63)
+    - count: Number of nodes of this type
+    - labels: Map of Kubernetes labels to apply to these nodes (default: {})
+    
+    Example:
+    worker_nodes = [
+      {
+        type  = "cx22"
+      },
+      {
+        type   = "cax22"
+        labels = {
+          "node.kubernetes.io/arch" = "arm64"
+        }
+      }
+    ]
+  EOF
+  validation {
+    condition = alltrue([
+      for node in var.worker_nodes : contains([
+        "cx11", "cx21", "cx22", "cx31", "cx32", "cx41", "cx42", "cx51", "cx52",
+        "cpx11", "cpx21", "cpx31", "cpx41", "cpx51",
+        "cax11", "cax21", "cax31", "cax41",
+        "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63"
+      ], node.type)
+    ])
+    error_message = "Invalid worker server type in worker_nodes."
+  }
+  validation {
+    condition = length(var.worker_nodes) <= 99
+    error_message = "Total number of worker nodes must be less than 100."
   }
 }
 
