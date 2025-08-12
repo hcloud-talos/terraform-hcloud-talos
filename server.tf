@@ -22,36 +22,36 @@ locals {
 
   # Calculate total worker count from both old and new variables
   legacy_worker_count = var.worker_count
-  new_worker_count = length(var.worker_nodes)
-  total_worker_count = local.legacy_worker_count + local.new_worker_count
-  
+  new_worker_count    = length(var.worker_nodes)
+  total_worker_count  = local.legacy_worker_count + local.new_worker_count
+
   # Generate worker node configurations from both old and new variables
   legacy_workers = var.worker_count > 0 ? [
     for i in range(var.worker_count) : {
-      index              = i
-      name               = "${local.cluster_prefix}worker-${i + 1}"
-      server_type        = var.worker_server_type
+      index       = i
+      name        = "${local.cluster_prefix}worker-${i + 1}"
+      server_type = var.worker_server_type
       image_id = (
         substr(var.worker_server_type, 0, 3) == "cax" ?
         (var.disable_arm ? null : data.hcloud_image.arm[0].id) :
         (var.disable_x86 ? null : data.hcloud_image.x86[0].id)
       )
-      ipv4_public        = local.worker_public_ipv4_list[i]
-      ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
-      ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
-      ipv4_private       = local.worker_private_ipv4_list[i]
-      labels             = {}
-      node_group_index   = 0
+      ipv4_public         = local.worker_public_ipv4_list[i]
+      ipv6_public         = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
+      ipv6_public_subnet  = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
+      ipv4_private        = local.worker_private_ipv4_list[i]
+      labels              = {}
+      node_group_index    = 0
       node_in_group_index = i
     }
   ] : []
-  
+
 
   new_workers = [
     for i, worker in var.worker_nodes : {
-      index              = local.legacy_worker_count + i
-      name               = "${local.cluster_prefix}worker-${local.legacy_worker_count + i + 1}"
-      server_type        = worker.type
+      index       = local.legacy_worker_count + i
+      name        = "${local.cluster_prefix}worker-${local.legacy_worker_count + i + 1}"
+      server_type = worker.type
       image_id = (
         substr(worker.type, 0, 3) == "cax" ?
         (var.disable_arm ? null : data.hcloud_image.arm[0].id) :
@@ -64,7 +64,7 @@ locals {
       labels             = worker.labels
     }
   ]
-  
+
   # Combine legacy and new workers
   workers = concat(local.legacy_workers, local.new_workers)
 
@@ -149,8 +149,8 @@ resource "hcloud_server" "workers_legacy" {
   placement_group_id = hcloud_placement_group.worker.id
 
   labels = merge({
-    "cluster" = var.cluster_name,
-    "role"    = "worker"
+    "cluster"     = var.cluster_name,
+    "role"        = "worker"
     "server_type" = each.value.server_type
   }, each.value.labels)
 
@@ -197,8 +197,8 @@ resource "hcloud_server" "workers_new" {
   placement_group_id = hcloud_placement_group.worker.id
 
   labels = merge({
-    "cluster" = var.cluster_name,
-    "role"    = "worker"
+    "cluster"     = var.cluster_name,
+    "role"        = "worker"
     "server_type" = each.value.server_type
   }, each.value.labels)
 
