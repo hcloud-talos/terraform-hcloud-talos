@@ -204,6 +204,56 @@ module "talos" {
 }
 ```
 
+### Mixed Worker Node Types
+
+For more advanced use cases, you can define different types of worker nodes with individual configurations using the `worker_nodes` variable:
+
+```hcl
+module "talos" {
+  source  = "hcloud-talos/talos/hcloud"
+  version = "<latest-version>"
+
+  talos_version      = "v1.10.3"
+  kubernetes_version = "1.30.3"
+
+  hcloud_token            = "your-hcloud-token"
+  firewall_use_current_ip = true
+
+  cluster_name    = "mixed-cluster"
+  datacenter_name = "fsn1-dc14"
+
+  control_plane_count       = 1
+  control_plane_server_type = "cx22"
+
+  # Define different worker node types
+  worker_nodes = [
+    # Standard x86 workers
+    {
+      type  = "cx22"
+      labels = {
+        "node.kubernetes.io/instance-type" = "cx22"
+      }
+    },
+    # ARM workers for specific workloads
+    {
+      type   = "cax22"
+      labels = {
+        "node.kubernetes.io/arch"          = "arm64"
+        "affinity.example.com" = "example"
+      }
+    }
+  ]
+}
+```
+
+> [!NOTE]
+> The `worker_nodes` variable allows you to:
+> - Mix different server types (x86 and ARM)
+> - Add custom labels to nodes
+> - Control the count of each node type independently
+> 
+> The legacy `worker_count` and `worker_server_type` variables are still supported for backward compatibility but are deprecated in favor of `worker_nodes`.
+
 You need to pipe the outputs of the module:
 
 ```hcl
