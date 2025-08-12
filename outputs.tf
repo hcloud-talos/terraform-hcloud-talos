@@ -10,6 +10,7 @@ output "kubeconfig" {
 
 output "talos_client_configuration" {
   value = data.talos_client_configuration.this
+  sensitive = true
 }
 
 output "talos_machine_configurations_control_plane" {
@@ -40,8 +41,9 @@ output "hetzner_network_id" {
 
 output "talos_worker_ids" {
   description = "Server IDs of the hetzner talos workers machines"
-  value = {
-    for id, server in hcloud_server.workers : id => server.id
-  }
+  value = merge(
+    { for id, server in hcloud_server.workers_new : id => server.id},
+    { for id, server in hcloud_server.workers_legacy : id => server.id}
+  )
 }
 

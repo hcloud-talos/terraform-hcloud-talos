@@ -103,20 +103,7 @@ data "talos_machine_configuration" "dummy_control_plane" {
   examples           = false
 }
 
-# Dummy configuration generated when worker_count is 0 for debugging purposes
-# tflint-ignore: terraform_unused_declarations
-data "talos_machine_configuration" "dummy_worker" {
-  count              = var.worker_count == 0 ? 1 : 0
-  talos_version      = var.talos_version
-  cluster_name       = var.cluster_name
-  cluster_endpoint   = local.cluster_endpoint_url_internal # Uses dummy endpoint when count is 0
-  kubernetes_version = var.kubernetes_version
-  machine_type       = "worker"
-  machine_secrets    = talos_machine_secrets.this.machine_secrets
-  config_patches     = concat([yamlencode(local.worker_yaml["dummy-worker-0"])], var.talos_worker_extra_config_patches) # Use dummy yaml + extra patches
-  docs               = false
-  examples           = false
-}
+
 
 resource "talos_machine_bootstrap" "this" {
   count                = var.control_plane_count > 0 ? 1 : 0

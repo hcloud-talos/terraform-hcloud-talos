@@ -84,7 +84,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv4" {
-  count         = var.worker_count
+  count         = local.total_worker_count
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv4"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv4"
@@ -97,7 +97,7 @@ resource "hcloud_primary_ip" "worker_ipv4" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv6" {
-  count         = var.enable_ipv6 ? var.worker_count > 0 ? var.worker_count : 1 : 0
+  count         = var.enable_ipv6 ? local.total_worker_count > 0 ? local.total_worker_count : 1 : 0
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv6"
   datacenter    = data.hcloud_datacenter.this.name
   type          = "ipv6"
@@ -139,6 +139,6 @@ locals {
     for index in range(var.control_plane_count > 0 ? var.control_plane_count : 1) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 101)
   ]
   worker_private_ipv4_list = [
-    for index in range(var.worker_count > 0 ? var.worker_count : 1) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 201)
+    for index in range(local.total_worker_count > 0 ? local.total_worker_count : 1) : cidrhost(hcloud_network_subnet.nodes.ip_range, index + 201)
   ]
 }
