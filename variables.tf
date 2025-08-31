@@ -248,6 +248,11 @@ variable "worker_nodes" {
   type = list(object({
     type   = string
     labels = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
   }))
   default     = []
   description = <<EOF
@@ -255,6 +260,7 @@ variable "worker_nodes" {
     - type: Server type (cx11, cx21, cx22, cx31, cx32, cx41, cx42, cx51, cx52, cpx11, cpx21, cpx31, cpx41, cpx51, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63)
     - count: Number of nodes of this type
     - labels: Map of Kubernetes labels to apply to these nodes (default: {})
+    - taints: List of Kubernetes taints to apply to these nodes (default: [])
     
     Example:
     worker_nodes = [
@@ -266,6 +272,13 @@ variable "worker_nodes" {
         labels = {
           "node.kubernetes.io/arch" = "arm64"
         }
+        taints = [
+          {
+            key    = "workload-type"
+            value  = "gpu"
+            effect = "NoSchedule"
+          }
+        ]
       }
     ]
   EOF

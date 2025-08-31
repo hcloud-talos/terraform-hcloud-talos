@@ -41,6 +41,7 @@ locals {
       ipv6_public_subnet  = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
       ipv4_private        = local.worker_private_ipv4_list[i]
       labels              = {}
+      taints              = []
       node_group_index    = 0
       node_in_group_index = i
     }
@@ -62,6 +63,7 @@ locals {
       ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[local.legacy_worker_count + i] : null
       ipv4_private       = local.worker_private_ipv4_list[local.legacy_worker_count + i]
       labels             = worker.labels
+      taints             = worker.taints
     }
   ]
 
