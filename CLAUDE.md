@@ -88,6 +88,15 @@ terraform init && terraform validate
 pre-commit run --all-files
 ```
 
+### Testing Directory (.demo/)
+The `.demo/` directory contains a test deployment configuration that:
+- Uses the parent module (`source = "../"`)
+- Configures a minimal single-node ARM64 cluster (CAX11)
+- Integrates with 1Password for token management
+- Contains its own Packer build artifacts for testing
+- Has `.gitignore` set to exclude all generated files
+- Provides a working example of module usage
+
 ### Pre-commit Hooks
 - terraform_fmt
 - terraform_docs
