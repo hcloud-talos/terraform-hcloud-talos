@@ -4,112 +4,132 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Terraform module that creates production-ready Kubernetes clusters using Talos OS on Hetzner Cloud infrastructure. It deploys secure, immutable clusters with comprehensive networking, security, and high availability features.
+Terraform module for production-ready Kubernetes clusters using Talos OS on Hetzner Cloud infrastructure. Features immutable infrastructure, HA control plane, Cilium CNI, and dual CCM setup (Hetzner + Talos).
 
-## Architecture
-
-### Core Components
-- **Control Plane**: 1, 3, or 5 control plane nodes (odd numbers only) running Talos OS
-- **Worker Nodes**: Configurable number of worker nodes
-- **Networking**: Private Hetzner Cloud networks with public API access via firewall rules
-- **CNI**: Cilium for advanced networking and security features
-- **Cloud Integration**: Hetzner Cloud Controller Manager for native cloud features
-
-### Key Files Structure
+## Key Files Structure
 - `terraform.tf` - Provider configurations (Hetzner Cloud, Talos, Helm, kubectl)
-- `variables.tf` - Comprehensive variable definitions (13k+ lines)
-- `server.tf` - Server provisioning for control plane and worker nodes
-- `network.tf` - VPC, subnets, floating IPs setup
-- `firewall.tf` - Security rules and firewall configuration
-- `talos.tf` - Talos OS configuration and bootstrapping
-- `talos_patch_*.tf` - Node-specific Talos configurations
+- `variables.tf` - Variable definitions (13k+ lines)
+- `server.tf` - Server provisioning with ARM/x86 image selection
+- `network.tf` - VPC, subnets, floating IPs, alias IP setup
+- `firewall.tf` - Security rules with IP auto-detection
+- `talos.tf` - Talos OS configuration with KubePrism
+- `talos_patch_*.tf` - Node-specific patches for control plane and workers
 - `manifest_*.tf` - Kubernetes manifests for Cilium and Hcloud CCM
+- `placement_groups.tf` - Spread topology for HA
+- `health.tf` - Cluster health monitoring
+- `outputs.tf` - Exports kubeconfig, talosconfig, cluster metadata
 
 ## Development Commands
 
-### Essential Commands
 ```bash
-# Format Terraform code
+# Format and validate
 terraform fmt -recursive
-
-# Validate configuration
 terraform init
 terraform validate
 
-# Build Talos images (required before first deployment)
+# Build Talos images (REQUIRED before first deployment)
 ./_packer/create.sh
 
-# Install and run pre-commit hooks
+# Quality checks
 pre-commit install
+pre-commit run --all-files
+
+# Deploy
+terraform plan
+terraform apply
+
+# Export configs
+terraform output --raw kubeconfig > ./kubeconfig
+terraform output --raw talosconfig > ./talosconfig
+
+# Access cluster
+export KUBECONFIG=./kubeconfig
+kubectl get nodes
+
+# Talos management (use public endpoint)
+talosctl --talosconfig ./talosconfig --endpoint <public-ip> version
+```
+
+## Configuration
+
+### Version Compatibility (CRITICAL)
+- `talos_version` must match between Packer and Terraform
+- `kubernetes_version` must be compatible with `talos_version`
+- `cilium_version` must be compatible with `kubernetes_version`
+- Terraform >= 1.8.0 required
+
+### Network Architecture
+- `network_ipv4_cidr`: 10.0.0.0/16 (main network)
+- `node_ipv4_cidr`: 10.0.1.0/24 (node subnet)
+- `pod_ipv4_cidr`: 10.0.16.0/20 (pod network)
+- `service_ipv4_cidr`: 10.0.8.0/21 (service network)
+- Alias IP: 10.0.1.100 (when `enable_alias_ip = true`)
+
+### Security Ports
+- 6443: Kubernetes API
+- 50000: Talos API
+- 7445: KubePrism (internal)
+
+### Key Variables
+- `enable_floating_ip` - Floating IP for control plane
+- `enable_alias_ip` - Alias IP for internal VIP
+- `firewall_use_current_ip` - Auto-detect current public IP
+- `firewall_kube_api_source` - Manual IP specification
+- `cilium_enable_encryption` - WireGuard encryption
+- `talos_control_plane_extra_config_patches` - Custom patches
+- `sysctls_extra_args` - Sysctl configurations
+- `kubelet_extra_args` - Kubelet customization
+
+## Testing & Quality
+
+```bash
+terraform fmt -recursive -check -diff
+terraform init && terraform validate
 pre-commit run --all-files
 ```
 
-### Packer Image Building
-Located in `_packer/` directory. Must be run before first Terraform deployment:
-```bash
-# Build Talos OS images for both ARM64 and x86_64
-./_packer/create.sh
-```
-
-### Testing and Quality Assurance
-- **Terraform Validation**: `terraform init && terraform validate`
-- **Security Scanning**: Checkov runs in CI, can be run locally if installed
-- **Code Formatting**: `terraform fmt -recursive` and Prettier
-- **Pre-commit Hooks**: Run automatically on commit, manually with `pre-commit run --all-files`
-
-## Configuration Management
-
-### Version Compatibility
-Critical version alignments required:
-- `talos_version` must match between Packer build and Terraform deployment
-- `kubernetes_version` must be compatible with `talos_version`
-- `cilium_version` must be compatible with `kubernetes_version`
-
-### Network Configuration
-All network CIDRs are customizable:
-- `network_ipv4_cidr` - Main network CIDR
-- `node_ipv4_cidr` - Node subnet CIDR
-- `pod_ipv4_cidr` - Pod network CIDR
-- `service_ipv4_cidr` - Service network CIDR
-
-### Security Configuration
-- Firewall rules restrict API access to specific IPs
-- `firewall_use_current_ip = true` automatically uses current public IP
-- Manual IP specification via `firewall_kube_api_source` and `firewall_talos_api_source`
-
-## Deployment Workflow
-
-1. **Image Building**: Run `_packer/create.sh` to build Talos OS images
-2. **Configuration**: Set required variables (hcloud_token, cluster_name, etc.)
-3. **Deployment**: Run `terraform plan` and `terraform apply`
-4. **Config Export**: Extract kubeconfig and talosconfig from Terraform outputs
-5. **Access**: Use kubectl and talosctl with exported configurations
-
-## CI/CD Integration
-
-### GitHub Actions Workflows
-- **dev-experience.yml**: Terraform validation on multiple versions (1.8.x, 1.9.x)
-- **checkov.yml**: Security scanning with SARIF output
-- **release.yml**: Automated semantic releases
-
-### Code Quality Tools
-- **Pre-commit hooks**: terraform_fmt, terraform_docs, terraform_tflint, terraform_checkov
-- **Conventional Commits**: Enforced via commitlint
-- **Semantic Release**: Automated versioning based on commit messages
+### Pre-commit Hooks
+- terraform_fmt
+- terraform_docs
+- terraform_tflint
+- terraform_checkov
 
 ## Important Notes
 
-### Cluster Upgrades
-- Kubernetes upgrades must be performed using `talosctl upgrade-k8s`, not by changing Terraform variables
-- Changes to `user_data` or `image` require node recreation
-- Always use publicly accessible endpoints when running talosctl from outside the cluster
+### Cluster Operations
+- **Upgrades**: Use `talosctl upgrade-k8s`, NOT Terraform variables
+- **Node changes**: `user_data` or `image` changes = node recreation
+- **Access**: Always use public endpoints for talosctl from outside
 
 ### Known Limitations
-- IPv6 dual stack not yet supported by Talos
-- KubeSpan may prevent cluster ready state in some configurations
-- Rate limiting issues with registry.k8s.io from some Hetzner IP ranges
+- IPv6 dual stack not supported by Talos
+- KubeSpan may prevent cluster ready state
+- Registry rate limiting from some Hetzner IPs
+- Health check disabled (issue #7967)
 
-### Multi-Architecture Support
-- Supports both ARM64 and x86_64 server types
-- Separate Packer builds create images for both architectures
-- Server type selection determines architecture (e.g., "cax11" for ARM64, "cx11" for x86_64)
+### Multi-Architecture
+- ARM64: CAX server types
+- x86_64: CX/CPX server types
+- Auto image selection based on server type
+- Disable via `disable_arm` or `disable_x86`
+
+### Debugging
+```bash
+# Health check
+curl -k https://<control-plane-ip>:6443/version
+
+# Talos logs
+talosctl --endpoint <public-ip> logs kubelet
+
+# Node diagnostics
+talosctl --endpoint <public-ip> health
+
+# Cilium status
+kubectl -n kube-system exec ds/cilium -- cilium status
+```
+
+## CI/CD
+- **dev-experience.yml**: Terraform validation (1.8.x, 1.9.x)
+- **checkov.yml**: Security scanning
+- **release.yml**: Semantic releases
+- **Commit format**: Conventional commits enforced
