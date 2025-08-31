@@ -10,6 +10,7 @@ locals {
     ipv6_public_subnet  = null                                # Fallback
     ipv4_private        = cidrhost(local.node_ipv4_cidr, 200) # Use a predictable dummy private IP
     labels              = {}
+    taints              = []
     node_group_index    = 0
     node_in_group_index = 0
   }] : []
@@ -29,20 +30,34 @@ locals {
           ]
         }
         certSANs = local.cert_SANs
-        kubelet = {
-          extraArgs = merge(
-            {
-              "cloud-provider"             = "external"
-              "rotate-server-certificates" = true
-            },
-            var.kubelet_extra_args
-          )
-          nodeIP = {
-            validSubnets = [
-              local.node_ipv4_cidr
-            ]
-          }
-        }
+        kubelet = merge(
+          {
+            extraArgs = merge(
+              {
+                "cloud-provider"             = "external"
+                "rotate-server-certificates" = true
+              },
+              var.kubelet_extra_args
+            )
+            nodeIP = {
+              validSubnets = [
+                local.node_ipv4_cidr
+              ]
+            }
+          },
+          # Add registerWithTaints if taints are defined
+          length(worker.taints) > 0 ? {
+            extraConfig = {
+              registerWithTaints = [
+                for taint in worker.taints : {
+                  key    = taint.key
+                  value  = taint.value
+                  effect = taint.effect
+                }
+              ]
+            }
+          } : {}
+        )
         network = {
           extraHostEntries = local.extra_host_entries
           kubespan = {
@@ -95,5 +110,4 @@ locals {
       }
     }
   }
-  value = ""
 }

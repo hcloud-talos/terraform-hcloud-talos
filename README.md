@@ -234,13 +234,20 @@ module "talos" {
         "node.kubernetes.io/instance-type" = "cx22"
       }
     },
-    # ARM workers for specific workloads
+    # ARM workers for specific workloads with taints
     {
       type   = "cax22"
       labels = {
         "node.kubernetes.io/arch"          = "arm64"
         "affinity.example.com" = "example"
       }
+      taints = [
+        {
+          key    = "arm64-only"
+          value  = "true"
+          effect = "NoSchedule"
+        }
+      ]
     }
   ]
 }
@@ -250,6 +257,7 @@ module "talos" {
 > The `worker_nodes` variable allows you to:
 > - Mix different server types (x86 and ARM)
 > - Add custom labels to nodes
+> - Apply taints for workload isolation
 > - Control the count of each node type independently
 > 
 > The legacy `worker_count` and `worker_server_type` variables are still supported for backward compatibility but are deprecated in favor of `worker_nodes`.
