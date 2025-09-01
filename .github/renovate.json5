@@ -18,6 +18,13 @@
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       automerge: true,
     },
+    {
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": true,
+      "automerge": true
+    }
   ],
   customManagers: [
     {
