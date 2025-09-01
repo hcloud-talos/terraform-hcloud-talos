@@ -149,7 +149,7 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  talos_version = "v1.10.3" # The version of talos features to use in generated machine configurations
+  talos_version = "v1.11.0" # The version of talos features to use in generated machine configurations
 
   hcloud_token            = "your-hcloud-token"
   # If true, the current IP address will be used as the source for the firewall rules.
@@ -175,7 +175,7 @@ module "talos" {
   version = "<latest-version>" # Replace with the latest version number
 
   # Use versions compatible with each other and supported by the module/Talos
-  talos_version      = "v1.10.3"
+  talos_version      = "v1.11.0"
   kubernetes_version = "1.30.3"
   cilium_version     = "1.16.2"
 
