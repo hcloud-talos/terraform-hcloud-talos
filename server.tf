@@ -140,7 +140,7 @@ resource "hcloud_server" "control_planes" {
   }
 }
 
-resource "hcloud_server" "workers_legacy" {
+resource "hcloud_server" "workers" {
   for_each           = { for worker in local.legacy_workers : worker.name => worker }
   datacenter         = data.hcloud_datacenter.this.name
   name               = each.value.name
