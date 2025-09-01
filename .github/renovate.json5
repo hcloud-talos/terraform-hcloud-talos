@@ -19,18 +19,16 @@
       automerge: true,
     },
     {
-      "matchDepTypes": [
-        "action"
-      ],
-      "pinDigests": true,
-      "automerge": true
-    }
+      matchDepTypes: ["action"],
+      pinDigests: true,
+      automerge: true,
+    },
   ],
   customManagers: [
     {
       description: "Update semantic-release in GitHub Action workflows",
       customType: "regex",
-      fileMatch: ["^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$"],
+      managerFilePatterns: ["/^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$/"],
       matchStrings: [
         "semantic_version\\s*:\\s*(\"|')?(?<currentValue>.+)(\"|'|(\\s+)|\\n|$)",
       ],
@@ -40,9 +38,9 @@
     {
       description: "Update conventional-changelog-conventionalcommits in GitHub Action workflows",
       customType: "regex",
-      fileMatch: ["^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$"],
+      managerFilePatterns: ["/^\\.github\\/(actions|workflows)\\/.+\\.ya?ml$/"],
       matchStrings: [
-        ".*(?<depName>conventional-changelog-conventionalcommits)@(?<currentValue>.+?)(\"|\'|(\\s+)|\\n|$)",
+        ".*(?<depName>conventional-changelog-conventionalcommits)@(?<currentValue>.+?)(\"|'|(\\s+)|\\n|$)",
       ],
       datasourceTemplate: "npm",
       depNameTemplate: "conventional-changelog-conventionalcommits",
@@ -50,7 +48,7 @@
     {
       description: "Update packer dependencies.",
       customType: "regex",
-      fileMatch: ["\\.pkr\\.hcl"],
+      managerFilePatterns: ["/\\.pkr\\.hcl/"],
       matchStrings: [
         'required_version[\\s]+=[\\s]+"=?(?<currentValue>\\S*)"',
         'source[\\s]+=[\\s]+"github.com/(?<depName>\\S*)"[\\s]+version[\\s]+=[\\s]+"(?<currentValue>\\S*)"',
