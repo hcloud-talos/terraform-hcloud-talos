@@ -9,7 +9,7 @@ terraform {
 
     talos = {
       source  = "siderolabs/talos"
-      version = ">= 0.1.2"
+      version = ">= 0.9.0"
     }
 
     http = {
