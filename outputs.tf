@@ -10,6 +10,7 @@ output "kubeconfig" {
 
 output "talos_client_configuration" {
   value = data.talos_client_configuration.this
+  sensitive = true
 }
 
 output "talos_machine_configurations_control_plane" {
@@ -31,6 +32,11 @@ output "kubeconfig_data" {
 output "public_ipv4_list" {
   description = "List of public IPv4 addresses of all control plane nodes"
   value       = local.control_plane_public_ipv4_list
+}
+
+output "public_ipv6_list" {
+  description = "List of public IPv4 addresses of all control plane nodes"
+  value       = local.control_plane_public_ipv6_list
 }
 
 output "hetzner_network_id" {

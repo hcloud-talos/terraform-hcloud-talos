@@ -31,9 +31,9 @@ locals {
     for i in range(var.control_plane_count) : {
       index              = i
       name               = "${local.cluster_prefix}control-plane-${i + 1}"
-      ipv4_public        = local.control_plane_public_ipv4_list[i],
-      ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i] : null
-      ipv6_public_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i] : null
+      ipv4_public        = var.enable_ipv6_only ? null :local.control_plane_public_ipv4_list[i],
+      ipv6_public        = var.enable_ipv6 ? "${local.control_plane_public_ipv6_list[i]}1" : null
+      ipv6_public_subnet = var.enable_ipv6 ? "${local.control_plane_public_ipv6_subnet_list[i]}1" : null
       ipv4_private       = local.control_plane_private_ipv4_list[i]
     }
   ]
@@ -41,8 +41,8 @@ locals {
     for i in range(var.worker_count) : {
       index              = i
       name               = "${local.cluster_prefix}worker-${i + 1}"
-      ipv4_public        = local.worker_public_ipv4_list[i],
-      ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i] : null
+      ipv4_public        = var.enable_ipv6_only ? null : local.worker_public_ipv4_list[i],
+      ipv6_public        = var.enable_ipv6 ? "${local.control_plane_public_ipv6_list[i]}1" : null
       ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i] : null
       ipv4_private       = local.worker_private_ipv4_list[i]
     }
@@ -82,8 +82,8 @@ resource "hcloud_server" "control_planes" {
   ]
 
   public_net {
-    ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.control_plane_ipv4[each.value.index].id
+    ipv4_enabled = var.enable_ipv6_only ? false : true
+    ipv4         = var.enable_ipv6_only ? null : hcloud_primary_ip.control_plane_ipv4[each.value.index].id
     ipv6_enabled = var.enable_ipv6
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[each.value.index].id : null
   }

@@ -1,4 +1,6 @@
 locals {
+  ipv4_nameservers = var.ipv4_nameservers
+  ipv6_nameservers = var.ipv6_nameservers
   # Define a dummy control plane entry for when count is 0
   dummy_control_planes = var.control_plane_count == 0 ? [{
     index              = 0
@@ -43,6 +45,7 @@ locals {
           }
         } : {}
         network = {
+          nameservers = var.enable_ipv6_only ? var.ipv6_nameservers : var.ipv4_nameservers
           interfaces = [
             {
               interface = "eth0"
