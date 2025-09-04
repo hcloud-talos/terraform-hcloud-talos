@@ -8,7 +8,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
       env:
         # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
         # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
@@ -24,7 +24,7 @@ runs:
     # Yarn dependencies cannot be cached until yarn is installed
     # WORKAROUND: https://github.com/actions/setup-node/issues/531
     - name: Extract cached dependencies
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
       with:
         cache: yarn
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
