@@ -84,6 +84,13 @@ data "helm_template" "cilium_default" {
     {
       name  = "operator.prometheus.serviceMonitor.enabled"
       value = var.cilium_enable_service_monitors ? "true" : "false"
+    },
+    { name  = "l7proxy.enabled"
+      value = "true"
+    },
+    {
+      name  = "gatewayAPI.enabled"
+      value = var.cilium_enable_gateway_api ? "true" : "false"
     }
   ]
 }
@@ -107,11 +114,26 @@ data "kubectl_file_documents" "cilium" {
   )
 }
 
+data "http" "gateway_api_crds" {
+  url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
+}
+
+data "kubectl_file_documents" "gateway_api_crds_yamls" {
+  content = data.http.gateway_api_crds.response_body
+}
+
+resource "kubectl_manifest" "gateway_api_crds" {
+  for_each   = var.cilium_enable_gateway_api ? data.kubectl_file_documents.gateway_api_crds_yamls.manifests : {}
+  yaml_body  = each.value
+  apply_only = true
+  depends_on = [data.http.talos_health]
+}
+
 resource "kubectl_manifest" "apply_cilium" {
   for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.cilium.manifests : {}
   yaml_body  = each.value
   apply_only = true
-  depends_on = [data.http.talos_health]
+  depends_on = [data.http.talos_health, resource.kubectl_manifest.gateway_api_crds]
 }
 
 
