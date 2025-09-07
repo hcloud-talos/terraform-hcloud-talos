@@ -1,3 +1,3 @@
 [submodule ".claude"]
 	path = .claude
-	url = git@github.com:mrclrchtr/.claude.git
+	url = https://github.com/mrclrchtr/.claude.git
