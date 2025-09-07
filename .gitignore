@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/helm,linux,macos,windows,intellij,terraform
-# Edit at https://www.toptal.com/developers/gitignore?templates=helm,linux,macos,windows,intellij,terraform
+# Created by https://www.toptal.com/developers/gitignore/api/helm,linux,macos,windows,intellij,terraform,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=helm,linux,macos,windows,intellij,terraform,visualstudiocode
 
 ### Helm ###
 # Chart dependencies
@@ -202,6 +202,25 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -228,7 +247,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/helm,linux,macos,windows,intellij,terraform
+# End of https://www.toptal.com/developers/gitignore/api/helm,linux,macos,windows,intellij,terraform,visualstudiocode
 
 debug.tf
 
