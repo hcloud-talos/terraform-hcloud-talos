@@ -193,6 +193,7 @@ module "talos" {
 
   control_plane_count       = 3
   control_plane_server_type = "cax11"
+  control_plane_allow_schedule = true
 
   worker_count       = 3
   worker_server_type = "cax21"
