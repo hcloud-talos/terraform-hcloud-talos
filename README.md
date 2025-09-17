@@ -91,6 +91,14 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - [Validates and approves node CSRs](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-certificate-approval).
 - In DaemonSet mode: CCM will use hostNetwork and current node to access kubernetes/talos API
 
+### [Tailscale](https://tailscale.com/) (Optional)
+
+- The Talos Image **MUST** be created with the [tailscale extension](https://github.com/siderolabs/extensions/blob/main/network/tailscale/README.md) when `tailscale.enabled` is set to true.
+- Tailscale can be enabled as a system extension on all nodes
+- Provides secure, encrypted networking between your nodes and other devices in your Tailscale network
+- Makes cluster nodes accessible via their Tailscale IPs from anywhere
+- Requires a valid Tailscale auth key to be provided in the configuration
+
 ## Prerequisites
 
 ### Required Software
@@ -202,6 +210,12 @@ module "talos" {
   node_ipv4_cidr    = "10.0.1.0/24"
   pod_ipv4_cidr     = "10.0.16.0/20"
   service_ipv4_cidr = "10.0.8.0/21"
+  
+  # Enable Tailscale integration
+  tailscale = {
+    enabled  = true
+    auth_key = "tskey-auth-xxxxxxxxxxxx" # Your Tailscale auth key
+  }
 }
 ```
 
@@ -290,6 +304,27 @@ Remember to move the generated config files to a persistent location if needed (
 e.g., `~/.kube/config`, `~/.talos/config`).
 
 ## Additional Configuration Examples
+
+### Tailscale Integration
+
+This module supports configuring Tailscale on your cluster nodes, which provides secure networking capabilities:
+
+```hcl
+tailscale = {
+  enabled  = true
+  auth_key = "tskey-auth-xxxxxxxxxxxx" # Your Tailscale auth key
+}
+```
+
+When Tailscale is enabled:
+- Each node will run Tailscale as a system extension
+- Nodes will automatically connect to your Tailscale network
+- Cilium's loadBalancer acceleration is set to "best-effort" mode for compatibility with Tailscale
+- You can access your cluster nodes directly via their Tailscale IPs
+
+> [!NOTE]
+> You must provide a valid Tailscale auth key when enabling this feature. Auth keys can be generated in the Tailscale admin console.
+> For more information, see the [Tailscale documentation on authentication keys](https://tailscale.com/kb/1085/auth-keys/).
 
 ### Kubelet Extra Args
 
