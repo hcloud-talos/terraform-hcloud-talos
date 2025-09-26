@@ -124,7 +124,6 @@ resource "hcloud_server" "control_planes" {
   network {
     network_id = hcloud_network_subnet.nodes.network_id
     ip         = each.value.ipv4_private
-    alias_ips  = [] # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
   }
 
   depends_on = [
@@ -135,7 +134,8 @@ resource "hcloud_server" "control_planes" {
   lifecycle {
     ignore_changes = [
       user_data,
-      image
+      image,
+      network.alias_ips # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
     ]
   }
 }
@@ -218,7 +218,6 @@ resource "hcloud_server" "workers_new" {
   network {
     network_id = hcloud_network_subnet.nodes.network_id
     ip         = each.value.ipv4_private
-    alias_ips  = [] # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
   }
 
   depends_on = [
@@ -229,7 +228,8 @@ resource "hcloud_server" "workers_new" {
   lifecycle {
     ignore_changes = [
       user_data,
-      image
+      image,
+      network.alias_ips # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
     ]
   }
 }
