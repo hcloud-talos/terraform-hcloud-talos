@@ -76,6 +76,17 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 > [!IMPORTANT]  
 > The Cilium version (`cilium_version`) has to be compatible with the Kubernetes (`kubernetes_version`) version.
 
+
+#### Cilium Gateway API
+To use Cilium as [Gateway API](https://gateway-api.sigs.k8s.io/) implementation, set `cilium_enable_gateway_api`
+variable. This will install the required dependencies. When you configure a gateway later on, the Cilium operator
+will provision an hcloud Load Balancer using Hcloud Controller Manager.
+> [!IMPORTANT] 
+> This step will fail if the load balancer
+> is not configured with the right [annotations](https://github.com/hetznercloud/hcloud-cloud-controller-manager/blob/main/docs/guides/load-balancer/quickstart.md) 
+> and the gateway will not provision endpoints.
+
+
 ### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
 
 - Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
