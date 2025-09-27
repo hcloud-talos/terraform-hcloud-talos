@@ -8,7 +8,7 @@ data "helm_template" "cilium_default" {
   version      = var.cilium_version
   kube_version = var.kubernetes_version
 
-  set = [
+  set = concat([
     {
       name  = "operator.replicas"
       value = var.control_plane_count > 1 ? 2 : 1
@@ -34,8 +34,10 @@ data "helm_template" "cilium_default" {
       value = "false"
     },
     {
+      // tailscale does not support XDP and therefore native fails. with best-effort we can fallthrough without failing!
+      // see more: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#loadbalancer-nodeport-xdp-acceleration
       name  = "loadBalancer.acceleration"
-      value = "native"
+      value = var.tailscale.enabled ? "best-effort" : "native"
     },
     {
       name  = "encryption.enabled"
@@ -84,8 +86,10 @@ data "helm_template" "cilium_default" {
     {
       name  = "operator.prometheus.serviceMonitor.enabled"
       value = var.cilium_enable_service_monitors ? "true" : "false"
-    }
-  ]
+    },
+    ],
+  )
+
 }
 
 data "helm_template" "cilium_from_values" {
