@@ -372,6 +372,23 @@ variable "talos_worker_extra_config_patches" {
   description = "List of additional YAML configuration patches to apply to the Talos machine configuration for worker nodes."
 }
 
+
+variable "tailscale" {
+  type = object({
+    enabled  = optional(bool)
+    auth_key = optional(string)
+  })
+  default = {
+    enabled  = false
+    auth_key = ""
+  }
+  description = "The auth key to use for Tailscale."
+  validation {
+    condition     = var.tailscale.enabled == false || (var.tailscale.enabled == true && var.tailscale.auth_key != "")
+    error_message = "If tailscale is enabled, an auth_key must be provided."
+  }
+}
+
 variable "registries" {
   type = object({
     mirrors = optional(map(object({
