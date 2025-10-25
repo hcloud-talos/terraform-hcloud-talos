@@ -31,6 +31,12 @@ terraform {
       source  = "hashicorp/tls"
       version = ">= 4.1.0"
     }
+
+    flux = {
+      source  = "fluxcd/flux",
+      version = "~> 1.2"
+    }
+
   }
 }
 

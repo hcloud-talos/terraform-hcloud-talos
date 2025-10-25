@@ -62,6 +62,28 @@ variable "output_mode_config_cluster_endpoint" {
   EOF
 }
 
+
+
+variable "flux" {
+  type = object({
+    enabled      = optional(bool, false)
+    repo         = string
+    branch       = optional(string, "main")
+    path         = optional(string, "/")
+    github_token = string
+
+    extra_components = optional(list(string), [])
+
+    sops = list(object({
+      name      = string
+      namespace = string
+      key       = string
+    }))
+  })
+  default = null
+}
+
+
 # Firewall
 variable "firewall_use_current_ip" {
   type        = bool
