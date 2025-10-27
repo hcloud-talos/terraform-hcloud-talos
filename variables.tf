@@ -417,6 +417,18 @@ variable "cilium_version" {
   EOF
 }
 
+variable "cilium_enable_gateway_api" {
+  type        = bool
+  default     = false
+  description = <<EOF
+    If true, the Gateway API will be enabled by:
+    - Installing preqreuisite CRDs https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+    - Installing tlsroute CRD
+    - Enabling Gateway API
+    This variable is incompatible with `cilium_values`. If the latter is set, this variable isn't used
+  EOF
+}
+
 variable "cilium_values" {
   type        = list(string)
   default     = null
