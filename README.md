@@ -117,7 +117,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 > [!TIP]
 > If you don't have a Hetzner account yet, you are welcome to use
-> this [Hetzner Cloud Referral Link](https://hetzner.cloud/?ref=6Q6Q6Q6Q6Q6Q) to claim 20€ credit and support
+> this [Hetzner Cloud Referral Link](https://hetzner.cloud/?ref=9EF3RYocQW8y) to claim 20€ credit and support
 > this project.
 
 - Create a new project in the Hetzner Cloud Console
