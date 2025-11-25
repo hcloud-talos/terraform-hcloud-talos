@@ -68,7 +68,9 @@ variable "firewall_use_current_ip" {
   default     = false
   description = <<EOF
     If true, the current IP address will be used as the source for the firewall rules.
-    ATTENTION: to determine the current IP, a request to a public service (https://ipv4.icanhazip.com) is made.
+    ATTENTION: to determine the current IP, requests to public services are made:
+    - IPv4 address is always fetched from https://ipv4.icanhazip.com
+    - IPv6 address is only fetched from https://ipv6.icanhazip.com if enable_ipv6 = true
   EOF
 }
 

@@ -2,18 +2,35 @@
 data "http" "personal_ipv4" {
   count = var.firewall_use_current_ip ? 1 : 0
   url   = "https://ipv4.icanhazip.com"
+
+  retry {
+    attempts     = 3
+    min_delay_ms = 1000
+    max_delay_ms = 2000
+  }
 }
 
 data "http" "personal_ipv6" {
-  count = var.firewall_use_current_ip ? 1 : 0
+  count = var.firewall_use_current_ip && var.enable_ipv6 ? 1 : 0
   url   = "https://ipv6.icanhazip.com"
+
+  retry {
+    attempts     = 3
+    min_delay_ms = 1000
+    max_delay_ms = 2000
+  }
 }
 
 locals {
-  current_ips = var.firewall_use_current_ip ? [
-    "${chomp(data.http.personal_ipv4[0].response_body)}/32",
-    "${chomp(data.http.personal_ipv6[0].response_body)}/128",
-  ] : []
+  # Current IPs list - always includes IPv4, conditionally includes IPv6
+  current_ips = var.firewall_use_current_ip ? concat(
+    [
+      "${chomp(data.http.personal_ipv4[0].response_body)}/32",
+    ],
+    var.firewall_use_current_ip && var.enable_ipv6 ? [
+      "${chomp(data.http.personal_ipv6[0].response_body)}/128",
+    ] : []
+  ) : []
 
   base_firewall_rules = concat(
     var.firewall_kube_api_source == null && !var.firewall_use_current_ip ? [] : [
