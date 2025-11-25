@@ -252,3 +252,5 @@ $RECYCLE.BIN/
 debug.tf
 
 .aider*
+
+.idea/copilot.data.*.xml
