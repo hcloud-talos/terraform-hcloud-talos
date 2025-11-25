@@ -254,3 +254,4 @@ debug.tf
 .aider*
 
 .idea/copilot.data.*.xml
+.idea/AICommit.xml
