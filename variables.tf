@@ -63,6 +63,17 @@ variable "output_mode_config_cluster_endpoint" {
 }
 
 # Firewall
+variable "firewall_id" {
+  type        = string
+  default     = null
+  description = <<EOF
+    ID of an existing Hetzner Cloud firewall to use instead of creating one.
+    When set, the module will not create a firewall and will use this ID instead.
+    This is useful to avoid chicken-and-egg issues when your IP changes:
+    manage the firewall externally and pass its ID here.
+  EOF
+}
+
 variable "firewall_use_current_ip" {
   type        = bool
   default     = false
