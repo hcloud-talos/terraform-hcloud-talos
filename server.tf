@@ -121,12 +121,6 @@ resource "hcloud_server" "control_planes" {
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[each.value.index].id : null
   }
 
-  network {
-    network_id = hcloud_network_subnet.nodes.network_id
-    ip         = each.value.ipv4_private
-    alias_ips  = [] # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
-  }
-
   depends_on = [
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.control_plane
@@ -136,6 +130,20 @@ resource "hcloud_server" "control_planes" {
     ignore_changes = [
       user_data,
       image
+    ]
+  }
+}
+
+resource "hcloud_server_network" "control_planes" {
+  for_each  = { for control_plane in local.control_planes : control_plane.name => control_plane }
+  server_id = hcloud_server.control_planes[each.key].id
+  subnet_id = hcloud_network_subnet.nodes.id
+  ip        = each.value.ipv4_private
+  alias_ips = []
+
+  lifecycle {
+    ignore_changes = [
+      alias_ips
     ]
   }
 }
@@ -167,12 +175,6 @@ resource "hcloud_server" "workers" {
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[each.value.index].id : null
   }
 
-  network {
-    network_id = hcloud_network_subnet.nodes.network_id
-    ip         = each.value.ipv4_private
-    alias_ips  = [] # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
-  }
-
   depends_on = [
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.worker
@@ -186,7 +188,19 @@ resource "hcloud_server" "workers" {
   }
 }
 
+resource "hcloud_server_network" "workers" {
+  for_each  = { for worker in local.legacy_workers : worker.name => worker }
+  server_id = hcloud_server.workers[each.key].id
+  subnet_id = hcloud_network_subnet.nodes.id
+  ip        = each.value.ipv4_private
+  alias_ips = []
 
+  lifecycle {
+    ignore_changes = [
+      alias_ips
+    ]
+  }
+}
 
 resource "hcloud_server" "workers_new" {
   for_each           = { for worker in local.new_workers : worker.name => worker }
@@ -215,12 +229,6 @@ resource "hcloud_server" "workers_new" {
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[each.value.index].id : null
   }
 
-  network {
-    network_id = hcloud_network_subnet.nodes.network_id
-    ip         = each.value.ipv4_private
-    alias_ips  = [] # fix for https://github.com/hetznercloud/terraform-provider-hcloud/issues/650
-  }
-
   depends_on = [
     hcloud_network_subnet.nodes,
     data.talos_machine_configuration.worker
@@ -230,6 +238,20 @@ resource "hcloud_server" "workers_new" {
     ignore_changes = [
       user_data,
       image
+    ]
+  }
+}
+
+resource "hcloud_server_network" "workers_new" {
+  for_each  = { for worker in local.new_workers : worker.name => worker }
+  server_id = hcloud_server.workers_new[each.key].id
+  subnet_id = hcloud_network_subnet.nodes.id
+  ip        = each.value.ipv4_private
+  alias_ips = []
+
+  lifecycle {
+    ignore_changes = [
+      alias_ips
     ]
   }
 }
