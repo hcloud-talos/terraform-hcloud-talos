@@ -25,9 +25,6 @@ locals {
       machine = {
         install = {
           image = "ghcr.io/siderolabs/installer:${var.talos_version}"
-          extraKernelArgs = [
-            "ipv6.disable=${var.enable_ipv6 ? 0 : 1}",
-          ]
         }
         certSANs = local.cert_SANs
         kubelet = merge(
