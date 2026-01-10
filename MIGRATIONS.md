@@ -8,6 +8,9 @@ This document describes how to migrate between major versions of this module.
 
 ### Breaking Changes
 
+- `datacenter_name` variable has been renamed to `location_name` and now uses location names instead of datacenter names.
+  - Old format: `"fsn1-dc14"`, `"nbg1-dc3"`, `"hel1-dc2"`, `"ash-dc1"`, `"hil-dc1"`
+  - New format: `"fsn1"`, `"nbg1"`, `"hel1"`, `"ash"`, `"hil"`, `"sin"`
 - `control_plane_count` + `control_plane_server_type` are replaced by `control_plane_nodes`.
 - `worker_count` + `worker_server_type` are removed.
 - `worker_nodes` is now the only way to define workers and it represents ALL workers (not "additional workers").
@@ -26,6 +29,28 @@ This document describes how to migrate between major versions of this module.
 
 
 ### Step 1: Update Inputs
+
+
+#### Datacenter to Location
+
+v1.x:
+
+```hcl
+datacenter_name = "fsn1-dc14"
+```
+
+v2:
+
+```hcl
+location_name = "fsn1"
+```
+
+The location name is derived from the first part of the datacenter name:
+- `fsn1-dc14` → `fsn1`
+- `nbg1-dc3` → `nbg1`
+- `hel1-dc2` → `hel1`
+- `ash-dc1` → `ash`
+- `hil-dc1` → `hil`
 
 
 #### Control Planes
