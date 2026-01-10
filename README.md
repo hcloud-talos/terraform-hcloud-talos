@@ -83,8 +83,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
 
-- Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
-  Datacenter, Server ID, IPs.
+- Updates the `Node` objects with information about the server from the Cloud, like instance Type, Location, Server ID, IPs.
 - Cleans up stale `Node` objects when the server is deleted in the API.
 - Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
 - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
@@ -176,7 +175,7 @@ module "talos" {
   firewall_use_current_ip = true
 
   cluster_name    = "dummy.com"
-  datacenter_name = "fsn1-dc14"
+  location_name   = "fsn1"
 
   control_plane_nodes = [
     {
@@ -211,7 +210,7 @@ module "talos" {
   firewall_kube_api_source = ["your-ip"]
   firewall_talos_api_source = ["your-ip"]
 
-  datacenter_name = "fsn1-dc14"
+  location_name = "fsn1"
 
   control_plane_nodes = [
     {
@@ -273,7 +272,7 @@ module "talos" {
   firewall_use_current_ip = true
 
   cluster_name    = "mixed-cluster"
-  datacenter_name = "fsn1-dc14"
+  location_name = "fsn1"
 
   control_plane_nodes = [
     {

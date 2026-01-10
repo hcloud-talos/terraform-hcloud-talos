@@ -34,16 +34,16 @@ variable "cluster_api_host" {
   default     = null
 }
 
-variable "datacenter_name" {
+variable "location_name" {
   type        = string
   description = <<EOF
-    The name of the datacenter where the cluster will be created.
+    The name of the location where the cluster will be created.
     This is used to determine the region and zone of the cluster and network.
-    Possible values: fsn1-dc14, nbg1-dc3, hel1-dc2, ash-dc1, hil-dc1
+    Possible values: fsn1, nbg1, hel1, ash, hil, sin
   EOF
   validation {
-    condition     = contains(["fsn1-dc14", "nbg1-dc3", "hel1-dc2", "ash-dc1", "hil-dc1"], var.datacenter_name)
-    error_message = "Invalid datacenter name."
+    condition     = contains(data.hcloud_locations.all.locations[*].name, var.location_name)
+    error_message = "Invalid location name."
   }
 }
 
