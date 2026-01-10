@@ -18,7 +18,7 @@ resource "hcloud_network" "this" {
 resource "hcloud_network_subnet" "nodes" {
   network_id   = hcloud_network.this.id
   type         = "cloud"
-  network_zone = data.hcloud_location.this.network_zone
+  network_zone = data.hcloud_location.selected.network_zone
   ip_range     = local.node_ipv4_cidr
 }
 
@@ -30,7 +30,7 @@ resource "hcloud_floating_ip" "control_plane_ipv4" {
   count             = local.create_floating_ip ? 1 : 0
   name              = "${local.cluster_prefix}control-plane-ipv4"
   type              = "ipv4"
-  home_location     = data.hcloud_location.this.name
+  home_location     = data.hcloud_location.selected.name
   description       = "Control Plane VIP"
   delete_protection = false
   labels = {
@@ -59,7 +59,7 @@ resource "hcloud_floating_ip_assignment" "this" {
 resource "hcloud_primary_ip" "control_plane_ipv4" {
   count         = local.control_plane_count
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv4"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.selected.name
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
@@ -72,7 +72,7 @@ resource "hcloud_primary_ip" "control_plane_ipv4" {
 resource "hcloud_primary_ip" "control_plane_ipv6" {
   count         = var.enable_ipv6 ? local.control_plane_count : 0
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv6"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.selected.name
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
@@ -85,7 +85,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 resource "hcloud_primary_ip" "worker_ipv4" {
   count         = local.worker_count
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv4"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.selected.name
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
@@ -98,7 +98,7 @@ resource "hcloud_primary_ip" "worker_ipv4" {
 resource "hcloud_primary_ip" "worker_ipv6" {
   count         = var.enable_ipv6 ? local.worker_count : 0
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv6"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.selected.name
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
