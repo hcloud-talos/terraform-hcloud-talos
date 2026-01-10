@@ -60,7 +60,7 @@ resource "hcloud_primary_ip" "control_plane_ipv4" {
   count = var.control_plane_count > 0 ? var.control_plane_count : 1
   # If control_plane_count is 0, we still need to create a primary IP for debugging purposes
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv4"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.this.name
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
@@ -73,7 +73,7 @@ resource "hcloud_primary_ip" "control_plane_ipv4" {
 resource "hcloud_primary_ip" "control_plane_ipv6" {
   count         = var.enable_ipv6 ? var.control_plane_count > 0 ? var.control_plane_count : 1 : 0
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv6"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.this.name
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
@@ -86,7 +86,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 resource "hcloud_primary_ip" "worker_ipv4" {
   count         = local.total_worker_count
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv4"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.this.name
   type          = "ipv4"
   assignee_type = "server"
   auto_delete   = false
@@ -99,7 +99,7 @@ resource "hcloud_primary_ip" "worker_ipv4" {
 resource "hcloud_primary_ip" "worker_ipv6" {
   count         = var.enable_ipv6 ? local.total_worker_count : 0
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv6"
-  datacenter    = data.hcloud_datacenter.this.name
+  location      = data.hcloud_location.this.name
   type          = "ipv6"
   assignee_type = "server"
   auto_delete   = false
