@@ -80,7 +80,7 @@ data "talos_machine_configuration" "control_plane" {
   kubernetes_version = var.kubernetes_version
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
-  config_patches     = concat([yamlencode(local.controlplane_yaml[each.value.name])], var.talos_control_plane_extra_config_patches, [local.tailscale_config_patch])
+  config_patches     = concat([yamlencode(local.controlplane_yaml[each.value.name])], var.talos_control_plane_extra_config_patches, local.tailscale_config_patch != null ? [local.tailscale_config_patch] : [])
   docs               = false
   examples           = false
 }
