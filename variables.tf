@@ -485,6 +485,12 @@ variable "deploy_prometheus_operator_crds" {
   description = "If true, the Prometheus Operator CRDs will be deployed."
 }
 
+variable "prometheus_operator_crds_version" {
+  type        = string
+  default     = null
+  description = "The version of the Prometheus Operator CRDs Helm chart to deploy. If not set, the latest version will be used."
+}
+
 variable "hcloud_ccm_version" {
   type        = string
   default     = null

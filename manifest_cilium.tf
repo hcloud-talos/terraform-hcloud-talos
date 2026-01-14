@@ -124,6 +124,7 @@ data "helm_template" "prometheus_operator_crds" {
   chart        = "prometheus-operator-crds"
   name         = "prometheus-operator-crds"
   repository   = "https://prometheus-community.github.io/helm-charts"
+  version      = var.prometheus_operator_crds_version
   kube_version = var.kubernetes_version
 }
 
