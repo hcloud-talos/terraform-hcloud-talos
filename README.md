@@ -73,8 +73,13 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
   default Flannel.
 - It provides a lot of features like Network Policies, Load Balancing, and more.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > The Cilium version (`cilium_version`) has to be compatible with the Kubernetes (`kubernetes_version`) version.
+
+> [!TIP]
+> After initial cluster bootstrap, you can set `deploy_cilium = false` (and `deploy_prometheus_operator_crds = false` if you used it) to hand off management to GitOps tools (e.g., Argo CD, Flux).
+> Run `terraform apply` once after toggling: Terraform removes these resources from state without deleting them from the cluster.
+> This works because the module uses `kubectl_manifest` with `apply_only = true`, so Terraform does not delete these manifests on destroy.
 
 ### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
 

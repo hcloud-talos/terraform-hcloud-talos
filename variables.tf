@@ -479,10 +479,30 @@ variable "cilium_enable_service_monitors" {
   EOF
 }
 
+variable "deploy_cilium" {
+  type        = bool
+  default     = true
+  description = <<EOF
+    If true, Cilium CNI will be deployed via Terraform.
+
+    Set to false after initial bootstrap to hand off management to GitOps tools (e.g., Argo CD).
+    After toggling, run `terraform apply` once to remove the Cilium resources from Terraform state.
+
+    Note: This module uses `kubectl_manifest.apply_only = true`, so disabling Cilium in Terraform will not delete it from the cluster.
+  EOF
+}
+
 variable "deploy_prometheus_operator_crds" {
   type        = bool
   default     = false
-  description = "If true, the Prometheus Operator CRDs will be deployed."
+  description = <<EOF
+    If true, the Prometheus Operator CRDs will be deployed via Terraform.
+
+    Set to false after initial bootstrap to hand off management to GitOps tools (e.g., Argo CD).
+    After toggling, run `terraform apply` once to remove the CRDs from Terraform state.
+
+    Note: This module uses `kubectl_manifest.apply_only = true`, so disabling the CRDs in Terraform will not delete them from the cluster.
+  EOF
 }
 
 variable "prometheus_operator_crds_version" {
