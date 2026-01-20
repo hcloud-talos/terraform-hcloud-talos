@@ -43,6 +43,9 @@ analyzeCommits:
       - type: "chore"
         scope: "project"
         release: false
+      - type: "chore"
+        scope: "ai"
+        release: false
 
 generateNotes:
   - path: "@semantic-release/release-notes-generator"
@@ -70,6 +73,9 @@ generateNotes:
           hidden: false
         - type: "chore"
           scope: "project"
+          hidden: true
+        - type: "chore"
+          scope: "ai"
           hidden: true
         - type: "chore"
           scope: "deps"
