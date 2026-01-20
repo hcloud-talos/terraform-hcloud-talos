@@ -511,6 +511,19 @@ variable "prometheus_operator_crds_version" {
   description = "The version of the Prometheus Operator CRDs Helm chart to deploy. If not set, the latest version will be used."
 }
 
+variable "deploy_hcloud_ccm" {
+  type        = bool
+  default     = true
+  description = <<EOF
+    If true, the Hetzner Cloud Controller Manager will be deployed via Terraform.
+
+    Set to false after initial bootstrap to hand off management to GitOps tools (e.g., Argo CD).
+    After toggling, run `terraform apply` once to remove the CCM resources from Terraform state.
+
+    Note: This module uses `kubectl_manifest.apply_only = true`, so disabling the CCM in Terraform will not delete it from the cluster.
+  EOF
+}
+
 variable "hcloud_ccm_version" {
   type        = string
   default     = null

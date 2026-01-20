@@ -90,6 +90,11 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
   Nodes as targets for the Load Balancer.
 
+> [!TIP]
+> After initial cluster bootstrap, you can set `deploy_hcloud_ccm = false` to hand off management to GitOps tools (e.g., Argo CD, Flux).
+> Run `terraform apply` once after toggling: Terraform removes these resources from state without deleting them from the cluster.
+> This works because the module uses `kubectl_manifest` with `apply_only = true`, so Terraform does not delete these manifests on destroy.
+
 ### [Talos Cloud Controller Manager](https://github.com/siderolabs/talos-cloud-controller-manager)
 
 - [Applies labels to the nodes](https://github.com/siderolabs/talos-cloud-controller-manager?tab=readme-ov-file#node-initialize).

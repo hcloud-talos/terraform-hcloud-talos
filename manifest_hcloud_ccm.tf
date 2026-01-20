@@ -1,4 +1,5 @@
 data "helm_template" "hcloud_ccm" {
+  count     = var.deploy_hcloud_ccm ? 1 : 0
   name      = "hcloud-cloud-controller-manager"
   namespace = "kube-system"
 
@@ -20,11 +21,12 @@ data "helm_template" "hcloud_ccm" {
 }
 
 data "kubectl_file_documents" "hcloud_ccm" {
-  content = data.helm_template.hcloud_ccm.manifest
+  count   = var.deploy_hcloud_ccm ? 1 : 0
+  content = data.helm_template.hcloud_ccm[0].manifest
 }
 
 resource "kubectl_manifest" "apply_hcloud_ccm" {
-  for_each   = var.control_plane_count > 0 ? data.kubectl_file_documents.hcloud_ccm.manifests : {}
+  for_each   = var.deploy_hcloud_ccm && var.control_plane_count > 0 ? data.kubectl_file_documents.hcloud_ccm[0].manifests : {}
   yaml_body  = each.value
   apply_only = true
   depends_on = [data.http.talos_health]
