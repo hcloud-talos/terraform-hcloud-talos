@@ -197,35 +197,63 @@ variable "ssh_public_key" {
   sensitive   = true
 }
 
-variable "control_plane_count" {
-  type        = number
+variable "control_plane_nodes" {
+  type = list(object({
+    id     = number
+    type   = string
+    labels = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
+  }))
   description = <<EOF
-    The number of control plane nodes to create.
-    Must be an odd number. Maximum 5.
-  EOF
-  validation {
-    // 0 is required for debugging (create configs etc. without servers)
-    condition     = var.control_plane_count == 0 || (var.control_plane_count % 2 == 1 && var.control_plane_count <= 5)
-    error_message = "The number of control plane nodes must be an odd number."
-  }
-}
+    List of control plane node configurations.
 
-variable "control_plane_server_type" {
-  type        = string
-  description = <<EOF
-    The server type to use for the control plane nodes.
-    Possible values: cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62,
-    cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63,
-    cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53
+    Each entry represents one control plane node.
+    The total number of control planes must be odd (1, 3, 5) and at most 5.
+
+    - id: Stable node id starting at 1 (used for naming and IP allocation).
+    - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
+    - labels: Map of Kubernetes labels to apply to this node (default: {})
+    - taints: List of Kubernetes taints to apply to this node (default: [])
   EOF
   validation {
-    condition = contains([
-      "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
-      "cax11", "cax21", "cax31", "cax41",
-      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
-      "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
-    ], var.control_plane_server_type)
-    error_message = "Invalid control plane server type."
+    condition     = length(var.control_plane_nodes) % 2 == 1 && length(var.control_plane_nodes) <= 5
+    error_message = "The number of control plane nodes must be an odd number (1, 3, 5) and at most 5."
+  }
+  validation {
+    condition = alltrue([
+      for node in var.control_plane_nodes : contains([
+        "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
+        "cax11", "cax21", "cax31", "cax41",
+        "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
+        "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
+      ], node.type)
+    ])
+    error_message = "Invalid control plane server type in control_plane_nodes."
+  }
+  validation {
+    condition = (
+      length(setsubtract(
+        toset([for node in var.control_plane_nodes : node.id]),
+        toset(range(1, length(var.control_plane_nodes) + 1))
+      )) == 0 &&
+      length(setsubtract(
+        toset(range(1, length(var.control_plane_nodes) + 1)),
+        toset([for node in var.control_plane_nodes : node.id])
+      )) == 0
+    )
+    error_message = "control_plane_nodes id must be unique and contiguous starting at 1 (1..N)."
+  }
+  validation {
+    condition = alltrue(flatten([
+      for node in var.control_plane_nodes : [
+        for taint in node.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], taint.effect)
+      ]
+    ]))
+    error_message = "Invalid taint effect in control_plane_nodes. Allowed values: NoSchedule, PreferNoSchedule, NoExecute."
   }
 }
 
@@ -236,43 +264,13 @@ variable "control_plane_allow_schedule" {
   description = <<EOF
     If true, control plane nodes will be schedulable (i.e., can run workloads).
     If false (default), control plane nodes will be tainted to prevent scheduling of regular workloads.
-    Note: If you set worker_count to 0, control plane nodes will automatically be schedulable regardless of this setting.
+    Note: If you set worker_nodes = [], control plane nodes will automatically be schedulable regardless of this setting.
   EOF
-}
-
-
-variable "worker_count" {
-  type        = number
-  default     = 0
-  description = "DEPRECATED: Use worker_nodes instead. The number of worker nodes to create. Maximum 99."
-  validation {
-    condition     = var.worker_count <= 99
-    error_message = "The number of worker nodes must be less than 100."
-  }
-}
-
-variable "worker_server_type" {
-  type        = string
-  default     = "cpx11"
-  description = <<EOF
-    DEPRECATED: Use worker_nodes instead. The server type to use for the worker nodes.
-    Possible values: cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62,
-    cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63,
-    cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53
-  EOF
-  validation {
-    condition = contains([
-      "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
-      "cax11", "cax21", "cax31", "cax41",
-      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
-      "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
-    ], var.worker_server_type)
-    error_message = "Invalid worker server type."
-  }
 }
 
 variable "worker_nodes" {
   type = list(object({
+    id     = number
     type   = string
     labels = optional(map(string), {})
     taints = optional(list(object({
@@ -283,19 +281,24 @@ variable "worker_nodes" {
   }))
   default     = []
   description = <<EOF
-    List of worker node configurations. Each object defines a group of worker nodes with the same configuration.
+    List of worker node configurations.
+
+    Each entry represents one worker node.
+
+    - id: Stable node id starting at 1 (used for naming and IP allocation).
     - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
-    - count: Number of nodes of this type
-    - labels: Map of Kubernetes labels to apply to these nodes (default: {})
-    - taints: List of Kubernetes taints to apply to these nodes (default: [])
+    - labels: Map of Kubernetes labels to apply to this node (default: {})
+    - taints: List of Kubernetes taints to apply to this node (default: [])
     
     Example:
     worker_nodes = [
       {
-        type  = "cx22"
+        id   = 1
+        type = "cx22"
       },
       {
-        type   = "cax22"
+        id    = 2
+        type   = "cax21"
         labels = {
           "node.kubernetes.io/arch" = "arm64"
         }
@@ -319,6 +322,27 @@ variable "worker_nodes" {
       ], node.type)
     ])
     error_message = "Invalid worker server type in worker_nodes."
+  }
+  validation {
+    condition = (
+      length(setsubtract(
+        toset([for node in var.worker_nodes : node.id]),
+        toset(range(1, length(var.worker_nodes) + 1))
+      )) == 0 &&
+      length(setsubtract(
+        toset(range(1, length(var.worker_nodes) + 1)),
+        toset([for node in var.worker_nodes : node.id])
+      )) == 0
+    )
+    error_message = "worker_nodes id must be unique and contiguous starting at 1 (1..N)."
+  }
+  validation {
+    condition = alltrue(flatten([
+      for node in var.worker_nodes : [
+        for taint in node.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], taint.effect)
+      ]
+    ]))
+    error_message = "Invalid taint effect in worker_nodes. Allowed values: NoSchedule, PreferNoSchedule, NoExecute."
   }
   validation {
     condition     = length(var.worker_nodes) <= 99

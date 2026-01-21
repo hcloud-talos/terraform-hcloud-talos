@@ -91,7 +91,7 @@ pre-commit run --all-files
 ### Testing Directory (.demo/)
 The `.demo/` directory contains a test deployment configuration that:
 - Uses the parent module (`source = "../"`)
-- Configures a minimal single-node ARM64 cluster (CAX11)
+- Configures a small demo cluster using `control_plane_nodes` and `worker_nodes`
 - Integrates with 1Password for token management
 - Contains its own Packer build artifacts for testing
 - Has `.gitignore` set to exclude all generated files
