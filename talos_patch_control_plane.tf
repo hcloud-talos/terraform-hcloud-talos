@@ -1,44 +1,48 @@
 locals {
-  # Define a dummy control plane entry for when count is 0
-  dummy_control_planes = var.control_plane_count == 0 ? [{
-    index              = 0
-    name               = "dummy-cp-0"
-    ipv4_public        = "0.0.0.0"                           # Fallback
-    ipv6_public        = null                                # Fallback
-    ipv6_public_subnet = null                                # Fallback
-    ipv4_private       = cidrhost(local.node_ipv4_cidr, 100) # Use a predictable dummy private IP
-  }] : []
-
-  # Combine real and dummy control planes
-  merged_control_planes = concat(local.control_planes, local.dummy_control_planes)
-
-  # Generate YAML for all (real or dummy) control planes
+  # Generate YAML for all control planes
   controlplane_yaml = {
-    for control_plane in local.merged_control_planes : control_plane.name => {
+    for control_plane in local.control_planes : control_plane.name => {
       machine = {
         install = {
           image = "ghcr.io/siderolabs/installer:${var.talos_version}"
         }
         certSANs = local.cert_SANs
-        kubelet = {
-          extraArgs = merge(
-            {
-              "cloud-provider"             = "external"
-              "rotate-server-certificates" = true
-            },
-            var.kubelet_extra_args
-          )
-          nodeIP = {
-            validSubnets = [
-              local.node_ipv4_cidr
-            ]
-          }
-        }
-        nodeLabels = var.worker_count <= 0 ? {
-          "node.kubernetes.io/exclude-from-external-load-balancers" = {
-            "$patch" = "delete"
-          }
-        } : {}
+        kubelet = merge(
+          {
+            extraArgs = merge(
+              {
+                "cloud-provider"             = "external"
+                "rotate-server-certificates" = true
+              },
+              var.kubelet_extra_args
+            )
+            nodeIP = {
+              validSubnets = [
+                local.node_ipv4_cidr
+              ]
+            }
+          },
+          # Add registerWithTaints if taints are defined
+          length(control_plane.taints) > 0 ? {
+            extraConfig = {
+              registerWithTaints = [
+                for taint in control_plane.taints : {
+                  key    = taint.key
+                  value  = taint.value
+                  effect = taint.effect
+                }
+              ]
+            }
+          } : {}
+        )
+        nodeLabels = merge(
+          control_plane.labels,
+          local.worker_count == 0 ? {
+            "node.kubernetes.io/exclude-from-external-load-balancers" = {
+              "$patch" = "delete"
+            }
+          } : {}
+        )
         network = {
           interfaces = [
             {
@@ -106,7 +110,7 @@ locals {
         registries = var.registries
       }
       cluster = {
-        allowSchedulingOnControlPlanes = var.control_plane_allow_schedule || (var.worker_count <= 0 && length(var.worker_nodes) <= 0)
+        allowSchedulingOnControlPlanes = var.control_plane_allow_schedule || local.worker_count == 0
         network = {
           dnsDomain = var.cluster_domain
           podSubnets = [

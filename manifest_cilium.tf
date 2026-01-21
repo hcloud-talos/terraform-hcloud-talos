@@ -11,7 +11,7 @@ data "helm_template" "cilium_default" {
   set = concat([
     {
       name  = "operator.replicas"
-      value = var.control_plane_count > 1 ? 2 : 1
+      value = local.control_plane_count > 1 ? 2 : 1
     },
     {
       name  = "ipam.mode"
@@ -113,7 +113,7 @@ data "kubectl_file_documents" "cilium" {
 }
 
 resource "kubectl_manifest" "apply_cilium" {
-  for_each   = var.deploy_cilium && var.control_plane_count > 0 ? data.kubectl_file_documents.cilium[0].manifests : {}
+  for_each   = var.deploy_cilium ? data.kubectl_file_documents.cilium[0].manifests : {}
   yaml_body  = each.value
   apply_only = true
   depends_on = [data.http.talos_health]
@@ -135,7 +135,7 @@ data "kubectl_file_documents" "prometheus_operator_crds" {
 }
 
 resource "kubectl_manifest" "apply_prometheus_operator_crds" {
-  for_each          = var.control_plane_count > 0 && var.deploy_prometheus_operator_crds ? data.kubectl_file_documents.prometheus_operator_crds[0].manifests : {}
+  for_each          = var.deploy_prometheus_operator_crds ? data.kubectl_file_documents.prometheus_operator_crds[0].manifests : {}
   yaml_body         = each.value
   server_side_apply = true
   apply_only        = true
