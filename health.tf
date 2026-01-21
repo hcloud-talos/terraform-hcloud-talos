@@ -9,7 +9,7 @@
 #}
 
 data "http" "talos_health" {
-  count    = var.control_plane_count > 0 ? 1 : 0
+  count    = 1
   url      = "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}/version"
   insecure = true
   retry {

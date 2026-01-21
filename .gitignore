@@ -170,6 +170,9 @@ Temporary Items
 # Local .terraform directories
 **/.terraform/*
 
+# Provider lock file (root configs only; modules should not commit this)
+/.terraform.lock.hcl
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
