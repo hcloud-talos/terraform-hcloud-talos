@@ -443,6 +443,12 @@ Refer to the [official Talos documentation on upgrading Kubernetes](https://www.
 
 ## Troubleshooting
 
+### Adding New Nodes (Scaling Up)
+
+**Alias IP stale state:** The module sets `alias_ips = []` on servers (see `server.tf`) to work around [hcloud provider #650](https://github.com/hetznercloud/terraform-provider-hcloud/issues/650). This causes `terraform apply` to remove alias IPs, leaving the previous owner node with stale network config. Reboot the affected control plane node to reassign the alias IP correctly.
+
+**Registry 403 errors:** Some Hetzner IP ranges are blocked by `registry.k8s.io`. If new nodes fail to pull images, you may need to recreate the server to get a different IP address.
+
 ### Importing Primary IPs
 
 When importing existing primary IPs into Terraform state, importing them individually will fail with errors like:
