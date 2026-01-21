@@ -441,6 +441,31 @@ Refer to the [official Talos documentation on upgrading Kubernetes](https://www.
   See [#46](https://github.com/hcloud-talos/terraform-hcloud-talos/issues/46)
   and [registry.k8s.io #138](https://github.com/kubernetes/registry.k8s.io/issues/138).
 
+## Troubleshooting
+
+### Importing Primary IPs
+
+When importing existing primary IPs into Terraform state, importing them individually will fail with errors like:
+
+```
+Error: Invalid index
+The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.
+```
+
+This occurs because `locals` in `server.tf` depend on all primary IP resources being present simultaneously.
+
+**Solution:** Import all primary IPs at once using Terraform import blocks. Create a temporary `imports.tf` file:
+
+```hcl
+import {
+  to = module.talos.hcloud_primary_ip.control_plane_ipv4[0]
+  id = "106798072"  # Replace with your actual IDs
+}
+# Add all other primary IPs (control_plane_ipv4[*], control_plane_ipv6[*], worker_ipv4[*], worker_ipv6[*])
+```
+
+Run `terraform plan` followed by `terraform apply` to import all resources in one operation, then delete `imports.tf`.
+
 ## Credits
 
 - [kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) For the inspiration and the great
