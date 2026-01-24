@@ -10,6 +10,10 @@ This directory contains Packer configuration to build Talos OS images suitable f
 > # _packer/hcloud.auto.pkrvars.hcl
 > talos_version = "v1.7.0" # Replace with your desired Talos version
 >
+> # Optionally, set custom server type for building snapshot:
+> # server_type_arm = "cax21"
+> # server_type_x86 = "cx33"
+>
 > # Optionally, add custom image URLs if using the Image Factory:
 > # image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
 > # image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
