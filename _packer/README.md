@@ -14,6 +14,10 @@ This directory contains Packer configuration to build Talos OS images suitable f
 > # server_type_arm = "cax21"
 > # server_type_x86 = "cx33"
 >
+> # Optionally, Hetzner Cloud location (region) where the temporary build server is created.
+> # Use a location where the provided server types are available.
+> # server_location = "fsn1"
+>
 > # Optionally, add custom image URLs if using the Image Factory:
 > # image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
 > # image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
