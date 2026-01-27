@@ -2,9 +2,7 @@
 
 This document describes how to migrate between major versions of this module.
 
-
-## v2 (from v1.x)
-
+## v3 (from v2.x)
 
 ### Breaking Changes
 
@@ -13,13 +11,18 @@ This document describes how to migrate between major versions of this module.
   - New format: `"fsn1"`, `"nbg1"`, `"hel1"`, `"ash"`, `"hil"`, `"sin"`
 - `control_plane_count` + `control_plane_server_type` are replaced by `control_plane_nodes`.
 - `worker_count` + `worker_server_type` are removed.
-- `worker_nodes` is now the only way to define workers and it represents ALL workers (not "additional workers").
+- `worker_nodes` is now the only way to define workers and it represents ALL workers.
 - `control_plane_nodes` and `worker_nodes` now require an explicit `id` field (stable, 1-based).
 - Empty control plane lists are no longer supported.
-- The internal worker server resource has been consolidated:
-  - removed: `hcloud_server.workers_new`
-  - canonical: `hcloud_server.workers`
-
+- `output_mode_config_cluster_endpoint` has been removed and replaced by:
+  - `kubeconfig_endpoint_mode` (`public_ip`, `private_ip`, `public_endpoint`, `private_endpoint`)
+  - `talosconfig_endpoints_mode` (`public_ip`, `private_ip`)
+- `talosconfig` endpoints are now always direct per-node IPs (Talos API). The module no longer supports writing a VIP or
+  load-balanced hostname into `talosconfig` endpoints (this is not recommended by Talos).
+- For HA control planes (`control_plane_nodes` > 1):
+  - `kubeconfig_endpoint_mode = "public_ip"` requires `enable_floating_ip = true`
+  - `kubeconfig_endpoint_mode = "private_ip"` requires `enable_alias_ip = true`
+- `kubeconfig_data.host` now matches the generated kubeconfig endpoint (it is no longer always the public IP).
 
 ### General Guidance
 
@@ -27,19 +30,17 @@ This document describes how to migrate between major versions of this module.
 - The `id` field controls node identity and IP allocation. The order of the list does not matter.
 - If you change ids or remove nodes without adjusting ids, Terraform may plan to replace servers.
 
+### Migration Steps
 
-### Step 1: Update Inputs
+1) Rename datacenter to location:
 
-
-#### Datacenter to Location
-
-v1.x:
+v2.x:
 
 ```hcl
 datacenter_name = "fsn1-dc14"
 ```
 
-v2:
+v3:
 
 ```hcl
 location_name = "fsn1"
@@ -52,17 +53,16 @@ The location name is derived from the first part of the datacenter name:
 - `ash-dc1` → `ash`
 - `hil-dc1` → `hil`
 
+2) Replace count-based nodes with explicit node lists:
 
-#### Control Planes
-
-v1.x:
+Control planes (v2.x):
 
 ```hcl
 control_plane_count       = 3
 control_plane_server_type = "cax11"
 ```
 
-v2:
+Control planes (v3):
 
 ```hcl
 control_plane_nodes = [
@@ -72,17 +72,14 @@ control_plane_nodes = [
 ]
 ```
 
-
-#### Workers
-
-v1.x legacy-only:
+Workers (v2.x):
 
 ```hcl
 worker_count       = 2
 worker_server_type = "cax11"
 ```
 
-v2:
+Workers (v3):
 
 ```hcl
 worker_nodes = [
@@ -91,95 +88,19 @@ worker_nodes = [
 ]
 ```
 
-
-v1.x mixed (legacy + `worker_nodes`):
-
-```hcl
-worker_count       = 2
-worker_server_type = "cax11"
-
-# In v1.x these were ADDITIONAL workers (starting at worker-3)
-worker_nodes = [
-  { id = 3, type = "cax11", labels = { "pool" = "extra" } }, # worker-3
-]
-```
-
-v2 (single list for ALL workers, keep the same numbering/order):
-
-```hcl
-worker_nodes = [
-  { id = 1, type = "cax11" },                                  # worker-1 (was legacy)
-  { id = 2, type = "cax11" },                                  # worker-2 (was legacy)
-  { id = 3, type = "cax11", labels = { "pool" = "extra" } },   # worker-3 (was worker_nodes)
-]
-```
-
-
-### Step 2: Run `terraform plan`
-
-After updating to v2 and updating your inputs, run:
-
-```bash
-terraform init
-terraform plan
-```
-
-
-### Step 3: If Needed, Move State for Former `workers_new`
-
-Terraform `moved` blocks cannot merge two existing resources into a single resource.
-
-This module ships a `moved` block to automatically rename `hcloud_server.workers_new` to
-`hcloud_server.workers`.
-
-- If you only used `worker_nodes` in v1.x (no legacy `worker_count` workers), the move should apply cleanly.
-- If you used BOTH legacy workers (`worker_count > 0`) AND `worker_nodes`, the destination address already
-  exists in state and Terraform cannot auto-move without conflicts.
-
-If you previously used legacy workers (`worker_count > 0`) AND `worker_nodes` in v1.x,
-your state likely contains both:
-
-- `hcloud_server.workers[...]` (legacy)
-- `hcloud_server.workers_new[...]` (worker_nodes)
-
-In that case, Terraform may warn that it “could not move” `workers_new` to `workers`
-and will plan to destroy/recreate those servers.
-
-To avoid that, move each `workers_new` instance to the corresponding `workers` address.
-
-1) List the instances:
-
-```bash
-terraform state list | grep 'hcloud_server.workers_new'
-```
-
-2) Move each instance:
-
-```bash
-# Example (adjust module name if yours is not "talos")
-terraform state mv \
-  'module.talos.hcloud_server.workers_new["worker-3"]' \
-  'module.talos.hcloud_server.workers["worker-3"]'
-```
-
-If you have many worker nodes, you can automate this:
-
-```bash
-for addr in $(terraform state list | grep 'hcloud_server.workers_new'); do
-  terraform state mv "$addr" "${addr/workers_new/workers}"
-done
-```
-
-3) Re-run plan and verify there are no server recreations:
-
-```bash
-terraform plan
-```
-
-
-### Step 4: Apply
-
-Once the plan looks safe:
+3) Remove `output_mode_config_cluster_endpoint` from your inputs.
+4) Choose the `kubeconfig` endpoint:
+   - If you previously used `output_mode_config_cluster_endpoint = "cluster_endpoint"`, set:
+      - `kubeconfig_endpoint_mode = "public_endpoint"`
+      - `cluster_api_host = "kube.example.com"`
+    - If you access the cluster over VPN/private networking, set:
+      - `kubeconfig_endpoint_mode = "private_ip"` (alias IP / VIP) **or**
+      - `kubeconfig_endpoint_mode = "private_endpoint"` with `cluster_api_host_private`
+5) Choose `talosconfig` endpoints (Talos API):
+   - `talosconfig_endpoints_mode = "public_ip"` when running `talosctl` from outside
+   - `talosconfig_endpoints_mode = "private_ip"` when running `talosctl` over VPN/private networking
+6) Run `terraform plan` and verify the rendered endpoints match your expected access pattern.
+7) Apply once the plan looks safe:
 
 ```bash
 terraform apply
