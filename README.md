@@ -168,6 +168,11 @@ Before deploying with Terraform, you need Talos OS images (snapshots) available 
 Use the module as shown in the following working minimal example:
 
 > [!NOTE]
+> Verify version compatibility before deploying:
+> - [Talos Support Matrix](https://docs.siderolabs.com/talos/latest/getting-started/support-matrix)
+> - [Cilium Compatibility](https://docs.cilium.io/en/stable/operations/system_requirements/#kubernetes-versions)
+
+> [!NOTE]
 > Actually, your current IP address has to have access to the nodes during the creation of the cluster.
 
 ```hcl
@@ -208,7 +213,7 @@ module "talos" {
 
   # Use versions compatible with each other and supported by the module/Talos
   talos_version      = "v1.12.2"
-  kubernetes_version = "1.32.2"
+  kubernetes_version = "1.35.0"
   cilium_version     = "1.16.2"
 
   hcloud_token = "your-hcloud-token"
@@ -334,7 +339,7 @@ module "talos" {
   version = "<latest-version>"
 
   talos_version      = "v1.12.2"
-  kubernetes_version = "1.32.2"
+  kubernetes_version = "1.35.0"
 
   hcloud_token            = "your-hcloud-token"
   firewall_use_current_ip = true
