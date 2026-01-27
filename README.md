@@ -208,7 +208,7 @@ module "talos" {
 
   # Use versions compatible with each other and supported by the module/Talos
   talos_version      = "v1.11.0"
-  kubernetes_version = "1.30.3"
+  kubernetes_version = "1.32.2"
   cilium_version     = "1.16.2"
 
   hcloud_token = "your-hcloud-token"
@@ -333,8 +333,8 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "<latest-version>"
 
-  talos_version      = "v1.10.3"
-  kubernetes_version = "1.30.3"
+  talos_version      = "v1.11.0"
+  kubernetes_version = "1.32.2"
 
   hcloud_token            = "your-hcloud-token"
   firewall_use_current_ip = true
