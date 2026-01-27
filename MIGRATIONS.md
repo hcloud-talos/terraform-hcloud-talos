@@ -23,6 +23,8 @@ This document describes how to migrate between major versions of this module.
   - `kubeconfig_endpoint_mode = "public_ip"` requires `enable_floating_ip = true`
   - `kubeconfig_endpoint_mode = "private_ip"` requires `enable_alias_ip = true`
 - `kubeconfig_data.host` now matches the generated kubeconfig endpoint (it is no longer always the public IP).
+- `kubernetes_version` is now required (no default value). Choose a version compatible with your Talos version:
+  https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
 
 ### General Guidance
 
@@ -88,19 +90,36 @@ worker_nodes = [
 ]
 ```
 
-3) Remove `output_mode_config_cluster_endpoint` from your inputs.
-4) Choose the `kubeconfig` endpoint:
+3) Set `kubernetes_version` explicitly (required in v3):
+
+v2.x (relied on default):
+
+```hcl
+# kubernetes_version had a default of "1.30.3"
+```
+
+v3 (must be set):
+
+```hcl
+kubernetes_version = "1.32.2"  # Choose version compatible with your Talos version
+```
+
+Check the support matrix for compatible versions:
+https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
+
+4) Remove `output_mode_config_cluster_endpoint` from your inputs.
+5) Choose the `kubeconfig` endpoint:
    - If you previously used `output_mode_config_cluster_endpoint = "cluster_endpoint"`, set:
       - `kubeconfig_endpoint_mode = "public_endpoint"`
       - `cluster_api_host = "kube.example.com"`
     - If you access the cluster over VPN/private networking, set:
       - `kubeconfig_endpoint_mode = "private_ip"` (alias IP / VIP) **or**
       - `kubeconfig_endpoint_mode = "private_endpoint"` with `cluster_api_host_private`
-5) Choose `talosconfig` endpoints (Talos API):
+6) Choose `talosconfig` endpoints (Talos API):
    - `talosconfig_endpoints_mode = "public_ip"` when running `talosctl` from outside
    - `talosconfig_endpoints_mode = "private_ip"` when running `talosctl` over VPN/private networking
-6) Run `terraform plan` and verify the rendered endpoints match your expected access pattern.
-7) Apply once the plan looks safe:
+7) Run `terraform plan` and verify the rendered endpoints match your expected access pattern.
+8) Apply once the plan looks safe:
 
 ```bash
 terraform apply
