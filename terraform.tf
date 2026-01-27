@@ -47,6 +47,11 @@ provider "helm" {
   }
 }
 
+provider "helm" {
+  alias      = "template"
+  kubernetes = {}
+}
+
 provider "kubectl" {
   host                   = local.kubeconfig_data.host
   client_certificate     = local.kubeconfig_data.client_certificate
