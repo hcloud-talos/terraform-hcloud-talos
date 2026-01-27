@@ -101,7 +101,7 @@ v2.x (relied on default):
 v3 (must be set):
 
 ```hcl
-kubernetes_version = "1.32.2"  # Choose version compatible with your Talos version
+kubernetes_version = "1.35.0"  # Choose version compatible with your Talos version
 ```
 
 Check the support matrix for compatible versions:
