@@ -13,7 +13,40 @@ variable "cluster_name" {
 variable "cluster_domain" {
   type        = string
   default     = "cluster.local"
-  description = "The domain name of the cluster."
+  description = <<EOF
+    The Kubernetes cluster DNS domain.
+
+    Note: This is often set to an internal-only domain (default: `cluster.local`). If you also want a stable internal
+    Kubernetes API hostname that resolves from your workstation/VPN, set `cluster_api_host_private` (and create the
+    corresponding private/split-horizon DNS record) instead of relying on `kube.[cluster_domain]`.
+  EOF
+}
+
+variable "cluster_api_host_private" {
+  type        = string
+  default     = null
+  description = <<EOF
+    Optional. Internal DNS hostname for the Kubernetes API endpoint used as Talos `cluster_endpoint`.
+
+    Defaults to `kube.[cluster_domain]`.
+    Set this to a hostname that also resolves from your workstation/VPN (e.g., `kube.8log.de`) to avoid client-side
+    DNS issues when Talos embeds the internal endpoint into the generated kubeconfig.
+
+    If `enable_alias_ip = true` (default), this module automatically maps the private VIP to this hostname via
+    `/etc/hosts` on each node. If `enable_alias_ip = false`, you must provide a working private DNS record yourself.
+  EOF
+
+  validation {
+    condition = var.cluster_api_host_private == null || (
+      var.cluster_api_host_private == trimspace(var.cluster_api_host_private) &&
+      trimspace(var.cluster_api_host_private) != "" &&
+      length(regexall("://", var.cluster_api_host_private)) == 0 &&
+      length(regexall(":", var.cluster_api_host_private)) == 0 &&
+      can(regex("^[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?(\\.[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?)*$", var.cluster_api_host_private))
+    )
+
+    error_message = "cluster_api_host_private must be null or a non-empty DNS hostname without scheme or port (example: kube.example.com)."
+  }
 }
 
 variable "cluster_prefix" {
@@ -26,12 +59,28 @@ variable "cluster_api_host" {
   type        = string
   description = <<EOF
     Optional. A stable DNS hostname for the public Kubernetes API endpoint (e.g., `kube.mydomain.com`).
-    If set, you MUST configure a DNS A record for this hostname pointing to your desired public entrypoint (e.g., Floating IP, Load Balancer IP).
-    This hostname will be embedded in the cluster's certificates (SANs).
-    If not set, the generated kubeconfig/talosconfig will use an IP address based on `output_mode_config_cluster_endpoint`.
-    Internal cluster communication often uses `kube.[cluster_domain]`, which is handled automatically via /etc/hosts if `enable_alias_ip = true`.
+    If set, you MUST configure a DNS A record for this hostname pointing to your desired public entrypoint
+    (e.g., Floating IP, TCP load balancer IP). This hostname will be embedded in the cluster's certificates (SANs).
+
+    Note: The Kubernetes API uses mutual TLS. Use a TCP load balancer (pass-through), not an HTTP/TLS-terminating load balancer.
+
+    If not set, the generated kubeconfig will use an IP address based on `kubeconfig_endpoint_mode`.
+    Internal cluster communication often uses the internal API hostname (see `cluster_api_host_private`),
+    which is handled automatically via /etc/hosts if `enable_alias_ip = true`.
   EOF
   default     = null
+
+  validation {
+    condition = var.cluster_api_host == null || (
+      var.cluster_api_host == trimspace(var.cluster_api_host) &&
+      trimspace(var.cluster_api_host) != "" &&
+      length(regexall("://", var.cluster_api_host)) == 0 &&
+      length(regexall(":", var.cluster_api_host)) == 0 &&
+      can(regex("^[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?(\\.[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?)*$", var.cluster_api_host))
+    )
+
+    error_message = "cluster_api_host must be null or a non-empty hostname/IP without scheme or port (example: kube.example.com)."
+  }
 }
 
 variable "location_name" {
@@ -47,18 +96,44 @@ variable "location_name" {
   }
 }
 
-variable "output_mode_config_cluster_endpoint" {
+variable "kubeconfig_endpoint_mode" {
   type    = string
   default = "public_ip"
   validation {
-    condition     = contains(["public_ip", "private_ip", "cluster_endpoint"], var.output_mode_config_cluster_endpoint)
-    error_message = "Invalid output mode for kube and talos config endpoint."
+    condition     = contains(["public_ip", "private_ip", "public_endpoint", "private_endpoint"], var.kubeconfig_endpoint_mode)
+    error_message = "Invalid kubeconfig_endpoint_mode. Valid values: public_ip, private_ip, public_endpoint, private_endpoint."
   }
   description = <<EOF
-    Configure which endpoint address is written into the generated `talosconfig` and `kubeconfig` files.
+    Configure which endpoint host is written into the generated `kubeconfig`.
+
+    Recommended:
+    - Use `public_endpoint` (with a TCP load balancer or DNS records) for HA control planes.
+    - Use `private_ip` or `private_endpoint` when you access the cluster over VPN/private networking.
+
+    Values:
     - `public_ip`: Use the public IP of the first control plane (or the Floating IP if enabled).
-    - `private_ip`: Use the private IP of the first control plane (or the private Alias IP if enabled). Useful if accessing only via VPN/private network.
-    - `cluster_endpoint`: Use the hostname defined in `cluster_api_host`. Requires `cluster_api_host` to be set.
+    - `private_ip`: Use the private Alias IP (VIP) when enabled, otherwise the first control plane private IP.
+    - `public_endpoint`: Use `cluster_api_host` (requires it to be set).
+    - `private_endpoint`: Use `cluster_api_host_private` (requires it to be set).
+  EOF
+}
+
+variable "talosconfig_endpoints_mode" {
+  type    = string
+  default = "public_ip"
+  validation {
+    condition     = contains(["public_ip", "private_ip"], var.talosconfig_endpoints_mode)
+    error_message = "Invalid talosconfig_endpoints_mode. Valid values: public_ip, private_ip."
+  }
+  description = <<EOF
+    Configure which addresses are written into the generated `talosconfig` as Talos API endpoints.
+
+    Note: Talos recommends using direct per-node IPs as endpoints (not a VIP or load-balanced hostname), so this module
+    only supports IP lists.
+
+    Values:
+    - `public_ip`: Use public IPs of all control plane nodes.
+    - `private_ip`: Use private IPs of all control plane nodes.
   EOF
 }
 
@@ -123,8 +198,8 @@ variable "enable_alias_ip" {
   default     = true
   description = <<EOF
     If true, a private alias IP (defaulting to the .100 address within `node_ipv4_cidr`) will be configured on the control plane nodes.
-    This enables a stable internal IP for the Kubernetes API server, reachable via `kube.[cluster_domain]`.
-    The module automatically configures `/etc/hosts` on nodes to resolve `kube.[cluster_domain]` to this alias IP.
+    This enables a stable internal IP for the Kubernetes API server, reachable via the internal API hostname.
+    The module automatically configures `/etc/hosts` on nodes to resolve the internal API hostname (defaults to `kube.[cluster_domain]`) to this alias IP.
   EOF
 }
 
@@ -379,7 +454,7 @@ variable "kubernetes_version" {
   type        = string
   default     = "1.30.3"
   description = <<EOF
-    The Kubernetes version to use. If not set, the latest version supported by Talos is used: https://www.talos.dev/v1.7/introduction/support-matrix/
+    The Kubernetes version to use. If not set, the latest version supported by Talos is used: https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
     Needs to be compatible with the `cilium_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 }
@@ -459,7 +534,7 @@ variable "registries" {
       }
     }
     ```
-    https://www.talos.dev/v1.6/reference/configuration/v1alpha1/config/#Config.machine.registries
+    https://docs.siderolabs.com/talos/latest/reference/configuration/v1alpha1/config/#Config.machine.registries
   EOF
 }
 
