@@ -255,3 +255,4 @@ debug.tf
 
 .idea/copilot.data.*.xml
 .idea/AICommit.xml
+.idea/go.imports.xml
