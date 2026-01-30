@@ -31,6 +31,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
-          semantic_version: 25.0.2
+          semantic_version: 25.0.3
           extra_plugins: |
             - conventional-changelog-conventionalcommits@9.1.0
