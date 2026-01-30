@@ -6,4 +6,12 @@ repos:
       - id: terraform_docs
       - id: terraform_tflint
       - id: terraform_checkov
-        exclude: ^.demo/
+
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.24.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        args: [--extends, '@commitlint/config-conventional']
+        additional_dependencies:
+          - '@commitlint/config-conventional@20.3.1'

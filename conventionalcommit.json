@@ -64,9 +64,6 @@
     },
     "revert": {
       "description": "Changes which revert a previous commit."
-    },
-    "wip": {
-      "description": "Changes which are work in progress."
     }
   },
   "footerTypes": [
