@@ -10,7 +10,13 @@ packer {
 
 variable "talos_version" {
   type    = string
-  default = "v1.11.0"
+  default = "v1.12.2"
+}
+
+variable "role" {
+  type        = string
+  default     = null
+  description = "Node role: 'control-plane' or 'worker'. If null, builds generic images without role label."
 }
 
 variable "image_url_arm" {
@@ -20,12 +26,12 @@ variable "image_url_arm" {
 
 variable "server_type_arm" {
   type    = string
-  default = "cax11"
+  default = "cax21"
 }
 
 variable "server_type_x86" {
   type    = string
-  default = "cx23"
+  default = "cx33"
 }
 
 variable "image_url_x86" {
@@ -41,6 +47,20 @@ variable "server_location" {
 locals {
   image_arm = var.image_url_arm != null ? var.image_url_arm : "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${var.talos_version}/hcloud-arm64.raw.xz"
   image_x86 = var.image_url_x86 != null ? var.image_url_x86 : "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${var.talos_version}/hcloud-amd64.raw.xz"
+
+  # Snapshot naming - include role if specified
+  snapshot_suffix_arm = var.role != null ? "ARM ${var.role}" : "ARM"
+  snapshot_suffix_x86 = var.role != null ? "x86 ${var.role}" : "x86"
+
+  # Labels - include role if specified
+  base_labels = {
+    type    = "infra"
+    os      = "talos"
+    version = var.talos_version
+    creator = "hcloud-talos"
+  }
+  arm_labels = var.role != null ? merge(local.base_labels, { arch = "arm", role = var.role }) : merge(local.base_labels, { arch = "arm" })
+  x86_labels = var.role != null ? merge(local.base_labels, { arch = "x86", role = var.role }) : merge(local.base_labels, { arch = "x86" })
 
   # Add local variables for inline shell commands
   download_image = "wget --timeout=5 --waitretry=5 --tries=5 --retry-connrefused --inet4-only -O /tmp/talos.raw.xz "
@@ -63,36 +83,24 @@ locals {
 source "hcloud" "talos-arm" {
   rescue       = "linux64"
   image        = "debian-11"
-  location     = "${var.server_location}"
-  server_type  = "${var.server_type_arm}"
+  location     = var.server_location
+  server_type  = var.server_type_arm
   ssh_username = "root"
 
-  snapshot_name   = "Talos Linux ${var.talos_version} ARM by hcloud-talos"
-  snapshot_labels = {
-    type    = "infra",
-    os      = "talos",
-    version = "${var.talos_version}",
-    arch    = "arm",
-    creator = "hcloud-talos"
-  }
+  snapshot_name   = "Talos Linux ${var.talos_version} ${local.snapshot_suffix_arm} by hcloud-talos"
+  snapshot_labels = local.arm_labels
 }
 
 # Source for the Talos x86 image
 source "hcloud" "talos-x86" {
   rescue       = "linux64"
   image        = "debian-11"
-  location     = "${var.server_location}"
-  server_type  = "${var.server_type_x86}"
+  location     = var.server_location
+  server_type  = var.server_type_x86
   ssh_username = "root"
 
-  snapshot_name   = "Talos Linux ${var.talos_version} x86 by hcloud-talos"
-  snapshot_labels = {
-    type    = "infra",
-    os      = "talos",
-    version = "${var.talos_version}",
-    arch    = "x86",
-    creator = "hcloud-talos"
-  }
+  snapshot_name   = "Talos Linux ${var.talos_version} ${local.snapshot_suffix_x86} by hcloud-talos"
+  snapshot_labels = local.x86_labels
 }
 
 # Build the Talos ARM snapshot
