@@ -1,0 +1,9 @@
+# Schematic configuration for control plane nodes.
+# Includes tailscale extension for secure remote access.
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools
+      - siderolabs/binfmt-misc
+      - siderolabs/tailscale
