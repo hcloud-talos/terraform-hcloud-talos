@@ -41,45 +41,110 @@ This script will:
 
 The Talos OS version used for the default images is defined by the `talos_version` variable in `talos-hcloud.pkr.hcl`. If you haven't created `hcloud.auto.pkrvars.hcl` to override it, this default value will be used.
 
+## Role-Specific Images (Different Extensions for Control Plane vs Workers)
+
+If you need different Talos extensions for control plane and worker nodes (e.g., tailscale only on control plane nodes), you can build role-specific images.
+
+### Schematic Files
+
+Two schematic files define the extensions for each role:
+
+- `schematic-control-plane.yaml` - Extensions for control plane nodes (includes tailscale)
+- `schematic-worker.yaml` - Extensions for worker nodes (no tailscale)
+
+Customize these files to include the extensions you need for each node type.
+
+### Building Role-Specific Images
+
+```bash
+# Build images for both roles (control-plane and worker)
+./create.sh --roles
+
+# Build only control-plane images
+./create.sh control-plane
+
+# Build only worker images
+./create.sh worker
+```
+
+The script will:
+
+1. Read the appropriate schematic file for each role
+2. Submit it to the Talos Image Factory to get a schematic ID
+3. Build images with the `role` label set (e.g., `role=control-plane` or `role=worker`)
+
+### Using Role-Specific Images in Terraform
+
+After building role-specific images, configure Terraform to use them:
+
+```hcl
+module "cluster" {
+  source = "..."
+
+  # Select images by role label
+  control_plane_image_selector = "os=talos,role=control-plane"
+  worker_image_selector        = "os=talos,role=worker"
+
+  # ... other variables
+}
+```
+
+The default selector `os=talos` works with generic images (built without `--roles`).
+
 ## Advanced Usage: Adding Extensions to the Talos Image
 
 If you need to include additional system extensions in your Talos images (e.g., for specific storage drivers or tools), you can use the Talos Image Factory.
 
-1.  **Define Extensions:**
-    Adjust the `schematic.yaml` file to include the official or custom extensions you need. The current file includes examples for `iscsi-tools`, `util-linux-tools`, and `binfmt-misc`.
+1. **Define Extensions:**
+   Adjust the `schematic.yaml` file to include the official or custom extensions you need. The current file includes examples for `iscsi-tools`, `util-linux-tools`, and `binfmt-misc`.
 
-2.  **Generate Schematic ID:**
-    Use the Talos Image Factory endpoint to generate a unique ID for your schematic configuration:
+2. **Generate Schematic ID:**
+   Use the Talos Image Factory endpoint to generate a unique ID for your schematic configuration:
 
-    ```shell
-    curl -X POST --data-binary @schematic.yaml https://factory.talos.dev/schematics
-    ```
+   ```shell
+   curl -X POST --data-binary @schematic.yaml https://factory.talos.dev/schematics
+   ```
 
-    This command will return a JSON response containing the schematic ID.
+   This command will return a JSON response containing the schematic ID.
 
-3.  **Get Custom Image URLs:**
-    Use the schematic ID and the desired Talos version to construct the URLs for the custom images:
+3. **Get Custom Image URLs:**
+   Use the schematic ID and the desired Talos version to construct the URLs for the custom images:
 
-    - ARM: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz`
-    - x86: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz`
+   - ARM: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz`
+   - x86: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz`
 
-    Replace `<SCHEMATIC_ID>` with the ID obtained in the previous step and `<TALOS_VERSION>` with the target Talos version (e.g., `v1.7.0`).
+   Replace `<SCHEMATIC_ID>` with the ID obtained in the previous step and `<TALOS_VERSION>` with the target Talos version (e.g., `v1.7.0`).
 
-4.  **Override Packer Variables:**
-    Create a file named `hcloud.auto.pkrvars.hcl` in this directory to provide the custom image URLs and the corresponding Talos version to Packer. The file should look like this:
+4. **Override Packer Variables:**
+   Create a file named `hcloud.auto.pkrvars.hcl` in this directory to provide the custom image URLs and the corresponding Talos version to Packer. The file should look like this:
 
-    ```hcl
-    # _packer/hcloud.auto.pkrvars.hcl
-    talos_version = "<TALOS_VERSION>" # e.g., "v1.7.0"
-    image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
-    image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
-    ```
+   ```hcl
+   # _packer/hcloud.auto.pkrvars.hcl
+   talos_version = "<TALOS_VERSION>" # e.g., "v1.7.0"
+   image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
+   image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
+   ```
 
-    Replace the placeholders with your actual schematic ID and Talos version. Remember to also set the `talos_version` variable in this file, as recommended in the tip at the beginning of this document.
+   Replace the placeholders with your actual schematic ID and Talos version. Remember to also set the `talos_version` variable in this file, as recommended in the tip at the beginning of this document.
 
-5.  **Build the Images:**
-    Run the `create.sh` script as usual:
-    ```bash
-    ./create.sh
-    ```
-    Packer will automatically pick up the variables from `hcloud.auto.pkrvars.hcl` and use your custom image URLs instead of the defaults.
+5. **Build the Images:**
+   Run the `create.sh` script as usual:
+
+   ```bash
+   ./create.sh
+   ```
+
+   Packer will automatically pick up the variables from `hcloud.auto.pkrvars.hcl` and use your custom image URLs instead of the defaults.
+
+## Image Labels
+
+Images are created with the following labels for selection in Terraform:
+
+| Label     | Description                      | Values                    |
+|-----------|----------------------------------|---------------------------|
+| `os`      | Operating system                 | `talos`                   |
+| `arch`    | CPU architecture                 | `arm`, `x86`              |
+| `version` | Talos version                    | e.g., `v1.11.0`           |
+| `role`    | Node role (only with `--roles`)  | `control-plane`, `worker` |
+| `creator` | Image creator                    | `hcloud-talos`            |
+| `type`    | Resource type                    | `infra`                   |

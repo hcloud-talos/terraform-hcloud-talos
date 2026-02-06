@@ -338,6 +338,26 @@ variable "disable_arm" {
   description = "If true, arm images will not be used."
 }
 
+variable "control_plane_image_selector" {
+  type        = string
+  default     = "os=talos"
+  description = <<EOF
+    Label selector for control plane Talos images in Hetzner Cloud.
+    Use this to select images with specific extensions (e.g., tailscale).
+    Example: "os=talos,role=control-plane"
+  EOF
+}
+
+variable "worker_image_selector" {
+  type        = string
+  default     = "os=talos"
+  description = <<EOF
+    Label selector for worker node Talos images in Hetzner Cloud.
+    Use this to select different images than control plane nodes.
+    Example: "os=talos,role=worker"
+  EOF
+}
+
 # Talos
 variable "kubelet_extra_args" {
   type        = map(string)
