@@ -13,7 +13,40 @@ variable "cluster_name" {
 variable "cluster_domain" {
   type        = string
   default     = "cluster.local"
-  description = "The domain name of the cluster."
+  description = <<EOF
+    The Kubernetes cluster DNS domain.
+
+    Note: This is often set to an internal-only domain (default: `cluster.local`). If you also want a stable internal
+    Kubernetes API hostname that resolves from your workstation/VPN, set `cluster_api_host_private` (and create the
+    corresponding private/split-horizon DNS record) instead of relying on `kube.[cluster_domain]`.
+  EOF
+}
+
+variable "cluster_api_host_private" {
+  type        = string
+  default     = null
+  description = <<EOF
+    Optional. Internal DNS hostname for the Kubernetes API endpoint used as Talos `cluster_endpoint`.
+
+    Defaults to `kube.[cluster_domain]`.
+    Set this to a hostname that also resolves from your workstation/VPN (e.g., `kube.8log.de`) to avoid client-side
+    DNS issues when Talos embeds the internal endpoint into the generated kubeconfig.
+
+    If `enable_alias_ip = true` (default), this module automatically maps the private VIP to this hostname via
+    `/etc/hosts` on each node. If `enable_alias_ip = false`, you must provide a working private DNS record yourself.
+  EOF
+
+  validation {
+    condition = var.cluster_api_host_private == null || (
+      var.cluster_api_host_private == trimspace(var.cluster_api_host_private) &&
+      trimspace(var.cluster_api_host_private) != "" &&
+      length(regexall("://", var.cluster_api_host_private)) == 0 &&
+      length(regexall(":", var.cluster_api_host_private)) == 0 &&
+      can(regex("^[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?(\\.[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?)*$", var.cluster_api_host_private))
+    )
+
+    error_message = "cluster_api_host_private must be null or a non-empty DNS hostname without scheme or port (example: kube.example.com)."
+  }
 }
 
 variable "cluster_prefix" {
@@ -26,39 +59,81 @@ variable "cluster_api_host" {
   type        = string
   description = <<EOF
     Optional. A stable DNS hostname for the public Kubernetes API endpoint (e.g., `kube.mydomain.com`).
-    If set, you MUST configure a DNS A record for this hostname pointing to your desired public entrypoint (e.g., Floating IP, Load Balancer IP).
-    This hostname will be embedded in the cluster's certificates (SANs).
-    If not set, the generated kubeconfig/talosconfig will use an IP address based on `output_mode_config_cluster_endpoint`.
-    Internal cluster communication often uses `kube.[cluster_domain]`, which is handled automatically via /etc/hosts if `enable_alias_ip = true`.
+    If set, you MUST configure a DNS A record for this hostname pointing to your desired public entrypoint
+    (e.g., Floating IP, TCP load balancer IP). This hostname will be embedded in the cluster's certificates (SANs).
+
+    Note: The Kubernetes API uses mutual TLS. Use a TCP load balancer (pass-through), not an HTTP/TLS-terminating load balancer.
+
+    If not set, the generated kubeconfig will use an IP address based on `kubeconfig_endpoint_mode`.
+    Internal cluster communication often uses the internal API hostname (see `cluster_api_host_private`),
+    which is handled automatically via /etc/hosts if `enable_alias_ip = true`.
   EOF
   default     = null
-}
 
-variable "datacenter_name" {
-  type        = string
-  description = <<EOF
-    The name of the datacenter where the cluster will be created.
-    This is used to determine the region and zone of the cluster and network.
-    Possible values: fsn1-dc14, nbg1-dc3, hel1-dc2, ash-dc1, hil-dc1
-  EOF
   validation {
-    condition     = contains(["fsn1-dc14", "nbg1-dc3", "hel1-dc2", "ash-dc1", "hil-dc1"], var.datacenter_name)
-    error_message = "Invalid datacenter name."
+    condition = var.cluster_api_host == null || (
+      var.cluster_api_host == trimspace(var.cluster_api_host) &&
+      trimspace(var.cluster_api_host) != "" &&
+      length(regexall("://", var.cluster_api_host)) == 0 &&
+      length(regexall(":", var.cluster_api_host)) == 0 &&
+      can(regex("^[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?(\\.[0-9A-Za-z]([0-9A-Za-z-]*[0-9A-Za-z])?)*$", var.cluster_api_host))
+    )
+
+    error_message = "cluster_api_host must be null or a non-empty hostname/IP without scheme or port (example: kube.example.com)."
   }
 }
 
-variable "output_mode_config_cluster_endpoint" {
+variable "location_name" {
+  type        = string
+  description = <<EOF
+    The name of the location where the cluster will be created.
+    This is used to determine the region and zone of the cluster and network.
+    Possible values: fsn1, nbg1, hel1, ash, hil, sin
+  EOF
+  validation {
+    condition     = contains(data.hcloud_locations.all.locations[*].name, var.location_name)
+    error_message = "Invalid location name."
+  }
+}
+
+variable "kubeconfig_endpoint_mode" {
   type    = string
   default = "public_ip"
   validation {
-    condition     = contains(["public_ip", "private_ip", "cluster_endpoint"], var.output_mode_config_cluster_endpoint)
-    error_message = "Invalid output mode for kube and talos config endpoint."
+    condition     = contains(["public_ip", "private_ip", "public_endpoint", "private_endpoint"], var.kubeconfig_endpoint_mode)
+    error_message = "Invalid kubeconfig_endpoint_mode. Valid values: public_ip, private_ip, public_endpoint, private_endpoint."
   }
   description = <<EOF
-    Configure which endpoint address is written into the generated `talosconfig` and `kubeconfig` files.
+    Configure which endpoint host is written into the generated `kubeconfig`.
+
+    Recommended:
+    - Use `public_endpoint` (with a TCP load balancer or DNS records) for HA control planes.
+    - Use `private_ip` or `private_endpoint` when you access the cluster over VPN/private networking.
+
+    Values:
     - `public_ip`: Use the public IP of the first control plane (or the Floating IP if enabled).
-    - `private_ip`: Use the private IP of the first control plane (or the private Alias IP if enabled). Useful if accessing only via VPN/private network.
-    - `cluster_endpoint`: Use the hostname defined in `cluster_api_host`. Requires `cluster_api_host` to be set.
+    - `private_ip`: Use the private Alias IP (VIP) when enabled, otherwise the first control plane private IP.
+    - `public_endpoint`: Use `cluster_api_host` (requires it to be set).
+    - `private_endpoint`: Use `cluster_api_host_private` (requires it to be set).
+  EOF
+}
+
+variable "talosconfig_endpoints_mode" {
+  type    = string
+  default = "public_ip"
+  validation {
+    condition     = contains(["public_ip", "private_ip"], var.talosconfig_endpoints_mode)
+    error_message = "Invalid talosconfig_endpoints_mode. Valid values: public_ip, private_ip."
+  }
+  description = <<EOF
+    Configure which addresses are written into the generated `talosconfig` as Talos API endpoints.
+
+    Note: Talos recommends using direct per-node IPs as endpoints (not a VIP or load-balanced hostname), so this module
+    only supports IP lists.
+
+    Values:
+    - `public_ip`: Use public IPs of all control plane nodes.
+    - `private_ip`: Use private IPs of all control plane nodes.
   EOF
 }
 
@@ -123,8 +198,8 @@ variable "enable_alias_ip" {
   default     = true
   description = <<EOF
     If true, a private alias IP (defaulting to the .100 address within `node_ipv4_cidr`) will be configured on the control plane nodes.
-    This enables a stable internal IP for the Kubernetes API server, reachable via `kube.[cluster_domain]`.
-    The module automatically configures `/etc/hosts` on nodes to resolve `kube.[cluster_domain]` to this alias IP.
+    This enables a stable internal IP for the Kubernetes API server, reachable via the internal API hostname.
+    The module automatically configures `/etc/hosts` on nodes to resolve the internal API hostname (defaults to `kube.[cluster_domain]`) to this alias IP.
   EOF
 }
 
@@ -197,35 +272,63 @@ variable "ssh_public_key" {
   sensitive   = true
 }
 
-variable "control_plane_count" {
-  type        = number
+variable "control_plane_nodes" {
+  type = list(object({
+    id     = number
+    type   = string
+    labels = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
+  }))
   description = <<EOF
-    The number of control plane nodes to create.
-    Must be an odd number. Maximum 5.
-  EOF
-  validation {
-    // 0 is required for debugging (create configs etc. without servers)
-    condition     = var.control_plane_count == 0 || (var.control_plane_count % 2 == 1 && var.control_plane_count <= 5)
-    error_message = "The number of control plane nodes must be an odd number."
-  }
-}
+    List of control plane node configurations.
 
-variable "control_plane_server_type" {
-  type        = string
-  description = <<EOF
-    The server type to use for the control plane nodes.
-    Possible values: cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62,
-    cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63,
-    cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53
+    Each entry represents one control plane node.
+    The total number of control planes must be odd (1, 3, 5) and at most 5.
+
+    - id: Stable node id starting at 1 (used for naming and IP allocation).
+    - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
+    - labels: Map of Kubernetes labels to apply to this node (default: {})
+    - taints: List of Kubernetes taints to apply to this node (default: [])
   EOF
   validation {
-    condition = contains([
-      "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
-      "cax11", "cax21", "cax31", "cax41",
-      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
-      "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
-    ], var.control_plane_server_type)
-    error_message = "Invalid control plane server type."
+    condition     = length(var.control_plane_nodes) % 2 == 1 && length(var.control_plane_nodes) <= 5
+    error_message = "The number of control plane nodes must be an odd number (1, 3, 5) and at most 5."
+  }
+  validation {
+    condition = alltrue([
+      for node in var.control_plane_nodes : contains([
+        "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
+        "cax11", "cax21", "cax31", "cax41",
+        "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
+        "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
+      ], node.type)
+    ])
+    error_message = "Invalid control plane server type in control_plane_nodes."
+  }
+  validation {
+    condition = (
+      length(setsubtract(
+        toset([for node in var.control_plane_nodes : node.id]),
+        toset(range(1, length(var.control_plane_nodes) + 1))
+      )) == 0 &&
+      length(setsubtract(
+        toset(range(1, length(var.control_plane_nodes) + 1)),
+        toset([for node in var.control_plane_nodes : node.id])
+      )) == 0
+    )
+    error_message = "control_plane_nodes id must be unique and contiguous starting at 1 (1..N)."
+  }
+  validation {
+    condition = alltrue(flatten([
+      for node in var.control_plane_nodes : [
+        for taint in node.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], taint.effect)
+      ]
+    ]))
+    error_message = "Invalid taint effect in control_plane_nodes. Allowed values: NoSchedule, PreferNoSchedule, NoExecute."
   }
 }
 
@@ -236,43 +339,13 @@ variable "control_plane_allow_schedule" {
   description = <<EOF
     If true, control plane nodes will be schedulable (i.e., can run workloads).
     If false (default), control plane nodes will be tainted to prevent scheduling of regular workloads.
-    Note: If you set worker_count to 0, control plane nodes will automatically be schedulable regardless of this setting.
+    Note: If you set worker_nodes = [], control plane nodes will automatically be schedulable regardless of this setting.
   EOF
-}
-
-
-variable "worker_count" {
-  type        = number
-  default     = 0
-  description = "DEPRECATED: Use worker_nodes instead. The number of worker nodes to create. Maximum 99."
-  validation {
-    condition     = var.worker_count <= 99
-    error_message = "The number of worker nodes must be less than 100."
-  }
-}
-
-variable "worker_server_type" {
-  type        = string
-  default     = "cpx11"
-  description = <<EOF
-    DEPRECATED: Use worker_nodes instead. The server type to use for the worker nodes.
-    Possible values: cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62,
-    cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63,
-    cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53
-  EOF
-  validation {
-    condition = contains([
-      "cpx11", "cpx12", "cpx21", "cpx22", "cpx31", "cpx32", "cpx41", "cpx42", "cpx51", "cpx52", "cpx62",
-      "cax11", "cax21", "cax31", "cax41",
-      "ccx13", "ccx23", "ccx33", "ccx43", "ccx53", "ccx63",
-      "cx22", "cx23", "cx32", "cx33", "cx42", "cx43", "cx52", "cx53"
-    ], var.worker_server_type)
-    error_message = "Invalid worker server type."
-  }
 }
 
 variable "worker_nodes" {
   type = list(object({
+    id     = number
     type   = string
     labels = optional(map(string), {})
     taints = optional(list(object({
@@ -283,19 +356,24 @@ variable "worker_nodes" {
   }))
   default     = []
   description = <<EOF
-    List of worker node configurations. Each object defines a group of worker nodes with the same configuration.
+    List of worker node configurations.
+
+    Each entry represents one worker node.
+
+    - id: Stable node id starting at 1 (used for naming and IP allocation).
     - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
-    - count: Number of nodes of this type
-    - labels: Map of Kubernetes labels to apply to these nodes (default: {})
-    - taints: List of Kubernetes taints to apply to these nodes (default: [])
+    - labels: Map of Kubernetes labels to apply to this node (default: {})
+    - taints: List of Kubernetes taints to apply to this node (default: [])
     
     Example:
     worker_nodes = [
       {
-        type  = "cx22"
+        id   = 1
+        type = "cx22"
       },
       {
-        type   = "cax22"
+        id    = 2
+        type   = "cax21"
         labels = {
           "node.kubernetes.io/arch" = "arm64"
         }
@@ -319,6 +397,27 @@ variable "worker_nodes" {
       ], node.type)
     ])
     error_message = "Invalid worker server type in worker_nodes."
+  }
+  validation {
+    condition = (
+      length(setsubtract(
+        toset([for node in var.worker_nodes : node.id]),
+        toset(range(1, length(var.worker_nodes) + 1))
+      )) == 0 &&
+      length(setsubtract(
+        toset(range(1, length(var.worker_nodes) + 1)),
+        toset([for node in var.worker_nodes : node.id])
+      )) == 0
+    )
+    error_message = "worker_nodes id must be unique and contiguous starting at 1 (1..N)."
+  }
+  validation {
+    condition = alltrue(flatten([
+      for node in var.worker_nodes : [
+        for taint in node.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], taint.effect)
+      ]
+    ]))
+    error_message = "Invalid taint effect in worker_nodes. Allowed values: NoSchedule, PreferNoSchedule, NoExecute."
   }
   validation {
     condition     = length(var.worker_nodes) <= 99
@@ -353,10 +452,14 @@ variable "kube_api_extra_args" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.30.3"
   description = <<EOF
-    The Kubernetes version to use. If not set, the latest version supported by Talos is used: https://www.talos.dev/v1.7/introduction/support-matrix/
-    Needs to be compatible with the `cilium_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+    The Kubernetes version to use. This variable is required.
+
+    Choose a version compatible with your Talos version:
+    https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
+
+    Also ensure compatibility with `cilium_version`:
+    https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 }
 
@@ -435,7 +538,7 @@ variable "registries" {
       }
     }
     ```
-    https://www.talos.dev/v1.6/reference/configuration/v1alpha1/config/#Config.machine.registries
+    https://docs.siderolabs.com/talos/latest/reference/configuration/v1alpha1/config/#Config.machine.registries
   EOF
 }
 

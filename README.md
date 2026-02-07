@@ -21,13 +21,13 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Goals 🚀
 
-| Goals                                                              | Status | Description                                                                                                                                                                                           |
-|--------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Production ready                                                   | ✅      | All recommendations from the [Talos Production Clusters](https://www.talos.dev/v1.6/introduction/prodnotes/) are implemented. **But you need to read it carefully to understand all implications.**   |
-| Use private networks for the internal communication of the cluster | ✅      | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                              |
-| Secure API Exposure                                                | ✅      | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed. |
-| Possibility to change all CIDRs of the networks                    | ✅      | All network CIDRs (network, node, pod, service) can be customized.                                                                                                                                    |
-| Configure the Cluster optimally to run in the Hetzner Cloud        | ✅      | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                  |
+  | Goals                                                              | Status | Description                                                                                                                                                                                                   |
+  |--------------------------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+  | Production ready                                                   | ✅      | Designed around the recommendations from the [Talos Production Clusters](https://docs.siderolabs.com/talos/latest/getting-started/prodnotes). You still need to handle DNS/LB setup, backups, and operations. |
+  | Use private networks for the internal communication of the cluster | ✅      | Hetzner Cloud Networks are used for internal node-to-node communication.                                                                                                                                      |
+  | Secure API Exposure                                                | ✅      | The Kubernetes and Talos APIs are exposed to the public internet but secured via firewall rules. By default (`firewall_use_current_ip = true`), only traffic from your current IP address is allowed.         |
+  | Possibility to change all CIDRs of the networks                    | ✅      | All network CIDRs (network, node, pod, service) can be customized.                                                                                                                                            |
+  | Configure the Cluster optimally to run in the Hetzner Cloud        | ✅      | This includes manual configuration of the network devices and not via DHCP, provisioning of Floating IPs (VIP), etc.                                                                                          |
 
 ## Information about the Module
 
@@ -35,41 +35,46 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - You can configure the module to create a cluster with 1, 3 or 5 control planes and n workers or only the control
   planes.
 - It allows scheduling pods on the control planes if no workers are created.
-- It has [Multihoming](https://www.talos.dev/v1.6/introduction/prodnotes/#multihoming) configuration (etcd and kubelet
+- It has [Multihoming](https://docs.siderolabs.com/talos/latest/getting-started/prodnotes/#multihoming) configuration (etcd and kubelet
   listen on public and private IP).
-- It uses [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/)
+- It uses [KubePrism](https://docs.siderolabs.com/talos/latest/kubernetes-guides/advanced-guides/kubeprism)
   for internal API server access (`127.0.0.1:7445`) from within the cluster nodes.
 - **Public API Endpoint:**
   - You can define a stable public endpoint for your cluster using the `cluster_api_host` variable (
     e.g., `kube.mydomain.com`).
   - If you set `cluster_api_host`, you **must** create a DNS A record for this hostname pointing to the public IP
-    address you want clients to use. This could be:
-    - The Hetzner Floating IP (if `enable_floating_ip = true`).
-    - The IP of an external Load Balancer you configure separately.
-    - The public IP of a specific control plane node (less recommended for multi-node control planes).
-  - The generated `kubeconfig` and `talosconfig` will use this hostname
-    if `output_mode_config_cluster_endpoint = "cluster_endpoint"`.
-  - **Note:** When using `talosctl` from outside the cluster, ensure you use the publicly resolvable endpoint (e.g.,
-    `cluster_api_host` or the Floating IP) with the `--endpoint` flag, as internal hostnames like
-    `kube.[cluster_domain]` are not externally resolvable.
+     address you want clients to use. This could be:
+     - The Hetzner Floating IP (if `enable_floating_ip = true`).
+     - The IP of an external TCP load balancer you configure separately (pass-through, no TLS termination).
+     - The public IP of a specific control plane node (less recommended for multi-node control planes).
+  - The generated `kubeconfig` will use this hostname if `kubeconfig_endpoint_mode = "public_endpoint"`.
+  - The generated `talosconfig` will always use direct per-node IPs as endpoints (see `talosconfig_endpoints_mode`).
+  - **Note:** `cluster_api_host` is the Kubernetes API endpoint (TCP/6443). Talos API access uses TCP/50000 and is
+    configured separately via `talosconfig_endpoints_mode`.
 - **Internal API Endpoint:**
-  - For internal communication _between cluster nodes_, Talos often uses the hostname `kube.[cluster_domain]` (
-    e.g., `kube.cluster.local`).
+  - For internal communication _between cluster nodes_, Talos uses an internal API hostname.
+    By default this is `kube.[cluster_domain]` (e.g., `kube.cluster.local`), but you can override it via
+    `cluster_api_host_private`.
   - If `enable_alias_ip = true` (the default), this module automatically configures `/etc/hosts` entries on each node
-    to resolve `kube.[cluster_domain]` to the _private_ alias IP (`10.0.1.100` by default). This ensures reliable
+    to resolve the internal API hostname to the _private_ alias IP (`10.0.1.100` by default). This ensures reliable
     internal communication.
+  - If `enable_alias_ip = false`, you must provide a working private DNS record for `cluster_api_host_private` yourself
+    (or accept the single-node fallback when using a single control plane).
+  - If you access the cluster from a workstation over VPN/private networking, consider creating a private (split-horizon)
+    DNS record for a resolvable name (e.g., `kube.example.com` -> `10.0.1.100`) and set `cluster_api_host_private` to
+    that name. This prevents client-side DNS failures when Talos embeds the internal endpoint into kubeconfig.
 - **Default Behavior (if `cluster_api_host` is not set):**
-  - If you don't set `cluster_api_host`, the generated `kubeconfig` and `talosconfig` will use an IP address directly
-    as the endpoint (controlled by `output_mode_config_cluster_endpoint`, defaulting to the first control plane's
-    public IP).
-  - Internal communication will still use `kube.[cluster_domain]` if `enable_alias_ip = true`.
+  - If you don't set `cluster_api_host`, the generated `kubeconfig` will use an IP address directly as the endpoint
+    (controlled by `kubeconfig_endpoint_mode`, defaulting to the first control plane's public IP or the Floating IP).
+  - `talosconfig` endpoints are configured separately via `talosconfig_endpoints_mode`.
+  - Internal communication will still use the internal API hostname (defaults to `kube.[cluster_domain]`) if `enable_alias_ip = true`.
 
 ## Additional installed software in the cluster
 
 ### [Cilium](https://cilium.io/)
 
 - Cilium is a modern, efficient, and secure networking and security solution for Kubernetes.
-- [Cilium is used as the CNI](https://www.talos.dev/v1.6/kubernetes-guides/network/deploying-cilium/) instead of the
+- [Cilium is used as the CNI](https://docs.siderolabs.com/talos/latest/kubernetes-guides/network/deploying-cilium) instead of the
   default Flannel.
 - It provides a lot of features like Network Policies, Load Balancing, and more.
 
@@ -83,8 +88,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ### [Hcloud Cloud Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager)
 
-- Updates the `Node` objects with information about the server from the Cloud , like instance Type, Location,
-  Datacenter, Server ID, IPs.
+- Updates the `Node` objects with information about the server from the Cloud, like instance Type, Location, Server ID, IPs.
 - Cleans up stale `Node` objects when the server is deleted in the API.
 - Routes traffic to the pods through Hetzner Cloud Networks. Removes one layer of indirection.
 - Watches Services with `type: LoadBalancer` and creates Hetzner Cloud Load Balancers for them, adds Kubernetes
@@ -120,7 +124,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ### Recommended Software
 
 - [hcloud cli](https://github.com/hetznercloud/cli)
-- [talosctl](https://www.talos.dev/v1.6/introduction/getting-started/#talosctl)
+- [talosctl](https://docs.siderolabs.com/talos/latest/introduction/getting-started/#talosctl)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
 ### Hetzner Cloud
@@ -158,6 +162,11 @@ Before deploying with Terraform, you need Talos OS images (snapshots) available 
 Use the module as shown in the following working minimal example:
 
 > [!NOTE]
+> Verify version compatibility before deploying:
+> - [Talos Support Matrix](https://docs.siderolabs.com/talos/latest/getting-started/support-matrix)
+> - [Cilium Compatibility](https://docs.cilium.io/en/stable/operations/system_requirements/#kubernetes-versions)
+
+> [!NOTE]
 > Actually, your current IP address has to have access to the nodes during the creation of the cluster.
 
 ```hcl
@@ -167,7 +176,7 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  talos_version = "v1.11.0" # The version of talos features to use in generated machine configurations
+  talos_version = "v1.12.2" # The version of talos features to use in generated machine configurations
 
   hcloud_token            = "your-hcloud-token"
   # If true, the current IP address will be used as the source for the firewall rules.
@@ -176,10 +185,14 @@ module "talos" {
   firewall_use_current_ip = true
 
   cluster_name    = "dummy.com"
-  datacenter_name = "fsn1-dc14"
+  location_name   = "fsn1"
 
-  control_plane_count       = 1
-  control_plane_server_type = "cax11"
+  control_plane_nodes = [
+    {
+      id   = 1
+      type = "cax11"
+    }
+  ]
 }
 ```
 
@@ -193,8 +206,8 @@ module "talos" {
   version = "<latest-version>" # Replace with the latest version number
 
   # Use versions compatible with each other and supported by the module/Talos
-  talos_version      = "v1.11.0"
-  kubernetes_version = "1.30.3"
+  talos_version      = "v1.12.2"
+  kubernetes_version = "1.35.0"
   cilium_version     = "1.16.2"
 
   hcloud_token = "your-hcloud-token"
@@ -207,14 +220,38 @@ module "talos" {
   firewall_kube_api_source = ["your-ip"]
   firewall_talos_api_source = ["your-ip"]
 
-  datacenter_name = "fsn1-dc14"
+  location_name = "fsn1"
 
-  control_plane_count       = 3
-  control_plane_server_type = "cax11"
+  control_plane_nodes = [
+    {
+      id   = 1
+      type = "cax11"
+    },
+    {
+      id   = 2
+      type = "cax11"
+    },
+    {
+      id   = 3
+      type = "cax11"
+    }
+  ]
   control_plane_allow_schedule = true
 
-  worker_count       = 3
-  worker_server_type = "cax21"
+  worker_nodes = [
+    {
+      id   = 1
+      type = "cax21"
+    },
+    {
+      id   = 2
+      type = "cax21"
+    },
+    {
+      id   = 3
+      type = "cax21"
+    }
+  ]
 
   network_ipv4_cidr = "10.0.0.0/16"
   node_ipv4_cidr    = "10.0.1.0/24"
@@ -229,6 +266,63 @@ module "talos" {
 }
 ```
 
+### Endpoint Configuration Examples
+
+These snippets show only the endpoint- and access-related settings. Combine them with the required module inputs from the examples above.
+
+#### VPN-only (private kubeconfig/talosconfig)
+
+Use this when your workstation/CI reaches the nodes via VPN/private networking, but the public firewall should still allow your current public IP (so Terraform can bootstrap and manage the cluster).
+
+```hcl
+firewall_use_current_ip = true
+
+# Use the private VIP via a VPN-resolvable hostname (split-horizon DNS).
+enable_alias_ip            = true # default
+cluster_api_host_private   = "kube.vpn.example.com" # -> 10.0.1.100 (private VIP)
+kubeconfig_endpoint_mode   = "private_endpoint"
+talosconfig_endpoints_mode = "private_ip"
+```
+
+#### Floating IP (public VIP)
+
+Use this when you want a public, stable Kubernetes API endpoint without running your own load balancer.
+
+```hcl
+firewall_use_current_ip = true
+
+enable_floating_ip         = true
+kubeconfig_endpoint_mode   = "public_ip" # uses the Floating IP for HA control planes
+talosconfig_endpoints_mode = "public_ip"
+```
+
+#### External TCP load balancer + public DNS (recommended for HA)
+
+Use this when you have a dedicated TCP (L4) load balancer pointing to all control planes on port 6443.
+
+```hcl
+firewall_use_current_ip    = true
+
+cluster_api_host           = "kube.example.com" # -> LB IP/DNS
+kubeconfig_endpoint_mode   = "public_endpoint"
+talosconfig_endpoints_mode = "public_ip"
+```
+
+#### Split-horizon: public kubeconfig + private node endpoint
+
+Use this when nodes should use a private VIP/hostname, but your kubeconfig should point to a public DNS/LB.
+
+```hcl
+firewall_use_current_ip    = true
+
+enable_alias_ip            = true # private VIP for nodes
+cluster_api_host_private   = "kube.internal.example.com" # -> 10.0.1.100 (private VIP)
+
+cluster_api_host           = "kube.example.com" # -> public Floating IP or TCP LB
+kubeconfig_endpoint_mode   = "public_endpoint"
+talosconfig_endpoints_mode = "public_ip"
+```
+
 ### Mixed Worker Node Types
 
 For more advanced use cases, you can define different types of worker nodes with individual configurations using the `worker_nodes` variable:
@@ -238,30 +332,36 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "<latest-version>"
 
-  talos_version      = "v1.10.3"
-  kubernetes_version = "1.30.3"
+  talos_version      = "v1.12.2"
+  kubernetes_version = "1.35.0"
 
   hcloud_token            = "your-hcloud-token"
   firewall_use_current_ip = true
 
   cluster_name    = "mixed-cluster"
-  datacenter_name = "fsn1-dc14"
+  location_name = "fsn1"
 
-  control_plane_count       = 1
-  control_plane_server_type = "cx22"
+  control_plane_nodes = [
+    {
+      id   = 1
+      type = "cx22"
+    }
+  ]
 
   # Define different worker node types
   worker_nodes = [
     # Standard x86 workers
     {
-      type  = "cx22"
+      id   = 1
+      type = "cx22"
       labels = {
         "node.kubernetes.io/instance-type" = "cx22"
       }
     },
     # ARM workers for specific workloads with taints
     {
-      type   = "cax22"
+      id    = 2
+      type  = "cax21"
       labels = {
         "node.kubernetes.io/arch"          = "arm64"
         "affinity.example.com" = "example"
@@ -283,9 +383,8 @@ module "talos" {
 > - Mix different server types (x86 and ARM)
 > - Add custom labels to nodes
 > - Apply taints for workload isolation
-> - Control the count of each node type independently
-> 
-> The legacy `worker_count` and `worker_server_type` variables are still supported for backward compatibility but are deprecated in favor of `worker_nodes`.
+> - Control the number of nodes by adding/removing entries
+> - Keep stable node identity by setting `id` (1..N)
 
 You need to pipe the outputs of the module:
 
@@ -379,19 +478,16 @@ To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` comm
 
 **Important Considerations for `talosctl` commands:**
 
-- **Endpoint Resolution:** When running `talosctl` commands from outside your cluster (e.g., from your local machine),
-  you might encounter issues resolving internal hostnames like `kube.cluster.local`.
-  This hostname is primarily for internal cluster communication.
-- **Using `--endpoint`:** To ensure reliable connectivity for `talosctl` operations (including `upgrade-k8s`,
-  `version`, etc.), always specify the publicly accessible endpoint of your cluster using the `--endpoint` flag.
-  This should be the `cluster_api_host` you configured,
-  or the public IP address of your Floating IP/first control plane node.
+- **Talos API Endpoints:** `talosctl` talks to the Talos API (TCP/50000). Use `talosconfig_endpoints_mode = "public_ip"`
+  when running `talosctl` from outside, or `"private_ip"` when running over VPN/private networking.
+- **Avoid VIP/Load-Balanced Endpoints:** Talos recommends using direct per-node IPs as endpoints in `talosconfig` (not a
+  VIP), because VIP availability depends on etcd health.
 - **Firewall Access:**
   Ensure your firewall rules (configured via `firewall_use_current_ip` or `firewall_talos_api_source`)
   allow access to the Talos API port (default 50000) on your control plane nodes from where you are running `talosctl`.
   Connectivity issues (e.g., `i/o timeout`) can occur if this port is blocked.
 
-Refer to the [official Talos documentation on upgrading Kubernetes](https://www.talos.dev/v1.9/kubernetes-guides/upgrading-kubernetes/) for detailed steps and best practices.
+Refer to the [official Talos documentation on upgrading Kubernetes](https://docs.siderolabs.com/talos/latest/kubernetes-guides/upgrading-kubernetes) for detailed steps and best practices.
 
 ## Known Limitations
 
@@ -409,9 +505,40 @@ Refer to the [official Talos documentation on upgrading Kubernetes](https://www.
   See [#46](https://github.com/hcloud-talos/terraform-hcloud-talos/issues/46)
   and [registry.k8s.io #138](https://github.com/kubernetes/registry.k8s.io/issues/138).
 
+## Troubleshooting
+
+### Adding New Nodes (Scaling Up)
+
+**Alias IP stale state:** The module sets `alias_ips = []` on servers (see `server.tf`) to work around [hcloud provider #650](https://github.com/hetznercloud/terraform-provider-hcloud/issues/650). This causes `terraform apply` to remove alias IPs, leaving the previous owner node with stale network config. Reboot the affected control plane node to reassign the alias IP correctly.
+
+**Registry 403 errors:** Some Hetzner IP ranges are blocked by `registry.k8s.io`. If new nodes fail to pull images, you may need to recreate the server to get a different IP address.
+
+### Importing Primary IPs
+
+When importing existing primary IPs into Terraform state, importing them individually will fail with errors like:
+
+```
+Error: Invalid index
+The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.
+```
+
+This occurs because `locals` in `server.tf` depend on all primary IP resources being present simultaneously.
+
+**Solution:** Import all primary IPs at once using Terraform import blocks. Create a temporary `imports.tf` file:
+
+```hcl
+import {
+  to = module.talos.hcloud_primary_ip.control_plane_ipv4[0]
+  id = "106798072"  # Replace with your actual IDs
+}
+# Add all other primary IPs (control_plane_ipv4[*], control_plane_ipv6[*], worker_ipv4[*], worker_ipv6[*])
+```
+
+Run `terraform plan` followed by `terraform apply` to import all resources in one operation, then delete `imports.tf`.
+
 ## Credits
 
 - [kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) For the inspiration and the great
   terraform module. This module is based on many ideas and code snippets from kube-hetzner.
-- [Talos](https://www.talos.dev/) For the incredible OS.
+- [Talos](https://docs.siderolabs.com/talos/latest/overview/what-is-talos) For the incredible OS.
 - [Hetzner Cloud](https://www.hetzner.com/cloud) For the great cloud hosting.

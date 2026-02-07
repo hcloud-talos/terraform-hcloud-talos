@@ -46,9 +46,5 @@ output "firewall_id" {
 
 output "talos_worker_ids" {
   description = "Server IDs of the hetzner talos workers machines"
-  value = merge(
-    { for id, server in hcloud_server.workers_new : id => server.id },
-    { for id, server in hcloud_server.workers : id => server.id }
-  )
+  value       = { for id, server in hcloud_server.workers : id => server.id }
 }
-
