@@ -259,5 +259,7 @@ debug.tf
 .idea/copilot.data.*.xml
 .idea/AICommit.xml
 .idea/go.imports.xml
+.idea/opentofu_settings.xml
+.idea/terraform.xml
 
 .pre-commit-cache
