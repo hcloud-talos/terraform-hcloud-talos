@@ -1,0 +1,4 @@
+// Rename file to terraform.tfvars
+
+op_vault_id_terraform = "your-vault-id"
+op_password_uuid_hetzner_token = "your-password-uuid-for-hetzner-token"

@@ -1,0 +1,22 @@
+machine:
+  kubelet:
+    extraArgs:
+      # Resource reservations optimized for CX43 (8 CPU, 15.5GB RAM) workers
+      # Total reserved: 1000m CPU (12.5%), 2Gi memory (13%) + 2Gi eviction threshold
+      system-reserved: cpu=400m,memory=1Gi,ephemeral-storage=2Gi
+      kube-reserved: cpu=600m,memory=1Gi,ephemeral-storage=2Gi
+
+      # Eviction thresholds - protection for workload nodes
+      eviction-hard: memory.available<2Gi,nodefs.available<10%,imagefs.available<10%
+      eviction-soft: memory.available<3Gi,nodefs.available<15%,imagefs.available<15%
+      eviction-soft-grace-period: memory.available=2m,nodefs.available=3m,imagefs.available=3m
+      eviction-minimum-reclaim: memory.available=1Gi,nodefs.available=2Gi,imagefs.available=2Gi
+      eviction-max-pod-grace-period: 90
+      eviction-pressure-transition-period: 30s
+
+      # Image GC - moderate settings for larger workers
+      image-gc-high-threshold: 80
+      image-gc-low-threshold: 70
+
+      # Pod limits
+      max-pods: 110

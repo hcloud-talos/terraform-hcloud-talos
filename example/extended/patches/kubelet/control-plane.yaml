@@ -1,0 +1,19 @@
+machine:
+  kubelet:
+    extraArgs:
+      # Resource reservations optimized for CX33 (4 CPU, 7.5GB RAM) control planes
+      # Total reserved: 600m CPU (15%), 1.28Gi memory (17%) + 1Gi eviction threshold
+      system-reserved: cpu=300m,memory=640Mi,ephemeral-storage=1Gi
+      kube-reserved: cpu=300m,memory=640Mi,ephemeral-storage=1Gi
+
+      # Eviction thresholds - aggressive for control plane stability (etcd protection)
+      eviction-hard: memory.available<1Gi,nodefs.available<10%,imagefs.available<10%
+      eviction-soft: memory.available<2Gi,nodefs.available<15%,imagefs.available<15%
+      eviction-soft-grace-period: memory.available=1m30s,nodefs.available=2m,imagefs.available=2m
+      eviction-minimum-reclaim: memory.available=512Mi,nodefs.available=2Gi,imagefs.available=2Gi
+      eviction-max-pod-grace-period: 60
+      eviction-pressure-transition-period: 30s
+
+      # Image GC - aggressive due to limited disk on control planes
+      image-gc-high-threshold: 75
+      image-gc-low-threshold: 65

@@ -1,0 +1,5 @@
+# Generated / local-only files
+.helm/
+.cache/
+kubeconfig
+talosconfig

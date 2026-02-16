@@ -1,0 +1,25 @@
+# =============================================================================
+# Example for Containerd Registry Mirrors - Pull-Through Cache Configuration
+# =============================================================================
+# Redirects image pulls through local docker-registry pull-through caches
+# Applied to all nodes (control plane + workers)
+# For sure, you need to replace the endpoints with your own
+# =============================================================================
+
+machine:
+  registries:
+    mirrors:
+      docker.io:
+        endpoints:
+          # NOTE: Docker Hub's registry API is served from `registry-1.docker.io`,
+          # not `docker.io` (which serves HTML and will break image pulls).
+          - https://registry-1.docker.io
+      ghcr.io:
+        endpoints:
+          - https://ghcr.io
+      gcr.io:
+        endpoints:
+          - https://gcr.io
+      registry.k8s.io:
+        endpoints:
+          - https://registry.k8s.io
