@@ -104,6 +104,13 @@ Closes #123
 7. Push to your fork
 8. Open a pull request against `main`
 
+## Release Branches (Important)
+
+This repository uses **semantic-release**, which tracks releases via **Git tags**.
+
+- Do **not** rebase / force-push branches that are used for releases: `main`, `next`, and maintenance branches like `1.x`.
+- If you want a clean history, rebase/squash on your **feature branch** before merging, not on `main`/`next`.
+
 ## Pull Request Process
 
 - CI will validate all commits in your PR
