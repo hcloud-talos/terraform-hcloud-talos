@@ -532,7 +532,7 @@ variable "registries" {
         "docker.io" = {
           endpoints = [
             "http://localhost:5000",
-            "https://docker.io"
+            "https://registry-1.docker.io"
           ]
         }
       }
