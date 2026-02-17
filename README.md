@@ -147,7 +147,11 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Usage
 
-### 1. Build Talos Images with Packer
+### 1. Build Talos Images with Packer (Optional)
+
+> [!TIP]
+> You can also use official Hetzner Talos images directly by setting `talos_image_id_x86` and/or `talos_image_id_arm`.
+> Check the Hetzner changelog for current Talos image IDs: https://docs.hetzner.cloud/changelog
 
 Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. This module provides Packer configurations to build these images.
 
@@ -183,6 +187,10 @@ module "talos" {
   version = "<latest-version>" # Replace with the latest version number
 
   talos_version = "v1.12.2" # The version of talos features to use in generated machine configurations
+
+  # Optional: use official Hetzner Talos image IDs (no custom Packer image required)
+  # talos_image_id_x86 = "<x86-image-id>"
+  # talos_image_id_arm = "<arm-image-id>"
 
   hcloud_token            = "your-hcloud-token"
   # If true, the current IP address will be used as the source for the firewall rules.

@@ -437,6 +437,32 @@ variable "disable_arm" {
   description = "If true, arm images will not be used."
 }
 
+variable "talos_image_id_x86" {
+  type        = string
+  default     = null
+  description = <<EOF
+    Optional Hetzner Cloud image ID for x86_64 architecture.
+    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
+  EOF
+  validation {
+    condition     = var.talos_image_id_x86 == null || can(regex("^[0-9]+$", var.talos_image_id_x86))
+    error_message = "talos_image_id_x86 must be a numeric image ID string (for example: \"122630\") or null."
+  }
+}
+
+variable "talos_image_id_arm" {
+  type        = string
+  default     = null
+  description = <<EOF
+    Optional Hetzner Cloud image ID for arm64 architecture.
+    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
+  EOF
+  validation {
+    condition     = var.talos_image_id_arm == null || can(regex("^[0-9]+$", var.talos_image_id_arm))
+    error_message = "talos_image_id_arm must be a numeric image ID string (for example: \"122629\") or null."
+  }
+}
+
 # Talos
 variable "kubelet_extra_args" {
   type        = map(string)

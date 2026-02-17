@@ -1,12 +1,12 @@
 data "hcloud_image" "arm" {
-  count             = var.disable_arm ? 0 : 1
+  count             = var.disable_arm || var.talos_image_id_arm != null ? 0 : 1
   with_selector     = "os=talos"
   with_architecture = "arm"
   most_recent       = true
 }
 
 data "hcloud_image" "x86" {
-  count             = var.disable_x86 ? 0 : 1
+  count             = var.disable_x86 || var.talos_image_id_x86 != null ? 0 : 1
   with_selector     = "os=talos"
   with_architecture = "x86"
   most_recent       = true
@@ -14,6 +14,16 @@ data "hcloud_image" "x86" {
 
 locals {
   cluster_prefix = var.cluster_prefix ? "${var.cluster_name}-" : ""
+
+  arm_image_id = (
+    var.talos_image_id_arm != null ? var.talos_image_id_arm :
+    (var.disable_arm || length(data.hcloud_image.arm) == 0 ? null : data.hcloud_image.arm[0].id)
+  )
+
+  x86_image_id = (
+    var.talos_image_id_x86 != null ? var.talos_image_id_x86 :
+    (var.disable_x86 || length(data.hcloud_image.x86) == 0 ? null : data.hcloud_image.x86[0].id)
+  )
 
   control_plane_count = length(var.control_plane_nodes)
   worker_count        = length(var.worker_nodes)
@@ -28,8 +38,8 @@ locals {
       server_type = local.control_plane_nodes_by_id[i].type
       image_id = (
         substr(local.control_plane_nodes_by_id[i].type, 0, 3) == "cax" ?
-        (var.disable_arm ? null : data.hcloud_image.arm[0].id) :
-        (var.disable_x86 ? null : data.hcloud_image.x86[0].id)
+        local.arm_image_id :
+        local.x86_image_id
       )
       ipv4_public        = local.control_plane_public_ipv4_list[i - 1]
       ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i - 1] : null
@@ -47,8 +57,8 @@ locals {
       server_type = local.worker_nodes_by_id[i].type
       image_id = (
         substr(local.worker_nodes_by_id[i].type, 0, 3) == "cax" ?
-        (var.disable_arm ? null : data.hcloud_image.arm[0].id) :
-        (var.disable_x86 ? null : data.hcloud_image.x86[0].id)
+        local.arm_image_id :
+        local.x86_image_id
       )
       ipv4_public        = local.worker_public_ipv4_list[i - 1]
       ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i - 1] : null
