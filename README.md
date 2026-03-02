@@ -4,7 +4,7 @@
   <h1 style="margin-top: 0; padding-top: 0;">Terraform - Hcloud - Talos</h1>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hcloud-talos/terraform-hcloud-talos?logo=github">
   <p>
-    <a href="https://hetzner.cloud/?ref=9EF3RYocQW8y">New to Hetzner? Get 20€ credit</a>
+    <a href="https://hetzner.cloud/?ref=9EF3RYocQW8y">New to Hetzner? Get 20€ credit (and support this project)!</a>
   </p>
   <p>
     <a href="https://www.buymeacoffee.com/mrclrchtr"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=mrclrchtr&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" /></a>
