@@ -6,6 +6,11 @@
 # Pipelines return the exit status of the last command to exit non-zero.
 set -euo pipefail
 
+echo "WARNING: _packer is deprecated and no longer maintained."
+echo "WARNING: Prefer terraform-provider-imager for creating Talos snapshots:"
+echo "WARNING: https://github.com/hcloud-talos/terraform-provider-imager"
+echo
+
 # Check if packer is installed
 command -v packer >/dev/null 2>&1 || {
     echo >&2 "Error: packer is not installed."

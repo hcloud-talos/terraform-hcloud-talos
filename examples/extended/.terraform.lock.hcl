@@ -106,6 +106,20 @@ provider "registry.terraform.io/hashicorp/tls" {
   ]
 }
 
+provider "registry.terraform.io/hcloud-talos/imager" {
+  version     = "0.1.1"
+  constraints = "~> 0.1"
+  hashes = [
+    "h1:cdcPRe3IZ+S+8CuusKPFH2I3B506daczVtSQN9BMRfs=",
+    "zh:126eb0a4870f6b81589d27724fdd4b113a49800a9f4bc2dd434229706b15df53",
+    "zh:182e6fd9d67a0d01f5c138741d647c6fe863a844ec6940d880c7a777745fa611",
+    "zh:1b651a5d06134b9e47335c9f99cbf1909dc06847bfa042620d9c9521efc5a1df",
+    "zh:935a104db5c9f779a40c101299516e822e161427976ccf16f12be542d4bff3c6",
+    "zh:ba0676726f71e5d2e641d26a7576b73e5f1300165d081cdde615b354062ac648",
+    "zh:cebad62171cbdbde026658bf0b442858617a6e70868a9c24e46405ba51712c64",
+  ]
+}
+
 provider "registry.terraform.io/hetznercloud/hcloud" {
   version     = "1.60.1"
   constraints = ">= 1.59.0"

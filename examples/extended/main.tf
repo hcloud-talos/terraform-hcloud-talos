@@ -11,6 +11,16 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = ">= 1.60.1"
     }
+
+    imager = {
+      source  = "hcloud-talos/imager"
+      version = "~> 0.1"
+    }
+
+    talos = {
+      source  = "siderolabs/talos"
+      version = ">= 0.7.0"
+    }
   }
 }
 
@@ -23,14 +33,52 @@ provider "hcloud" {
   token = data.onepassword_item.hetzner_token.password
 }
 
+provider "imager" {
+  token = data.onepassword_item.hetzner_token.password
+}
+
+provider "talos" {}
+
+locals {
+  talos_version = "v1.12.2"
+}
+
+resource "talos_image_factory_schematic" "x86" {
+  schematic = yamlencode({
+    customization = {
+      systemExtensions = {
+        officialExtensions = []
+      }
+    }
+  })
+}
+
+data "talos_image_factory_urls" "hcloud_amd64" {
+  talos_version = local.talos_version
+  schematic_id  = talos_image_factory_schematic.x86.id
+  platform      = "hcloud"
+  architecture  = "amd64"
+}
+
+resource "imager_image" "talos_x86" {
+  image_url    = data.talos_image_factory_urls.hcloud_amd64.urls.disk_image
+  architecture = "x86"
+  description  = "Talos Linux ${local.talos_version} x86 example-extended"
+
+  labels = {
+    version = local.talos_version
+  }
+}
+
 module "talos" {
   # Local module source (repo root) for testing migrations / current version.
   source = "../.."
 
   hcloud_token = data.onepassword_item.hetzner_token.password
 
-  talos_version      = "v1.12.2"
+  talos_version      = local.talos_version
   kubernetes_version = "1.35.0"
+  talos_image_id_x86 = imager_image.talos_x86.id
 
   disable_arm = true
 

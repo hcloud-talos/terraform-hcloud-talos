@@ -125,8 +125,11 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 ### Required Software
 
 - [terraform](https://www.terraform.io/downloads.html)
-- [packer](https://www.packer.io/downloads)
 - [helm](https://helm.sh/docs/intro/install/)
+
+### Optional Legacy Software
+
+- [packer](https://www.packer.io/downloads) for the deprecated `_packer/` workflow, which is no longer maintained
 
 ### Recommended Software
 
@@ -147,7 +150,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ## Usage
 
-### 1. Build Talos Images with Packer (Optional)
+### 1. Create Talos Images with `terraform-provider-imager` (Recommended)
 
 > [!TIP]
 > You can use official Hetzner Talos ISOs by setting `talos_iso_id_x86` and/or `talos_iso_id_arm` (but these are usually outdated – check the versions!).
@@ -156,7 +159,37 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 > You can also use custom Talos image by setting `talos_image_id_x86` and/or `talos_image_id_arm`.
 > List Talos image IDs: `hcloud image list`
 
-Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. This module provides Packer configurations to build these images.
+Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. The maintained workflow is to create those snapshots directly from Terraform with the companion provider [`hcloud-talos/imager`](https://github.com/hcloud-talos/terraform-provider-imager).
+
+```hcl
+terraform {
+  required_providers {
+    imager = {
+      source = "hcloud-talos/imager"
+    }
+  }
+}
+
+provider "imager" {
+  token = var.hcloud_token
+}
+
+resource "imager_image" "talos_x86" {
+  image_url    = "https://factory.talos.dev/image/<schematic-id>/<talos-version>/hcloud-amd64.raw.xz"
+  architecture = "x86"
+
+  labels = {
+    version = var.talos_version
+  }
+}
+```
+
+Pass the resulting snapshot IDs into this module with `talos_image_id_x86` and `talos_image_id_arm`. A complete runnable example is available in [`examples/extended`](examples/extended).
+
+### 2. Packer Workflow (Deprecated, No Longer Maintained)
+
+> [!WARNING]
+> The `_packer/` workflow is deprecated and no longer maintained. Use [`hcloud-talos/imager`](https://github.com/hcloud-talos/terraform-provider-imager) for new clusters and future updates.
 
 - **Purpose:** Creates ARM and x86 Talos OS snapshots compatible with Hetzner Cloud.
 - **Location:** All Packer-related files are in the `_packer/` directory.
@@ -168,9 +201,9 @@ Before deploying with Terraform, you need Talos OS images (snapshots) available 
 - **Customization:** You can build standard Talos images or create custom images with additional system extensions using the Talos Image Factory.
 - **Versioning:** Ensure the `talos_version` used during the Packer build matches the `talos_version` variable set in your Terraform configuration to avoid potential incompatibilities.
 
-> **Detailed Instructions:** For comprehensive steps on building default images, using the Image Factory for custom extensions, and managing Talos versions (including how to override the default version), please refer to the **[`_packer/README.md`](_packer/README.md)** file.
+> **Legacy Instructions:** If you still need the deprecated Packer flow, refer to **[`_packer/README.md`](_packer/README.md)**.
 
-### 2. Deploy the Cluster with Terraform
+### 3. Deploy the Cluster with Terraform
 
 Use the module as shown in the following working minimal example:
 
@@ -195,7 +228,7 @@ module "talos" {
   # talos_iso_id_x86 = "<x86-iso-id>"
   # talos_iso_id_arm = "<arm-iso-id>"
 
-  # Optional: use custom Talos image IDs (snapshots) instead
+  # Optional: use custom Talos image IDs (snapshots) created by terraform-provider-imager instead
   # talos_image_id_x86 = "<x86-image-id>"
   # talos_image_id_arm = "<arm-image-id>"
 
