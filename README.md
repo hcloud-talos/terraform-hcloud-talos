@@ -159,6 +159,14 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 > You can also use custom Talos image by setting `talos_image_id_x86` and/or `talos_image_id_arm`.
 > List Talos image IDs: `hcloud image list`
 
+> [!WARNING]
+> Prefer custom Talos images/snapshots created with `terraform-provider-imager` over the official Hetzner Talos ISOs.
+> Some Hetzner-provided Talos ISOs have booted Talos in `metal` mode instead of `hcloud`, which leads to incorrect
+> node `providerID`s such as `talos://metal/...`. This breaks `hcloud-cloud-controller-manager` route creation and can
+> cause pod-to-pod networking failures across nodes.
+> If you still use `talos_iso_id_x86` or `talos_iso_id_arm`, verify the current ISO version carefully first.
+> See [#417](https://github.com/hcloud-talos/terraform-hcloud-talos/issues/417).
+
 Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. The maintained workflow is to create those snapshots directly from Terraform with the companion provider [`hcloud-talos/imager`](https://github.com/hcloud-talos/terraform-provider-imager).
 
 ```hcl
