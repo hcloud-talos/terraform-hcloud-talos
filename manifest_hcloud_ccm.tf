@@ -3,6 +3,8 @@ data "helm_template" "hcloud_ccm" {
   name      = "hcloud-cloud-controller-manager"
   namespace = "kube-system"
 
+  provider = helm.template
+
   repository   = "https://charts.hetzner.cloud"
   chart        = "hcloud-cloud-controller-manager"
   version      = var.hcloud_ccm_version

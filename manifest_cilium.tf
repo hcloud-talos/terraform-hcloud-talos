@@ -3,6 +3,8 @@ data "helm_template" "cilium_default" {
   name      = "cilium"
   namespace = "kube-system"
 
+  provider = helm.template
+
   repository   = "https://helm.cilium.io"
   chart        = "cilium"
   version      = var.cilium_version
@@ -97,6 +99,8 @@ data "helm_template" "cilium_from_values" {
   name      = "cilium"
   namespace = "kube-system"
 
+  provider = helm.template
+
   repository   = "https://helm.cilium.io"
   chart        = "cilium"
   version      = var.cilium_version
@@ -127,6 +131,8 @@ data "helm_template" "prometheus_operator_crds" {
   repository   = "https://prometheus-community.github.io/helm-charts"
   version      = var.prometheus_operator_crds_version
   kube_version = var.kubernetes_version
+
+  provider = helm.template
 }
 
 data "kubectl_file_documents" "prometheus_operator_crds" {
