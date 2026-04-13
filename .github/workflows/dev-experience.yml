@@ -78,7 +78,7 @@ jobs:
           echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
           mkdir -p ~/.terraform.d/plugin-cache
       - name: Cache IaC
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.terraform.d/plugin-cache
           key: "${{ runner.os }}-${{ matrix.engine }}-${{ matrix.version }}-${{ hashFiles('.terraform.lock.hcl') }}"
