@@ -4,5 +4,5 @@
     "@commitlint/config-conventional": "20.5.0",
     "prettier": "3.8.3"
   },
-  "packageManager": "yarn@4.13.0"
+  "packageManager": "yarn@4.14.1"
 }
