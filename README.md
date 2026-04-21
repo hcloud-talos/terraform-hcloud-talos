@@ -452,7 +452,8 @@ module "talos" {
 
 When `name` is omitted, the module keeps the default generated names like `worker-1` or, with `cluster_prefix = true`,
 `<cluster_name>-worker-1`. When `name` is set, it is used as-is and `cluster_prefix` is not added. Custom names must be
-unique across all control plane and worker nodes and must be valid DNS labels.
+unique across all control plane and worker nodes and must be valid DNS labels. The module also renders a Talos
+`HostnameConfig` document for custom names, so Hetzner server names and Talos/Kubernetes node names stay aligned.
 
 You need to pipe the outputs of the module:
 
