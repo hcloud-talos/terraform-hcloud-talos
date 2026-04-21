@@ -42,6 +42,7 @@ locals {
     for i in range(1, local.control_plane_count + 1) : {
       index       = i - 1
       name        = coalesce(local.control_plane_nodes_by_id[i].name, "${local.cluster_prefix}control-plane-${i}")
+      custom_name = local.control_plane_nodes_by_id[i].name != null
       server_type = local.control_plane_nodes_by_id[i].type
       image_id = (
         substr(local.control_plane_nodes_by_id[i].type, 0, 3) == "cax" ?
@@ -66,6 +67,7 @@ locals {
     for i in range(1, local.worker_count + 1) : {
       index       = i - 1
       name        = coalesce(local.worker_nodes_by_id[i].name, "${local.cluster_prefix}worker-${i}")
+      custom_name = local.worker_nodes_by_id[i].name != null
       server_type = local.worker_nodes_by_id[i].type
       image_id = (
         substr(local.worker_nodes_by_id[i].type, 0, 3) == "cax" ?
