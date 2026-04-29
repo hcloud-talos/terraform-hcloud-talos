@@ -44,6 +44,7 @@ locals {
           } : {}
         )
         network = {
+          hostname = control_plane.name
           interfaces = [
             {
               interface = "eth0"
