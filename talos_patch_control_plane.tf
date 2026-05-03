@@ -5,6 +5,9 @@ locals {
       machine = {
         install = {
           image = "ghcr.io/siderolabs/installer:${var.talos_version}"
+          extraKernelArgs = [
+            "talos.hostname=${control_plane.name}"
+          ]
         }
         certSANs = local.cert_SANs
         kubelet = merge(
@@ -44,7 +47,6 @@ locals {
           } : {}
         )
         network = {
-          hostname = control_plane.name
           interfaces = [
             {
               interface = "eth0"
