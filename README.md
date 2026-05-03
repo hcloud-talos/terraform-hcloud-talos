@@ -385,6 +385,103 @@ kubeconfig_endpoint_mode   = "public_endpoint"
 talosconfig_endpoints_mode = "public_ip"
 ```
 
+### VPN Site-to-Site (Shared Private Network)
+
+You can attach a VPN gateway VM (from another Terraform module) to the same private network as the cluster, allowing secure access from remote locations without exposing services to the public internet.
+
+**How it works:**
+- The VPN gateway VM gets a private IP in the cluster's node subnet (e.g., `10.0.1.250`)
+- The gateway does SNAT/masquerading for VPN client traffic, so cluster nodes see traffic as originating from the gateway's private IP
+- No extra routes needed on cluster nodes — return traffic goes directly to the gateway on the same subnet
+
+**Pattern A — Reference the network from another module:**
+
+```hcl
+module "cluster" {
+  source  = "hcloud-talos/talos/hcloud"
+  version = "<latest-version>"
+
+  hcloud_token            = "your-hcloud-token"
+  firewall_use_current_ip = true
+  cluster_name            = "vpn-cluster"
+  location_name           = "fsn1"
+
+  control_plane_nodes = [
+    { id = 1, type = "cax11" }
+  ]
+}
+
+# In your VPN gateway module, consume the outputs:
+module "vpn_gateway" {
+  source = "./vpn-gateway"
+
+  hcloud_network_id = module.cluster.hetzner_network_id
+  node_subnet_cidr  = module.cluster.node_ipv4_cidr
+  # Give the VPN gateway a private IP in the same subnet, e.g., 10.0.1.250
+}
+```
+
+**Pattern B — Share a network between cluster and VPN modules (BYO network):**
+
+```hcl
+# Create the shared network once
+resource "hcloud_network" "shared" {
+  name     = "shared-net"
+  ip_range = "10.0.0.0/16"
+}
+
+resource "hcloud_network_subnet" "shared" {
+  network_id   = hcloud_network.shared.id
+  type         = "cloud"
+  network_zone = "eu-central"
+  ip_range     = "10.0.1.0/24"
+}
+
+# Pass it to the cluster module
+module "cluster" {
+  source  = "hcloud-talos/talos/hcloud"
+  version = "<latest-version>"
+
+  hcloud_token            = "your-hcloud-token"
+  firewall_use_current_ip = true
+  cluster_name            = "vpn-cluster"
+  location_name           = "fsn1"
+
+  # BYO network: module uses this instead of creating a new one
+  network_id       = hcloud_network.shared.id
+  node_ipv4_cidr   = "10.0.1.0/24" # must match the existing subnet
+
+  control_plane_nodes = [
+    { id = 1, type = "cax11" }
+  ]
+}
+
+# VPN gateway attached to the same network
+module "vpn_gateway" {
+  source = "./vpn-gateway"
+
+  hcloud_network_id = hcloud_network.shared.id
+  node_subnet_cidr  = "10.0.1.0/24"
+}
+```
+
+**Adding network routes for VPN client subnets:**
+
+If you want proper routing (instead of SNAT) between VPN clients and cluster nodes, add static routes to the Hetzner network:
+
+```hcl
+module "cluster" {
+  # ... other settings ...
+
+  network_routes = [
+    {
+      destination = "10.8.0.0/24"   # VPN client subnet
+      gateway     = "10.0.1.250"    # VPN gateway private IP
+    }
+  ]
+}
+```
+
 ### Mixed Worker Node Types
 
 For more advanced use cases, you can define different types of worker nodes with individual configurations using the `worker_nodes` variable:

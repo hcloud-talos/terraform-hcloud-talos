@@ -254,6 +254,44 @@ variable "service_ipv4_cidr" {
   default     = "10.0.8.0/21"
 }
 
+variable "network_id" {
+  type        = string
+  default     = null
+  description = <<EOF
+    Optional. ID of an existing Hetzner Cloud network to use instead of creating one.
+    When set, the module will not create a new network or subnet — both must already exist.
+    Use this for VPN site-to-site setups where the network is shared between modules
+    (e.g., a separate infra module creates the network, and both the cluster and VPN
+    gateway modules consume it).
+
+    The existing subnet must match `node_ipv4_cidr`.
+  EOF
+
+  validation {
+    condition     = var.network_id == null || try(tonumber(var.network_id), null) != null
+    error_message = "network_id must be a valid Hetzner Cloud network ID (numeric)."
+  }
+}
+
+variable "network_routes" {
+  type = list(object({
+    destination = string
+    gateway     = string
+  }))
+  default     = []
+  description = <<EOF
+    Optional. Network routes to add to the Hetzner Cloud network.
+    Useful for VPN site-to-site setups where VPN clients are in a different subnet.
+    Each route must specify a destination CIDR and a gateway IP (the private IP
+    of the VPN gateway VM within the same network).
+
+    Example:
+    [
+      { destination = "10.8.0.0/24", gateway = "10.0.1.250" }
+    ]
+  EOF
+}
+
 # Server
 variable "talos_version" {
   type        = string

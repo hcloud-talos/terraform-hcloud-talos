@@ -35,8 +35,23 @@ output "public_ipv4_list" {
 }
 
 output "hetzner_network_id" {
-  description = "Network ID of the network created at cluster creation"
-  value       = hcloud_network.this.id
+  description = "Network ID of the Hetzner Cloud network used by the cluster"
+  value       = local.network_id
+}
+
+output "network_ipv4_cidr" {
+  description = "The main network CIDR that all subnets are created within"
+  value       = local.network_ipv4_cidr
+}
+
+output "node_ipv4_cidr" {
+  description = "The node subnet CIDR used for control plane and worker nodes"
+  value       = local.node_ipv4_cidr
+}
+
+output "network_subnet_id" {
+  description = "Network subnet ID (only set when the module creates the subnet)"
+  value       = local.create_network ? hcloud_network_subnet.nodes[0].id : null
 }
 
 output "firewall_id" {

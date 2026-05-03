@@ -168,7 +168,7 @@ locals {
                 name: hcloud
                 namespace: kube-system
               data:
-                network: ${base64encode(hcloud_network.this.id)}
+                network: ${base64encode(local.network_id)}
                 token: ${base64encode(var.hcloud_token)}
             EOT
           }
