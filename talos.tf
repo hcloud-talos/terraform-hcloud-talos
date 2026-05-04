@@ -94,9 +94,21 @@ data "talos_machine_configuration" "control_plane" {
   kubernetes_version = var.kubernetes_version
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
-  config_patches     = concat([yamlencode(local.controlplane_yaml[each.value.name])], var.talos_control_plane_extra_config_patches, local.tailscale_config_patch != null ? [local.tailscale_config_patch] : [])
-  docs               = false
-  examples           = false
+  config_patches = concat(
+    [yamlencode(local.controlplane_yaml[each.value.name])],
+    each.value.custom_name ? [
+      yamlencode({
+        apiVersion = "v1alpha1"
+        kind       = "HostnameConfig"
+        auto       = "off"
+        hostname   = each.value.name
+      })
+    ] : [],
+    var.talos_control_plane_extra_config_patches,
+    local.tailscale_config_patch != null ? [local.tailscale_config_patch] : []
+  )
+  docs     = false
+  examples = false
 }
 
 data "talos_machine_configuration" "worker" {
@@ -107,9 +119,20 @@ data "talos_machine_configuration" "worker" {
   kubernetes_version = var.kubernetes_version
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
-  config_patches     = concat([yamlencode(local.worker_yaml[each.value.name])], var.talos_worker_extra_config_patches)
-  docs               = false
-  examples           = false
+  config_patches = concat(
+    [yamlencode(local.worker_yaml[each.value.name])],
+    each.value.custom_name ? [
+      yamlencode({
+        apiVersion = "v1alpha1"
+        kind       = "HostnameConfig"
+        auto       = "off"
+        hostname   = each.value.name
+      })
+    ] : [],
+    var.talos_worker_extra_config_patches
+  )
+  docs     = false
+  examples = false
 }
 
 resource "talos_machine_bootstrap" "this" {

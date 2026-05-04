@@ -356,6 +356,7 @@ variable "ssh_public_key" {
 variable "control_plane_nodes" {
   type = list(object({
     id     = number
+    name   = optional(string)
     type   = string
     labels = optional(map(string), {})
     taints = optional(list(object({
@@ -371,6 +372,7 @@ variable "control_plane_nodes" {
     The total number of control planes must be odd (1, 3, 5) and at most 5.
 
     - id: Stable node id starting at 1 (used for naming and IP allocation).
+    - name: Optional custom node name. If omitted, the module uses the default generated name.
     - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
     - labels: Map of Kubernetes labels to apply to this node (default: {})
     - taints: List of Kubernetes taints to apply to this node (default: [])
@@ -404,6 +406,15 @@ variable "control_plane_nodes" {
     error_message = "control_plane_nodes id must be unique and contiguous starting at 1 (1..N)."
   }
   validation {
+    condition = alltrue([
+      for node in var.control_plane_nodes : node.name == null || (
+        length(node.name) <= 63 &&
+        length(regexall("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", node.name)) > 0
+      )
+    ])
+    error_message = "control_plane_nodes name must be a valid DNS label: lowercase alphanumeric characters or hyphens, start and end with an alphanumeric character, and be at most 63 characters."
+  }
+  validation {
     condition = alltrue(flatten([
       for node in var.control_plane_nodes : [
         for taint in node.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], taint.effect)
@@ -427,6 +438,7 @@ variable "control_plane_allow_schedule" {
 variable "worker_nodes" {
   type = list(object({
     id     = number
+    name   = optional(string)
     type   = string
     labels = optional(map(string), {})
     taints = optional(list(object({
@@ -442,6 +454,7 @@ variable "worker_nodes" {
     Each entry represents one worker node.
 
     - id: Stable node id starting at 1 (used for naming and IP allocation).
+    - name: Optional custom node name. If omitted, the module uses the default generated name.
     - type: Server type (cpx11, cpx12, cpx21, cpx22, cpx31, cpx32, cpx41, cpx42, cpx51, cpx52, cpx62, cax11, cax21, cax31, cax41, ccx13, ccx23, ccx33, ccx43, ccx53, ccx63, cx22, cx23, cx32, cx33, cx42, cx43, cx52, cx53)
     - labels: Map of Kubernetes labels to apply to this node (default: {})
     - taints: List of Kubernetes taints to apply to this node (default: [])
@@ -491,6 +504,32 @@ variable "worker_nodes" {
       )) == 0
     )
     error_message = "worker_nodes id must be unique and contiguous starting at 1 (1..N)."
+  }
+  validation {
+    condition = alltrue([
+      for node in var.worker_nodes : node.name == null || (
+        length(node.name) <= 63 &&
+        length(regexall("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", node.name)) > 0
+      )
+    ])
+    error_message = "worker_nodes name must be a valid DNS label: lowercase alphanumeric characters or hyphens, start and end with an alphanumeric character, and be at most 63 characters."
+  }
+  validation {
+    condition = length(distinct(concat(
+      [
+        for node in var.control_plane_nodes : coalesce(
+          node.name,
+          var.cluster_prefix ? "${var.cluster_name}-control-plane-${node.id}" : "control-plane-${node.id}"
+        )
+      ],
+      [
+        for node in var.worker_nodes : coalesce(
+          node.name,
+          var.cluster_prefix ? "${var.cluster_name}-worker-${node.id}" : "worker-${node.id}"
+        )
+      ]
+    ))) == length(concat(var.control_plane_nodes, var.worker_nodes))
+    error_message = "Effective node names across control_plane_nodes and worker_nodes must be unique."
   }
   validation {
     condition = alltrue(flatten([
