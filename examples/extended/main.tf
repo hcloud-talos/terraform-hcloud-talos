@@ -4,7 +4,7 @@ terraform {
   required_providers {
     onepassword = {
       source  = "1password/onepassword"
-      version = "2.2.1"
+      version = ">= 3.3.1"
     }
 
     hcloud = {
@@ -14,7 +14,7 @@ terraform {
 
     imager = {
       source  = "hcloud-talos/imager"
-      version = "~> 0.1"
+      version = ">= 1.0.6"
     }
 
     talos = {
@@ -29,19 +29,25 @@ provider "onepassword" {
   service_account_token = var.op_service_account_token_test
 }
 
+locals {
+  hcloud_token = one(flatten([
+    for s in data.onepassword_item.hetzner_token.section : [
+      for f in s.field : f.value if f.label == "token"
+    ]
+  ]))
+
+  talos_version = "v1.12.2"
+}
+
 provider "hcloud" {
-  token = data.onepassword_item.hetzner_token.password
+  token = local.hcloud_token
 }
 
 provider "imager" {
-  token = data.onepassword_item.hetzner_token.password
+  token = local.hcloud_token
 }
 
 provider "talos" {}
-
-locals {
-  talos_version = "v1.12.2"
-}
 
 resource "talos_image_factory_schematic" "x86" {
   schematic = yamlencode({
@@ -74,7 +80,7 @@ module "talos" {
   # Local module source (repo root) for testing migrations / current version.
   source = "../.."
 
-  hcloud_token = data.onepassword_item.hetzner_token.password
+  hcloud_token = local.hcloud_token
 
   talos_version      = local.talos_version
   kubernetes_version = "1.35.0"
