@@ -56,7 +56,7 @@ talosctl --talosconfig ./talosconfig --endpoint <public-ip> version
 - `talos_version` must match between Packer and Terraform
 - `kubernetes_version` must be compatible with `talos_version`
 - `cilium_version` must be compatible with `kubernetes_version`
-- Terraform >= 1.8.0 required
+- Terraform >= 1.14.0 required
 
 ### Network Architecture
 - `network_ipv4_cidr`: 10.0.0.0/16 (main network)
