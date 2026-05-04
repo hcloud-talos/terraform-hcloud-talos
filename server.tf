@@ -53,7 +53,7 @@ locals {
         local.arm_iso_id :
         local.x86_iso_id
       )
-      ipv4_public        = local.control_plane_public_ipv4_list[i - 1]
+      ipv4_public        = can(local.control_plane_public_ipv4_list[i - 1]) ? local.control_plane_public_ipv4_list[i - 1] : null
       ipv6_public        = var.enable_ipv6 ? local.control_plane_public_ipv6_list[i - 1] : null
       ipv6_public_subnet = var.enable_ipv6 ? local.control_plane_public_ipv6_subnet_list[i - 1] : null
       ipv4_private       = local.control_plane_private_ipv4_list[i - 1]
@@ -77,7 +77,7 @@ locals {
         local.arm_iso_id :
         local.x86_iso_id
       )
-      ipv4_public        = local.worker_public_ipv4_list[i - 1]
+      ipv4_public        = can(local.worker_public_ipv4_list[i - 1]) ? local.worker_public_ipv4_list[i - 1] : null
       ipv6_public        = var.enable_ipv6 ? local.worker_public_ipv6_list[i - 1] : null
       ipv6_public_subnet = var.enable_ipv6 ? local.worker_public_ipv6_subnet_list[i - 1] : null
       ipv4_private       = local.worker_private_ipv4_list[i - 1]
@@ -122,8 +122,8 @@ resource "hcloud_server" "control_planes" {
   ]
 
   public_net {
-    ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.control_plane_ipv4[each.value.index].id
+    ipv4_enabled = !var.disable_public_ipv4
+    ipv4         = !var.disable_public_ipv4 ? hcloud_primary_ip.control_plane_ipv4[each.value.index].id : null
     ipv6_enabled = var.enable_ipv6
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.control_plane_ipv6[each.value.index].id : null
   }
@@ -170,8 +170,8 @@ resource "hcloud_server" "workers" {
   ]
 
   public_net {
-    ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.worker_ipv4[each.value.index].id
+    ipv4_enabled = !var.disable_public_ipv4
+    ipv4         = !var.disable_public_ipv4 ? hcloud_primary_ip.worker_ipv4[each.value.index].id : null
     ipv6_enabled = var.enable_ipv6
     ipv6         = var.enable_ipv6 ? hcloud_primary_ip.worker_ipv6[each.value.index].id : null
   }

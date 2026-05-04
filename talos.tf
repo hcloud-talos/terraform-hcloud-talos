@@ -43,6 +43,12 @@ locals {
   )
   cluster_endpoint_url_internal = "https://${local.cluster_endpoint_internal}:${local.api_port_k8s}"
 
+  bootstrap_endpoint = (
+    var.bootstrap_endpoint_mode == "private_ip" ?
+    local.control_plane_private_ipv4_list[0] :
+    can(local.control_plane_public_ipv4_list[0]) ? local.control_plane_public_ipv4_list[0] : local.control_plane_private_ipv4_list[0]
+  )
+
   // ************
   cert_SANs = distinct(
     concat(
@@ -109,8 +115,8 @@ data "talos_machine_configuration" "worker" {
 resource "talos_machine_bootstrap" "this" {
   count                = 1
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint             = local.control_plane_public_ipv4_list[0]
-  node                 = local.control_plane_public_ipv4_list[0]
+  endpoint             = local.bootstrap_endpoint
+  node                 = local.bootstrap_endpoint
   depends_on = [
     hcloud_server.control_planes
   ]
@@ -128,6 +134,16 @@ data "talos_client_configuration" "this" {
     var.talosconfig_endpoints_mode == "public_ip" ? (
       # Use public IPs in talosconfig
       local.control_plane_public_ipv4_list
+    ) :
+
+    var.talosconfig_endpoints_mode == "public_endpoint" ? (
+      # Use a public Talos API endpoint hostname in talosconfig
+      [local.cluster_api_host_public_explicit]
+    ) :
+
+    var.talosconfig_endpoints_mode == "private_endpoint" ? (
+      # Use a private Talos API endpoint hostname in talosconfig
+      [local.cluster_api_host_private_explicit]
     ) : []
   )
 }
@@ -135,7 +151,7 @@ data "talos_client_configuration" "this" {
 resource "talos_cluster_kubeconfig" "this" {
   count                = 1
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = local.control_plane_public_ipv4_list[0]
+  node                 = local.bootstrap_endpoint
   depends_on = [
     talos_machine_bootstrap.this
   ]

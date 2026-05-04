@@ -118,22 +118,49 @@ variable "kubeconfig_endpoint_mode" {
   EOF
 }
 
+variable "bootstrap_endpoint_mode" {
+  type    = string
+  default = "public_ip"
+  validation {
+    condition     = contains(["public_ip", "private_ip"], var.bootstrap_endpoint_mode)
+    error_message = "Invalid bootstrap_endpoint_mode. Valid values: public_ip, private_ip."
+  }
+  description = <<EOF
+    Configure how Terraform reaches Talos during bootstrap, kubeconfig retrieval, and health checks.
+
+    Values:
+    - `public_ip`: Use the first control plane public IP (default, backward compatible).
+    - `private_ip`: Use the first control plane private IP (requires VPN/private network access).
+  EOF
+}
+
 variable "talosconfig_endpoints_mode" {
   type    = string
   default = "public_ip"
   validation {
-    condition     = contains(["public_ip", "private_ip"], var.talosconfig_endpoints_mode)
-    error_message = "Invalid talosconfig_endpoints_mode. Valid values: public_ip, private_ip."
+    condition     = contains(["public_ip", "private_ip", "public_endpoint", "private_endpoint"], var.talosconfig_endpoints_mode)
+    error_message = "Invalid talosconfig_endpoints_mode. Valid values: public_ip, private_ip, public_endpoint, private_endpoint."
+  }
+  validation {
+    condition     = var.talosconfig_endpoints_mode != "public_endpoint" || var.cluster_api_host != null
+    error_message = "talosconfig_endpoints_mode = \"public_endpoint\" requires cluster_api_host to be set."
+  }
+  validation {
+    condition     = var.talosconfig_endpoints_mode != "private_endpoint" || var.cluster_api_host_private != null
+    error_message = "talosconfig_endpoints_mode = \"private_endpoint\" requires cluster_api_host_private to be set."
   }
   description = <<EOF
-    Configure which addresses are written into the generated `talosconfig` as Talos API endpoints.
+    Configure which endpoints are written into the generated `talosconfig` as Talos API endpoints.
 
-    Note: Talos recommends using direct per-node IPs as endpoints (not a VIP or load-balanced hostname), so this module
-    only supports IP lists.
+    Recommended:
+    - Prefer `public_ip` or `private_ip` (direct per-node Talos endpoints).
+    - Use endpoint hostname modes only when you intentionally proxy/load-balance Talos API traffic.
 
     Values:
     - `public_ip`: Use public IPs of all control plane nodes.
     - `private_ip`: Use private IPs of all control plane nodes.
+    - `public_endpoint`: Use `cluster_api_host` (requires it to be set).
+    - `private_endpoint`: Use `cluster_api_host_private` (requires it to be set).
   EOF
 }
 
@@ -222,6 +249,22 @@ variable "enable_ipv6" {
     If true, the servers will have an IPv6 address.
     IPv4/IPv6 dual-stack is actually not supported, it keeps being an IPv4 single stack. PRs welcome!
   EOF
+}
+
+variable "disable_public_ipv4" {
+  type        = bool
+  default     = false
+  description = <<EOF
+    If true, do not assign public IPv4 addresses to control plane and worker nodes.
+
+    Requires `bootstrap_endpoint_mode = "private_ip"` and private network reachability
+    from the Terraform runner (for example via site-to-site VPN or a bastion host).
+  EOF
+
+  validation {
+    condition     = !var.disable_public_ipv4 || var.bootstrap_endpoint_mode == "private_ip"
+    error_message = "disable_public_ipv4 requires bootstrap_endpoint_mode = \"private_ip\"."
+  }
 }
 
 variable "enable_kube_span" {
