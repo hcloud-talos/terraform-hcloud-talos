@@ -70,15 +70,6 @@ data "hcloud_floating_ip" "control_plane_ipv4" {
   )
 }
 
-resource "hcloud_floating_ip_assignment" "this" {
-  count          = local.create_floating_ip ? 1 : 0
-  floating_ip_id = data.hcloud_floating_ip.control_plane_ipv4[0].id
-  server_id      = hcloud_server.control_planes[local.control_planes[0].name].id
-  depends_on = [
-    hcloud_server.control_planes,
-  ]
-}
-
 resource "hcloud_primary_ip" "control_plane_ipv4" {
   count         = local.control_plane_count
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv4"
