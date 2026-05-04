@@ -55,7 +55,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
      - The IP of an external TCP load balancer you configure separately (pass-through, no TLS termination).
      - The public IP of a specific control plane node (less recommended for multi-node control planes).
   - The generated `kubeconfig` will use this hostname if `kubeconfig_endpoint_mode = "public_endpoint"`.
-  - The generated `talosconfig` will always use direct per-node IPs as endpoints (see `talosconfig_endpoints_mode`).
+  - The generated `talosconfig` uses direct per-node IPs by default and can optionally use endpoint hostnames via `talosconfig_endpoints_mode`.
   - **Note:** `cluster_api_host` is the Kubernetes API endpoint (TCP/6443). Talos API access uses TCP/50000 and is
     configured separately via `talosconfig_endpoints_mode`.
 - **Internal API Endpoint:**
@@ -75,6 +75,13 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
     (controlled by `kubeconfig_endpoint_mode`, defaulting to the first control plane's public IP or the Floating IP).
   - `talosconfig` endpoints are configured separately via `talosconfig_endpoints_mode`.
   - Internal communication will still use the internal API hostname (defaults to `kube.[cluster_domain]`) if `enable_alias_ip = true`.
+- **Private Bootstrap (`bootstrap_endpoint_mode`):**
+  - When running Terraform from a host with VPN/private network access (WireGuard, Tailscale, site-to-site VPN),
+    set `bootstrap_endpoint_mode = "private_ip"` so Terraform bootstraps and health-checks the cluster via private IPs
+    instead of public IPs.
+  - Combine with `disable_public_ipv4 = true` to provision nodes without public IPv4 addresses entirely.
+  - See the [WireGuard VPN example](#vpn-only-private-bootstrap-with-wireguard) for a tested setup using Talos's
+    built-in WireGuard.
 
 ## Additional installed software in the cluster
 
@@ -332,19 +339,94 @@ module "talos" {
 
 These snippets show only the endpoint- and access-related settings. Combine them with the required module inputs from the examples above.
 
-#### VPN-only (private kubeconfig/talosconfig)
+#### VPN-only (private bootstrap with WireGuard)
 
-Use this when your workstation/CI reaches the nodes via VPN/private networking, but the public firewall should still allow your current public IP (so Terraform can bootstrap and manage the cluster).
+Use Talos's built-in [WireGuard](https://www.talos.dev/v1.13/networking/advanced/wireguard/) to bootstrap and manage the cluster over private IPs. No site-to-site VPN VM or external DNS needed.
 
+**On the cluster side** (added as a machine config patch):
 ```hcl
-firewall_use_current_ip = true
+talos_control_plane_extra_config_patches = [
+  yamlencode({
+    apiVersion = "v1alpha1"
+    kind       = "WireguardConfig"
+    name       = "wg0"
+    privateKey = "<base64-node-private-key>"
+    listenPort = 51820
+    addresses  = [{ address = "10.200.0.1/24" }]
+    peers = [{
+      publicKey  = "<base64-workstation-public-key>"
+      allowedIPs = ["10.200.0.0/24"]
+    }]
+  })
+]
 
-# Use the private VIP via a VPN-resolvable hostname (split-horizon DNS).
-enable_alias_ip            = true # default
-cluster_api_host_private   = "kube.vpn.example.com" # -> 10.0.1.100 (private VIP)
-kubeconfig_endpoint_mode   = "private_endpoint"
+extra_firewall_rules = [
+  {
+    direction   = "in"
+    protocol    = "udp"
+    port        = "51820"
+    source_ips  = ["0.0.0.0/0"]
+    description = "WireGuard VPN tunnel"
+  }
+]
+```
+
+**On your workstation** (macOS WireGuard app or `wg-quick`):
+```ini
+[Interface]
+PrivateKey = <base64-workstation-private-key>
+Address = 10.200.0.250/24
+
+[Peer]
+PublicKey = <base64-node-public-key>
+Endpoint = <control-plane-public-ip>:51820
+AllowedIPs = 10.200.0.0/24, 10.0.1.0/24
+PersistentKeepalive = 25
+```
+
+Once the tunnel is active, switch to private bootstrap:
+```hcl
+bootstrap_endpoint_mode    = "private_ip"
+kubeconfig_endpoint_mode   = "private_ip"
 talosconfig_endpoints_mode = "private_ip"
 ```
+
+> [!NOTE]
+> - The WireGuard patch is applied at node boot time (part of the Talos machine config).
+> - For the initial deployment, bootstrap still uses public IPs (`bootstrap_endpoint_mode = "public_ip"`, the default).
+> - After nodes boot with the WireGuard interface active, enable private bootstrap for subsequent operations.
+
+#### VPN-only (site-to-site VPN gateway)
+
+Use this when you already have a VPN gateway VM (`10.0.1.250`) on the same private network, or when you have split-horizon DNS resolving `kube.vpn.example.com` to the private VIP (`10.0.1.100`).
+
+```hcl
+enable_alias_ip            = true # default
+cluster_api_host_private   = "kube.vpn.example.com" # -> 10.0.1.100 (private VIP)
+
+bootstrap_endpoint_mode    = "private_ip"
+kubeconfig_endpoint_mode   = "private_ip"  # uses 10.0.1.100 directly
+# kubeconfig_endpoint_mode = "private_endpoint"  # alternative: requires DNS
+
+talosconfig_endpoints_mode = "private_ip"
+
+# Optional: remove public IPv4 entirely
+# disable_public_ipv4      = true
+```
+
+#### Fully Private (no public IPv4)
+
+Provision nodes without public IPv4 addresses for maximum cost optimization and minimum attack surface. Requires the WireGuard tunnel or VPN gateway to be active before applying.
+
+```hcl
+bootstrap_endpoint_mode    = "private_ip"
+disable_public_ipv4        = true
+kubeconfig_endpoint_mode   = "private_ip"
+talosconfig_endpoints_mode = "private_ip"
+```
+
+> [!WARNING]
+> When `disable_public_ipv4 = true`, nodes have no public IPs. All Terraform operations (bootstrap, health check, kubeconfig retrieval) use private IPs via the WireGuard tunnel or VPN gateway. Ensure your tunnel is active and reachable before applying.
 
 #### Floating IP (public VIP)
 
@@ -637,8 +719,9 @@ To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` comm
 
 **Important Considerations for `talosctl` commands:**
 
-- **Talos API Endpoints:** `talosctl` talks to the Talos API (TCP/50000). Use `talosconfig_endpoints_mode = "public_ip"`
-  when running `talosctl` from outside, or `"private_ip"` when running over VPN/private networking.
+- **Talos API Endpoints:** `talosctl` talks to the Talos API (TCP/50000). Prefer `talosconfig_endpoints_mode = "public_ip"`
+  when running from outside, or `"private_ip"` over VPN/private networking. Endpoint hostname modes
+  (`"public_endpoint"` / `"private_endpoint"`) are also available for explicit gateway/proxy workflows.
 - **Avoid VIP/Load-Balanced Endpoints:** Talos recommends using direct per-node IPs as endpoints in `talosconfig` (not a
   VIP), because VIP availability depends on etcd health.
 - **Firewall Access:**

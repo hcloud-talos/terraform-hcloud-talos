@@ -71,7 +71,7 @@ data "hcloud_floating_ip" "control_plane_ipv4" {
 }
 
 resource "hcloud_primary_ip" "control_plane_ipv4" {
-  count         = local.control_plane_count
+  count         = var.disable_public_ipv4 ? 0 : local.control_plane_count
   name          = "${local.cluster_prefix}control-plane-${count.index + 1}-ipv4"
   location      = data.hcloud_location.selected.name
   type          = "ipv4"
@@ -97,7 +97,7 @@ resource "hcloud_primary_ip" "control_plane_ipv6" {
 }
 
 resource "hcloud_primary_ip" "worker_ipv4" {
-  count         = local.worker_count
+  count         = var.disable_public_ipv4 ? 0 : local.worker_count
   name          = "${local.cluster_prefix}worker-${count.index + 1}-ipv4"
   location      = data.hcloud_location.selected.name
   type          = "ipv4"
