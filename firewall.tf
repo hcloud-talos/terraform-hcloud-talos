@@ -103,4 +103,24 @@ resource "hcloud_firewall" "this" {
   labels = {
     "cluster" = var.cluster_name
   }
+
+  # Attachment mode is selectable via var.firewall_attachment_mode.
+  #
+  # - "per_server" (default, original behavior): firewall is attached via
+  #   `firewall_ids = [local.firewall_id]` on each hcloud_server.
+  #
+  # - "label_selector": firewall is attached via the apply_to block below.
+  #   Use this when you also need to attach OTHER firewalls via label selector
+  #   to the same servers (e.g., an external public-facing firewall).
+  #   Hetzner refuses per-server firewall_ids modifications once any
+  #   label-selector binding exists on the same firewall
+  #   (firewall_managed_by_label_selector), so the two modes are mutually
+  #   exclusive on the SAME firewall — but multiple label-selector firewalls
+  #   coexist freely.
+  dynamic "apply_to" {
+    for_each = var.firewall_attachment_mode == "label_selector" ? [1] : []
+    content {
+      label_selector = "cluster=${var.cluster_name}"
+    }
+  }
 }
