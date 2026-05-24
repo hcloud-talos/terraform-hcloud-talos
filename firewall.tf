@@ -59,9 +59,9 @@ locals {
   firewall_rules = {
     for rule in local.base_firewall_rules :
     format("%s-%s-%s",
-      lookup(rule, "direction", "null"),
-      lookup(rule, "protocol", "null"),
-      lookup(rule, "port", "null")
+      coalesce(lookup(rule, "direction", "null"), "null"),
+      coalesce(lookup(rule, "protocol", "null"), "null"),
+      coalesce(lookup(rule, "port", "null"), "null")
     ) => rule
   }
 
@@ -69,9 +69,9 @@ locals {
   extra_firewall_rules = {
     for rule in var.extra_firewall_rules :
     format("%s-%s-%s",
-      lookup(rule, "direction", "null"),
-      lookup(rule, "protocol", "null"),
-      lookup(rule, "port", "null")
+      coalesce(lookup(rule, "direction", "null"), "null"),
+      coalesce(lookup(rule, "protocol", "null"), "null"),
+      coalesce(lookup(rule, "port", "null"), "null")
     ) => rule
   }
 
