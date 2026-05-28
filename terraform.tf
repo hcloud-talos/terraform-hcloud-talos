@@ -53,5 +53,6 @@ provider "kubectl" {
   client_key             = local.kubeconfig_data.client_key
   cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
   load_config_file       = false
+  lazy_load              = true
   apply_retry_count      = 3
 }
