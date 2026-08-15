@@ -176,6 +176,27 @@ variable "firewall_id" {
   EOF
 }
 
+variable "firewall_attachment_mode" {
+  type        = string
+  default     = "per_server"
+  description = <<EOF
+    How the module firewall attaches to cluster servers.
+
+    - "per_server" (default, backward-compatible): attached via
+      `firewall_ids = [local.firewall_id]` on each hcloud_server.
+    - "label_selector": attached via `apply_to.label_selector` on the firewall;
+      servers receive no per-resource firewall_ids. Use this when you also need
+      to attach OTHER firewalls (e.g., an external public-facing firewall)
+      via label selector to the same servers — Hetzner refuses per-server
+      firewall_ids modifications once any label-selector binding exists on the
+      same firewall (`firewall_managed_by_label_selector`).
+  EOF
+  validation {
+    condition     = contains(["per_server", "label_selector"], var.firewall_attachment_mode)
+    error_message = "firewall_attachment_mode must be \"per_server\" or \"label_selector\"."
+  }
+}
+
 variable "firewall_use_current_ip" {
   type        = bool
   default     = false
