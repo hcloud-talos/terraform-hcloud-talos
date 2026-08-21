@@ -39,4 +39,4 @@ jobs:
         with:
           semantic_version: 25.0.9
           extra_plugins: |
-            - conventional-changelog-conventionalcommits@10.3.0
+            - conventional-changelog-conventionalcommits@10.4.0
