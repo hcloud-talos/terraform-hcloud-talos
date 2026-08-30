@@ -117,9 +117,10 @@ resource "hcloud_server" "control_planes" {
     "server_type" = each.value.server_type
   }, each.value.labels)
 
-  firewall_ids = [
-    local.firewall_id
-  ]
+  # In "label_selector" mode the firewall attaches itself via apply_to
+  # (see firewall.tf), so per-server firewall_ids must stay empty to avoid
+  # the firewall_managed_by_label_selector lock.
+  firewall_ids = var.firewall_attachment_mode == "per_server" ? [local.firewall_id] : []
 
   public_net {
     ipv4_enabled = !var.disable_public_ipv4
@@ -165,9 +166,10 @@ resource "hcloud_server" "workers" {
     "server_type" = each.value.server_type
   }, each.value.labels)
 
-  firewall_ids = [
-    local.firewall_id
-  ]
+  # In "label_selector" mode the firewall attaches itself via apply_to
+  # (see firewall.tf), so per-server firewall_ids must stay empty to avoid
+  # the firewall_managed_by_label_selector lock.
+  firewall_ids = var.firewall_attachment_mode == "per_server" ? [local.firewall_id] : []
 
   public_net {
     ipv4_enabled = !var.disable_public_ipv4
