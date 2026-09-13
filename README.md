@@ -594,6 +594,7 @@ module "talos" {
     # Standard x86 workers
     {
       id   = 1
+      name = "stateful-1"
       type = "cx22"
       labels = {
         "node.kubernetes.io/instance-type" = "cx22"
@@ -626,6 +627,12 @@ module "talos" {
 > - Apply taints for workload isolation
 > - Control the number of nodes by adding/removing entries
 > - Keep stable node identity by setting `id` (1..N)
+> - Override the generated Hetzner/Talos/Kubernetes node name by setting `name`
+
+When `name` is omitted, the module keeps the default generated names like `worker-1` or, with `cluster_prefix = true`,
+`<cluster_name>-worker-1`. When `name` is set, it is used as-is and `cluster_prefix` is not added. Custom names must be
+unique across all control plane and worker nodes and must be valid DNS labels. The module also renders a Talos
+`HostnameConfig` document for custom names, so Hetzner server names and Talos/Kubernetes node names stay aligned.
 
 You need to pipe the outputs of the module:
 
