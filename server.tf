@@ -143,7 +143,8 @@ resource "hcloud_server" "control_planes" {
     ignore_changes = [
       user_data,
       image,
-      iso
+      iso,
+      network, # Talos's VIP operator sets alias_ips at runtime; set block, so ignore whole
     ]
   }
 }
@@ -191,7 +192,8 @@ resource "hcloud_server" "workers" {
     ignore_changes = [
       user_data,
       image,
-      iso
+      iso,
+      network,
     ]
   }
 }
