@@ -38,5 +38,6 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           semantic_version: 25.0.9
+          # Release-notes-generator 14 uses writer 8. Keep the preset on version 9.
           extra_plugins: |
-            - conventional-changelog-conventionalcommits@10.4.0
+            - conventional-changelog-conventionalcommits@9.3.1
