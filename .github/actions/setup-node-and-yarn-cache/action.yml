@@ -9,6 +9,8 @@ runs:
   steps:
     - name: Setup Node
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24
       env:
         # https://github.com/actions/setup-node/issues/733#issuecomment-1489952874
         # https://github.com/actions/cache/blob/04f198bf0b2a39f7230a4304bf07747a0bddf146/tips-and-workarounds.md#cache-segment-restore-timeout
@@ -26,6 +28,7 @@ runs:
     - name: Extract cached dependencies
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
+        node-version: 24
         cache: yarn
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
       env:

@@ -1,6 +1,6 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended", ":automergePatch"],
+  extends: ["config:recommended", ":automergePatch", ":enablePreCommit"],
   assignees: ["mrclrchtr"],
   prHourlyLimit: 0,
   rangeStrategy: "bump",
@@ -8,6 +8,10 @@
     "examples/**",
   ],
   packageRules: [
+    {
+      matchPackageNames: ["@commitlint/cli", "@commitlint/config-conventional"],
+      groupName: "commitlint",
+    },
     {
       matchManagers: ["terraform"],
       semanticCommitType: "fix",
