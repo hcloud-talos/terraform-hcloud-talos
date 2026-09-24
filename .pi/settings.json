@@ -1,0 +1,19 @@
+{
+  "packages": [
+    "npm:@mrclrchtr/supi-debug",
+    "npm:@mrclrchtr/supi-code-intelligence",
+    "npm:@mrclrchtr/supi-ask-user",
+    "npm:@mrclrchtr/supi-claude-md",
+    "npm:@mrclrchtr/supi-context",
+    "npm:@mrclrchtr/supi-settings",
+    "npm:@mrclrchtr/supi-skills",
+    "npm:@mrclrchtr/supi-extras",
+    "npm:@mrclrchtr/supi-bash-timeout",
+    "npm:@mrclrchtr/supi-web",
+    "npm:@mrclrchtr/supi-cache",
+    "npm:@mrclrchtr/supi-insights",
+    "npm:@mrclrchtr/supi-review",
+    "npm:@mrclrchtr/supi-agent",
+    "npm:@mrclrchtr/supi-prompt-suggestions"
+  ]
+}
