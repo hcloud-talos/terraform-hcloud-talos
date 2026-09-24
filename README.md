@@ -131,7 +131,8 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 
 ### Required Software
 
-- [terraform](https://www.terraform.io/downloads.html)
+- [Terraform](https://www.terraform.io/downloads.html) 1.10.0 or later, or [OpenTofu](https://opentofu.org/docs/intro/install/) 1.10.0 or later.
+  CI tests Terraform 1.15 and 1.16, and OpenTofu 1.11 and 1.12.
 - [helm](https://helm.sh/docs/intro/install/)
 
 ### Optional Legacy Software
