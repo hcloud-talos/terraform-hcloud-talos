@@ -144,7 +144,7 @@ resource "hcloud_server" "control_planes" {
       user_data,
       image,
       iso,
-      network, # Talos's VIP operator sets alias_ips at runtime; set block, so ignore whole
+      network, # Talos manages the control-plane VIP; this also ignores network ID and IP changes.
     ]
   }
 }
@@ -193,7 +193,6 @@ resource "hcloud_server" "workers" {
       user_data,
       image,
       iso,
-      network,
     ]
   }
 }
