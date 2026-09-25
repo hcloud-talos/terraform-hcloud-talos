@@ -736,6 +736,10 @@ Refer to the [official Talos documentation on upgrading Kubernetes](https://docs
 
 - Changes in the `user_data` (e.g. `talos_machine_configuration`) and `image` (e.g. version upgrades with `packer`) will
   not be applied to existing nodes, because it would force a recreation of the nodes.
+- Terraform ignores the full `network` block for control-plane servers. This lets Talos manage the VIP alias IP. A check
+  warns if a server's network ID or private IP differs from the configuration. The check does not compare alias IPs and
+  does not stop a plan or apply. Terraform will not apply network ID or private IP changes to control-plane servers.
+  Review each warning and plan any network migration separately. Terraform continues to manage worker network blocks.
 
 ## Known Issues
 

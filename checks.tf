@@ -45,3 +45,21 @@ check "cluster_endpoint_ha_safety" {
     error_message = "For HA control planes (control_plane_nodes > 1), you must configure a stable Kubernetes API endpoint for Talos cluster_endpoint. Enable enable_alias_ip (private VIP), enable_floating_ip (public VIP), or set cluster_api_host/cluster_api_host_private (DNS/TCP LB) to an endpoint that can reach all control plane nodes."
   }
 }
+
+check "control_plane_network_matches_config" {
+  assert {
+    condition = alltrue([
+      for name, server in hcloud_server.control_planes :
+      length(server.network) == 1 && anytrue([
+        for network in server.network :
+        tostring(network.network_id) == tostring(local.network_id) &&
+        network.ip == one([
+          for control_plane in local.control_planes :
+          control_plane.ipv4_private if control_plane.name == name
+        ])
+      ])
+    ])
+
+    error_message = "A control-plane server's network ID or private IP differs from configuration. Terraform ignores network changes. Migrate or replace the server."
+  }
+}
