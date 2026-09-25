@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - next
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - synchronize
@@ -14,7 +14,8 @@ on:
     branches:
       - main
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref || github.ref }}"
@@ -24,10 +25,6 @@ jobs:
   terraform-check:
     name: IaC Check (${{ matrix.label }})
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      issues: write # for create or update comment
-      pull-requests: write # for create or update comment
     strategy:
       fail-fast: false
       matrix:
@@ -51,11 +48,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.sha }}
       - name: Configure IaC plugin cache
         run: |
-          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+          printf 'plugin_cache_dir = "%s/.terraform.d/plugin-cache"\n' "$HOME" > ~/.terraformrc
           mkdir -p ~/.terraform.d/plugin-cache
       - name: Cache IaC
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -67,20 +62,15 @@ jobs:
         if: matrix.engine == 'terraform'
         uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_version: ${{ matrix.version }}
       - name: Setup OpenTofu
         if: matrix.engine == 'tofu'
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           tofu_version: ${{ matrix.version }}
-      - name: Save terraform version to output
+      - name: Show Terraform version
         if: matrix.engine == 'terraform'
-        id: terraform-version
-        run: |
-          terraform version
-          echo "TERRAFORM_VERSION=$(terraform version --json | jq -r '.terraform_version')" >> $GITHUB_OUTPUT
+        run: terraform version
       - name: IaC Format
         id: fmt
         run: ${{ matrix.cli }} fmt -recursive -check -diff
@@ -93,59 +83,6 @@ jobs:
         id: validate
         run: ${{ matrix.cli }} validate -no-color
         continue-on-error: true
-      - name: Find Comment
-        if: matrix.engine == 'terraform' && github.event_name == 'pull_request_target'
-        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: |
-            Terraform-Check (version: ${{ steps.terraform-version.outputs.TERRAFORM_VERSION }})
-      - name: Create or update comment
-        if: matrix.engine == 'terraform' && github.event_name == 'pull_request_target'
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ### Terraform-Check (version: ${{ steps.terraform-version.outputs.TERRAFORM_VERSION }}): ${{ steps.fmt.outcome == 'success' && steps.init.outcome == 'success' && steps.validate.outcome == 'success' && '✅' || '❌' }}
-
-            <details><summary>🖌 Terraform Format: ${{ steps.fmt.outcome == 'success' && '✅' || '❌' }}</summary>
-
-            ```
-            # Outputs:
-            ${{ steps.fmt.outputs.stdout }}
-
-            # Errors:
-            ${{ steps.fmt.outputs.stderr }}
-            ```
-
-            </details>
-
-            <details><summary>⚙️ Terraform Init: ${{ steps.init.outcome == 'success' && '✅' || '❌' }}</summary>
-
-            ```
-            # Outputs:
-            ${{ steps.init.outputs.stdout }}
-
-            # Errors:
-            ${{ steps.init.outputs.stderr }}
-            ```
-            </details>
-
-            <details><summary>🤖 Terraform Validate: ${{ steps.validate.outcome == 'success' && '✅' || '❌' }}</summary>
-
-            ```
-            # Outputs:
-            ${{ steps.validate.outputs.stdout }}
-
-            # Errors:
-            ${{ steps.validate.outputs.stderr }}
-            ```
-
-            </details>
       - name: Fail on error
         if: ${{
           steps.fmt.outcome != 'success'
@@ -158,16 +95,11 @@ jobs:
   commitlint:
     name: Commitlint
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      issues: write # for create or update comment
-      pull-requests: write # for create or update comment
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.sha }}
       - name: Setup Node and Yarn Cache
         uses: ./.github/actions/setup-node-and-yarn-cache
         with:
@@ -180,64 +112,10 @@ jobs:
         run: yarn commitlint --last --verbose
         working-directory: ./.github/commitlint
       - name: Validate PR commits with commitlint
-        if: github.event_name == 'pull_request_target'
-        id: validate
+        if: github.event_name == 'pull_request'
         run: |
-          yarn commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose > commitlint_output.txt
+          yarn commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
         working-directory: ./.github/commitlint
-      - name: Print commitlint output
-        if: ${{ always() && github.event_name == 'pull_request_target' }}
-        run: |
-          echo $(cat ./.github/commitlint/commitlint_output.txt)
-      - name: Set commitlint output to env
-        if: ${{ always() && github.event_name == 'pull_request_target' }}
-        run: |
-          {
-            echo 'commitlint_output<<EOF'
-            cat ./.github/commitlint/commitlint_output.txt
-            echo EOF
-          } >> "$GITHUB_ENV"
-      - name: Find Comment
-        if: ${{ always() && github.event_name == 'pull_request_target' }}
-        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: |
-            Commitlint-Check
-      - name: Create or update commitlint comment on failure
-        if: ${{ failure() && github.event_name == 'pull_request_target' }}
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ### Commitlint-Check
-            Thanks for your contribution :heart:
-
-            Unfortunately, [commitlint](https://commitlint.js.org) has detected that this PR has one ore more commit messages that do not follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :scream_cat:
-
-            ```
-            ${{ env.commitlint_output }}
-            ```
-
-            Please update the commit messages accordingly.
-          reactions: eyes
-      - name: Create or update commitlint comment on success
-        if: ${{ success() && github.event_name == 'pull_request_target' }}
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ### Commitlint-Check
-            Thanks for your contribution :heart:
-
-            [commitlint](https://commitlint.js.org) has detected that all commit messages in this PR follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) :tada:
-          reactions: hooray
 
   dev_xperience_status_check:
     name: DevXperience status check
