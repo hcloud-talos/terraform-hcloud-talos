@@ -6,6 +6,9 @@ locals {
   api_port_k8s        = 6443
   api_port_kube_prism = 7445
 
+  # talos_cluster.kubernetes_version requires the "v" prefix, unlike var.kubernetes_version used elsewhere.
+  kubernetes_version_v = startswith(var.kubernetes_version, "v") ? var.kubernetes_version : "v${var.kubernetes_version}"
+
   best_public_ipv4 = (
     var.enable_floating_ip ?
     # Use floating IP
@@ -112,14 +115,22 @@ data "talos_machine_configuration" "worker" {
   examples           = false
 }
 
-resource "talos_machine_bootstrap" "this" {
-  count                = 1
+resource "talos_cluster" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint             = local.bootstrap_endpoint
-  node                 = local.bootstrap_endpoint
+  # node must be a raw IP present in control_plane_nodes; bootstrap_endpoint can be a public IP/hostname instead, so it's kept separate as `endpoint`.
+  node                = local.control_plane_private_ipv4_list[0]
+  endpoint            = local.bootstrap_endpoint
+  control_plane_nodes = local.control_plane_private_ipv4_list
+  kubernetes_version  = local.kubernetes_version_v
   depends_on = [
     hcloud_server.control_planes
   ]
+
+  timeouts = {
+    create = "10m"
+    # upgrade-k8s rolls sequentially across every node with health gating; must outlast that.
+    update = "60m"
+  }
 }
 
 data "talos_client_configuration" "this" {
@@ -153,7 +164,7 @@ resource "talos_cluster_kubeconfig" "this" {
   client_configuration = talos_machine_secrets.this.client_configuration
   node                 = local.bootstrap_endpoint
   depends_on = [
-    talos_machine_bootstrap.this
+    talos_cluster.this
   ]
 }
 
