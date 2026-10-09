@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@7261f53f41d97434955b6ca5e26a2b0805f0cba2 # v7.0.0
+        uses: cycjimmy/semantic-release-action@8be816a60e417d22b0e09b61adc23605036497eb # v7.1.0
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
