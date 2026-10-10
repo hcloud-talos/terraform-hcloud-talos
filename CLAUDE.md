@@ -85,6 +85,7 @@ talosctl --talosconfig ./talosconfig --endpoint <public-ip> version
 ```bash
 terraform fmt -recursive -check -diff
 terraform init && terraform validate
+terraform test
 pre-commit run --all-files
 ```
 
@@ -106,7 +107,7 @@ The `.demo/` directory contains a test deployment configuration that:
 ## Important Notes
 
 ### Cluster Operations
-- **Upgrades**: Use `talosctl upgrade-k8s`, NOT Terraform variables
+- **Upgrades**: Kubernetes upgrades are natively supported — changing `kubernetes_version` and running `terraform apply` runs `upgrade-k8s` via the `talos_cluster` resource. Talos OS upgrades still require node replacement (new Packer image), not Terraform variables
 - **Node changes**: `user_data` or `image` changes = node recreation
 - **Access**: Always use public endpoints for talosctl from outside
 
