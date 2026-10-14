@@ -30,6 +30,13 @@
       pinDigests: true,
       automerge: true,
     },
+    {
+      // The release-notes-generator in semantic-release-action uses conventional-changelog-writer 8.
+      // Preset 10 needs writer 9 or newer and breaks the release with "Missing helper".
+      description: "Keep the changelog preset on the version compatible with the release-notes-generator",
+      matchPackageNames: ["conventional-changelog-conventionalcommits"],
+      allowedVersions: ">=9 <10",
+    },
   ],
   customManagers: [
     {

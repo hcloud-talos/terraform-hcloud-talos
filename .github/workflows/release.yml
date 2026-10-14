@@ -38,6 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           semantic_version: 25.0.9
-          # Release-notes-generator 14 uses writer 8. Keep the preset on version 9.
+          # Release-notes-generator 14 uses writer 8. Preset 10 needs writer 9 or newer and fails with
+          # "Missing helper". Keep the preset on version 9 (see renovate.json5, allowedVersions).
           extra_plugins: |
-            - conventional-changelog-conventionalcommits@10.4.1
+            - conventional-changelog-conventionalcommits@9.3.1
