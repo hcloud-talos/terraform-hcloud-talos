@@ -1,0 +1,49 @@
+terraform {
+  required_version = ">= 1.10.0"
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = ">= 1.70.0"
+    }
+  }
+}
+
+variable "use_iso" {
+  type    = bool
+  default = false
+}
+
+resource "terraform_data" "image" {
+  for_each = {
+    arm = "123456"
+    x86 = "234567"
+  }
+  input = each.value
+}
+
+module "images" {
+  source = "./module"
+
+  hcloud_token       = "test-token"
+  cluster_name       = "test"
+  talos_version      = "v1.14.3"
+  kubernetes_version = "1.35.0"
+  control_plane_nodes = [{
+    id   = 1
+    type = "cx23"
+  }]
+
+  talos_image_arm = var.use_iso ? null : { id = terraform_data.image["arm"].output }
+  talos_image_x86 = var.use_iso ? null : { id = terraform_data.image["x86"].output }
+  talos_iso_arm   = var.use_iso ? { id = terraform_data.image["arm"].output } : null
+  talos_iso_x86   = var.use_iso ? { id = terraform_data.image["x86"].output } : null
+}
+
+# OpenTofu apply assertions need root outputs to read the applied values.
+output "arm" {
+  value = module.images.arm
+}
+
+output "x86" {
+  value = module.images.x86
+}

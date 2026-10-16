@@ -84,7 +84,9 @@ module "talos" {
 
   talos_version      = local.talos_version
   kubernetes_version = "1.35.0"
-  talos_image_id_x86 = imager_image.talos_x86.id
+  talos_image_x86 = {
+    id = imager_image.talos_x86.id
+  }
 
   disable_arm = true
 

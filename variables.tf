@@ -507,22 +507,106 @@ variable "worker_nodes" {
 variable "disable_x86" {
   type        = bool
   default     = false
-  description = "If true, x86 images will not be used."
+  description = "Skip automatic x86 image lookup and ISO attachment. Supplied image IDs are still used. This does not disable x86 nodes."
 }
 
 variable "disable_arm" {
   type        = bool
   default     = false
-  description = "If true, arm images will not be used."
+  description = "Skip automatic ARM image lookup and ISO attachment. Supplied image IDs are still used. This does not disable ARM nodes."
+}
+
+variable "talos_image_x86" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional x86 image configuration. Set id to a Hetzner Cloud image ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_image_x86 == null ? true : can(regex("^[0-9]+$", var.talos_image_x86.id))
+    error_message = "talos_image_x86.id must be a numeric image ID string, not null or empty."
+  }
+  validation {
+    condition     = var.talos_image_x86 == null || (var.talos_image_id_x86 == null && var.talos_iso_id_x86 == null)
+    error_message = "Do not combine talos_image_x86 with talos_image_id_x86 or talos_iso_id_x86."
+  }
+}
+
+variable "talos_image_arm" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional ARM image configuration. Set id to a Hetzner Cloud image ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_image_arm == null ? true : can(regex("^[0-9]+$", var.talos_image_arm.id))
+    error_message = "talos_image_arm.id must be a numeric image ID string, not null or empty."
+  }
+  validation {
+    condition     = var.talos_image_arm == null || (var.talos_image_id_arm == null && var.talos_iso_id_arm == null)
+    error_message = "Do not combine talos_image_arm with talos_image_id_arm or talos_iso_id_arm."
+  }
+}
+
+variable "talos_iso_x86" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional x86 ISO configuration. Set id to a Hetzner Cloud ISO ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with an image object or legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_iso_x86 == null ? true : can(regex("^[0-9]+$", var.talos_iso_x86.id))
+    error_message = "talos_iso_x86.id must be a numeric ISO ID string, not null or empty."
+  }
+  validation {
+    condition = var.talos_iso_x86 == null || (
+      var.talos_image_x86 == null && var.talos_image_id_x86 == null && var.talos_iso_id_x86 == null
+    )
+    error_message = "Do not combine talos_iso_x86 with talos_image_x86, talos_image_id_x86, or talos_iso_id_x86."
+  }
+}
+
+variable "talos_iso_arm" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional ARM ISO configuration. Set id to a Hetzner Cloud ISO ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with an image object or legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_iso_arm == null ? true : can(regex("^[0-9]+$", var.talos_iso_arm.id))
+    error_message = "talos_iso_arm.id must be a numeric ISO ID string, not null or empty."
+  }
+  validation {
+    condition = var.talos_iso_arm == null || (
+      var.talos_image_arm == null && var.talos_image_id_arm == null && var.talos_iso_id_arm == null
+    )
+    error_message = "Do not combine talos_iso_arm with talos_image_arm, talos_image_id_arm, or talos_iso_id_arm."
+  }
 }
 
 variable "talos_image_id_x86" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud image ID for x86_64 architecture (for example a custom Talos snapshot).
-    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
-    Hint: list Talos snapshot IDs with `hcloud image list`.
+    Legacy x86 image ID input. Prefer talos_image_x86 = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    A supplied ID skips automatic image lookup. List image IDs with `hcloud image list`.
   EOF
   validation {
     condition     = var.talos_image_id_x86 == null || can(regex("^[0-9]+$", var.talos_image_id_x86))
@@ -534,9 +618,9 @@ variable "talos_image_id_arm" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud image ID for arm64 architecture (for example a custom Talos snapshot).
-    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
-    Hint: list Talos snapshot IDs with `hcloud image list`.
+    Legacy ARM image ID input. Prefer talos_image_arm = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    A supplied ID skips automatic image lookup. List image IDs with `hcloud image list`.
   EOF
   validation {
     condition     = var.talos_image_id_arm == null || can(regex("^[0-9]+$", var.talos_image_id_arm))
@@ -548,9 +632,9 @@ variable "talos_iso_id_x86" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud ISO ID for x86_64 architecture.
-    If set, the ISO is mounted via the server `iso` field.
-    Hint: list Talos ISO IDs with `hcloud iso list`.
+    Legacy x86 ISO ID input. Prefer talos_iso_x86 = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    The ISO is attached unless disable_x86 is true. List ISO IDs with `hcloud iso list`.
   EOF
   validation {
     condition     = var.talos_iso_id_x86 == null || can(regex("^[0-9]+$", var.talos_iso_id_x86))
@@ -562,9 +646,9 @@ variable "talos_iso_id_arm" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud ISO ID for arm64 architecture.
-    If set, the ISO is mounted via the server `iso` field.
-    Hint: list Talos ISO IDs with `hcloud iso list`.
+    Legacy ARM ISO ID input. Prefer talos_iso_arm = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    The ISO is attached unless disable_arm is true. List ISO IDs with `hcloud iso list`.
   EOF
   validation {
     condition     = var.talos_iso_id_arm == null || can(regex("^[0-9]+$", var.talos_iso_id_arm))

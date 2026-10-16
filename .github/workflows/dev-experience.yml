@@ -83,6 +83,10 @@ jobs:
         id: validate
         run: ${{ matrix.cli }} validate -no-color
         continue-on-error: true
+      - name: Test image and ISO selection
+        env:
+          IAC_CLI: ${{ matrix.cli }}
+        run: ./tests/images.sh
       - name: Install Talos configuration validator
         run: |
           version="v1.14.$(jq -r '.["1.14"].minimum_patch' supported_versions.json)"

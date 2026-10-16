@@ -2,6 +2,38 @@
 
 This document describes how to migrate between major versions of this module.
 
+## Image and ISO inputs
+
+Use the object inputs for image and ISO IDs that are unknown during planning.
+This includes snapshots created by `terraform-provider-imager` in the same apply.
+Change this:
+
+```hcl
+talos_image_id_x86 = imager_image.talos_x86.id
+```
+
+To this:
+
+```hcl
+talos_image_x86 = {
+  id = imager_image.talos_x86.id
+}
+```
+
+The same change applies to `talos_image_arm`, `talos_iso_x86`, and `talos_iso_arm`.
+The object must be known during planning; only its ID can remain unknown. The ID
+must be a numeric string, not null or empty. No resource addresses change.
+
+The legacy scalar inputs remain supported for fixed IDs. Do not combine an
+object input with another source for the same architecture. ARM and x86 can use
+different sources.
+
+If you set `disable_arm` or `disable_x86` only to avoid the unknown-ID error,
+you can remove that flag for the architecture with the new object input. Keep
+flags for unused architectures if you need to skip their image lookup. These
+flags skip automatic lookup and ISO attachment; they do not disable nodes or
+prevent the use of supplied image IDs.
+
 ## v4 (from v3.x)
 
 Version 4.0.0 adds explicit Talos and Kubernetes version limits and the Talos 1.14

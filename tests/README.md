@@ -1,4 +1,35 @@
-# Configuration and version tests
+# Tests
+
+## Image and ISO selection
+
+Run from the repository root:
+
+```sh
+./tests/images.sh
+IAC_CLI=tofu ./tests/images.sh
+./tests/images.sh -filter=generated_images.tftest.hcl
+```
+
+Requirements:
+
+- Terraform 1.10 or later, or a CI-tested OpenTofu version.
+- Network access to download the Hetzner provider.
+
+The runner copies production image selection, variables, and version validation
+into a temporary module. The fixture calls that module with both fixed IDs and
+IDs from `terraform_data` resources. The plan tests run before those IDs are
+known. The apply tests use only local `terraform_data` resources.
+
+The Hetzner provider is mocked. No token, cloud resources, or cluster access is
+required. Lookup tests check the source count and selectors. The provider marks
+the lookup ID as optional rather than computed, so the mock cannot supply it.
+Other tests check the selected image and ISO IDs directly.
+
+The tests also cover legacy scalar inputs, disabled lookup and ISO attachment,
+invalid IDs, and conflicting source inputs. Temporary configuration and state
+are removed when the runner exits.
+
+## Configuration and versions
 
 Run from the repository root:
 
