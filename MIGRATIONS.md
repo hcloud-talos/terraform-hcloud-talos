@@ -2,7 +2,11 @@
 
 This document describes how to migrate between major versions of this module.
 
-## Next major release: explicit version support
+## v4 (from v3.x)
+
+Version 4.0.0 adds explicit Talos and Kubernetes version limits and the Talos 1.14
+configuration format. See the [v4.0.0 release notes](https://github.com/hcloud-talos/terraform-hcloud-talos/releases/tag/v4.0.0)
+for the complete change summary.
 
 ### Breaking changes
 
@@ -18,22 +22,43 @@ This document describes how to migrate between major versions of this module.
   lookup; check their versions yourself.
 - The Cilium default changes from `1.16.2` to `1.20.3`. Review its upgrade guide
   and your Helm values. Pin `cilium_version` if you manage this upgrade separately.
+  Cilium compatibility is not enforced by the Talos/Kubernetes checks. Cilium 1.20
+  documents tested support for Kubernetes 1.33–1.36, not every version supported
+  by Talos.
+- The deprecated Packer template applies the same Talos limits and defaults to
+  `v1.14.3`. Update local `hcloud.auto.pkrvars.hcl` files that select older versions.
+  Use `terraform-provider-imager` for new image builds.
 - Talos 1.14 extra patches must not set legacy fields that conflict with the new
   generated documents.
 
+### Supported versions in v4.0.0
+
+| Talos series | Minimum Talos version | Kubernetes range |
+| --- | --- | --- |
+| 1.13 | `v1.13.11` | `>= 1.31.0, < 1.36.99` |
+| 1.14 | `v1.14.3` | `>= 1.32.0, < 1.37.99` |
+
+Later stable Talos patches within these two minor series are accepted. New minor
+and major series require explicit module support. The boot image must match
+`talos_version`.
+
 ### Upgrade procedure
 
-1. Back up Terraform state and etcd. Check the Talos and Kubernetes upgrade paths.
+1. Back up Terraform state and etcd. Check the Talos, Kubernetes, and Cilium
+   upgrade paths.
 2. Upgrade existing nodes with the Talos tools. Changing `talos_version` or
    `kubernetes_version` in Terraform does not upgrade those nodes. Server
    lifecycle rules ignore changes to `user_data`, `image`, and `iso`.
 3. Build or select images that match the supported Talos version for new nodes.
-4. Set supported version inputs and update custom patches. Run
-   `terraform init -upgrade` to select the required provider.
+4. Set the module version to `4.0.0`, set supported version inputs, and update
+   custom patches. Review `cilium_version` explicitly. Run `terraform init -upgrade`
+   to select the required provider.
 5. Review `terraform plan`. Do not apply an unexpected server replacement.
 6. Apply machine configuration to existing nodes through your normal Talos
    configuration process. This module supplies configuration through server
    `user_data`; it does not apply changes to existing nodes.
+
+### Custom patches for Talos 1.14
 
 For Talos 1.13, existing legacy patches remain valid. For Talos 1.14, change this:
 
