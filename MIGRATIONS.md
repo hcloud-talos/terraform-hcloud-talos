@@ -2,6 +2,80 @@
 
 This document describes how to migrate between major versions of this module.
 
+## Next major release: explicit version support
+
+### Breaking changes
+
+- Talos is limited to stable `v1.13.11` or later 1.13 patches, and `v1.14.3` or
+  later 1.14 patches. Older versions and unapproved minor series are rejected.
+- Kubernetes must match the selected Talos series. See
+  [SUPPORTED_VERSIONS.md](SUPPORTED_VERSIONS.md) for the exact limits.
+- Use a `v` prefix for Talos, but not for Kubernetes. Both inputs require a patch
+  number. Prereleases and build metadata are rejected.
+- The Talos provider is limited to `0.12.x`.
+- Default snapshot lookup now requires `os=talos` and
+  `version=<talos_version>` labels. Explicit image and ISO IDs still bypass the
+  lookup; check their versions yourself.
+- The Cilium default changes from `1.16.2` to `1.20.3`. Review its upgrade guide
+  and your Helm values. Pin `cilium_version` if you manage this upgrade separately.
+- Talos 1.14 extra patches must not set legacy fields that conflict with the new
+  generated documents.
+
+### Upgrade procedure
+
+1. Back up Terraform state and etcd. Check the Talos and Kubernetes upgrade paths.
+2. Upgrade existing nodes with the Talos tools. Changing `talos_version` or
+   `kubernetes_version` in Terraform does not upgrade those nodes. Server
+   lifecycle rules ignore changes to `user_data`, `image`, and `iso`.
+3. Build or select images that match the supported Talos version for new nodes.
+4. Set supported version inputs and update custom patches. Run
+   `terraform init -upgrade` to select the required provider.
+5. Review `terraform plan`. Do not apply an unexpected server replacement.
+6. Apply machine configuration to existing nodes through your normal Talos
+   configuration process. This module supplies configuration through server
+   `user_data`; it does not apply changes to existing nodes.
+
+For Talos 1.13, existing legacy patches remain valid. For Talos 1.14, change this:
+
+```yaml
+machine:
+  kubelet:
+    extraArgs:
+      max-pods: "80"
+```
+
+To this:
+
+```yaml
+apiVersion: v1alpha1
+kind: KubeletConfig
+extraArgs:
+  max-pods: "80"
+```
+
+Other relevant mappings are:
+
+| Legacy field | Talos 1.14 document and field |
+| --- | --- |
+| `machine.nodeLabels` | `KubeNodeConfig.labels` |
+| `machine.kubelet.nodeIP` | `KubeNodeConfig.nodeIP` |
+| `machine.kubelet.extraConfig` | `KubeletConfig.config` |
+| `machine.features.hostDNS` | `ResolverConfig.hostDNS` |
+| `machine.install.image` | `UnattendedInstallConfig.installer.image` |
+| Installer hostname kernel argument | `HostnameConfig.hostname` |
+| `cluster.network` | `KubeNetworkConfig` |
+| `cluster.apiServer.extraArgs` | `KubeAPIServerConfig.extraArgs` |
+| `cluster.controllerManager.extraArgs` | `KubeControllerManagerConfig.extraArgs` |
+| `cluster.scheduler.extraArgs` | `KubeSchedulerConfig.extraArgs` |
+
+Talos 1.14 installation selects `/dev/sda`, as the Packer build does. If you need
+another disk, override `UnattendedInstallConfig.provisioning.diskSelector.match`.
+
+For clusters without workers, the module removes the load balancer exclusion
+label and the default control-plane scheduling restriction in both formats.
+Custom taints remain in place. Do not remove the label patch as a workaround for
+issue #620; Talos 1.14 needs the patch in the new document.
+
 ## v3 (from v2.x)
 
 ### Breaking Changes

@@ -156,6 +156,21 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - You can store the token in the environment variable `HCLOUD_TOKEN` or use it in the following commands/terraform
   files.
 
+## Supported versions
+
+| Talos | Kubernetes |
+| --- | --- |
+| `v1.13.11` and later stable 1.13 patches | `>= 1.31.0, < 1.36.99` |
+| `v1.14.3` and later stable 1.14 patches | `>= 1.32.0, < 1.37.99` |
+
+Terraform rejects unsupported combinations, prereleases, and unapproved Talos
+minor versions. The boot image must match `talos_version`. Default snapshot lookup
+requires both `os=talos` and `version=<talos_version>` labels.
+
+See [SUPPORTED_VERSIONS.md](SUPPORTED_VERSIONS.md) for the policy, Cilium
+compatibility limits, and test coverage. See [MIGRATIONS.md](MIGRATIONS.md) before
+upgrading an existing cluster.
+
 ## Usage
 
 ### 1. Create Talos Images with `terraform-provider-imager` (Recommended)
@@ -238,7 +253,8 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  talos_version = "v1.12.2" # The version of talos features to use in generated machine configurations
+  talos_version      = "v1.14.3" # Must match the boot image.
+  kubernetes_version = "1.35.0"
 
   # Optional: use official Hetzner Talos ISO IDs (no custom Packer image required)
   # talos_iso_id_x86 = "<x86-iso-id>"
@@ -275,10 +291,10 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  # Use versions compatible with each other and supported by the module/Talos
-  talos_version      = "v1.12.2"
+  # Use a supported Talos and Kubernetes combination.
+  talos_version      = "v1.14.3"
   kubernetes_version = "1.35.0"
-  cilium_version     = "1.16.2"
+  cilium_version     = "1.20.3"
 
   hcloud_token = "your-hcloud-token"
 
@@ -574,7 +590,7 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "<latest-version>"
 
-  talos_version      = "v1.12.2"
+  talos_version      = "v1.14.3"
   kubernetes_version = "1.35.0"
 
   hcloud_token            = "your-hcloud-token"

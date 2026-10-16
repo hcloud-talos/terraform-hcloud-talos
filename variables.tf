@@ -83,19 +83,6 @@ variable "cluster_api_host" {
   }
 }
 
-variable "location_name" {
-  type        = string
-  description = <<EOF
-    The name of the location where the cluster will be created.
-    This is used to determine the region and zone of the cluster and network.
-    Possible values: fsn1, nbg1, hel1, ash, hil, sin
-  EOF
-  validation {
-    condition     = contains(data.hcloud_locations.all.locations[*].name, var.location_name)
-    error_message = "Invalid location name."
-  }
-}
-
 variable "kubeconfig_endpoint_mode" {
   type    = string
   default = "public_ip"
@@ -338,7 +325,18 @@ variable "network_routes" {
 # Server
 variable "talos_version" {
   type        = string
-  description = "The version of talos features to use in generated machine configurations."
+  nullable    = false
+  description = "The Talos version for generated configuration and installer images. Use vMAJOR.MINOR.PATCH from SUPPORTED_VERSIONS.md. The boot image must use the same version."
+
+  validation {
+    condition = anytrue([
+      for parts in regexall("^v${local.stable_version_pattern}$", var.talos_version) : try(
+        tonumber(parts[2]) >= local.supported_talos_versions[join(".", slice(parts, 0, 2))].minimum_patch,
+        false,
+      )
+    ])
+    error_message = "Unsupported talos_version. Use ${local.supported_talos_description}. Prereleases, build metadata, and other minor versions are not supported."
+  }
 }
 
 variable "ssh_public_key" {
@@ -589,15 +587,31 @@ variable "kube_api_extra_args" {
 
 variable "kubernetes_version" {
   type        = string
+  nullable    = false
   description = <<EOF
-    The Kubernetes version to use. This variable is required.
-
-    Choose a version compatible with your Talos version:
-    https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
-
-    Also ensure compatibility with `cilium_version`:
-    https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+    The Kubernetes version, in MAJOR.MINOR.PATCH format without a v prefix.
+    The version must match the Talos compatibility matrix in SUPPORTED_VERSIONS.md.
+    Prereleases and build metadata are not supported.
+    Check Cilium compatibility separately: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
+
+  validation {
+    condition = !local.talos_version_supported || anytrue([
+      for parts in regexall("^${local.stable_version_pattern}$", var.kubernetes_version) : try(
+        tonumber(parts[0]) == 1 &&
+        tonumber(parts[1]) >= local.talos_support.kubernetes_min_minor &&
+        tonumber(parts[1]) <= local.talos_support.kubernetes_max_minor &&
+        (tonumber(parts[1]) < local.talos_support.kubernetes_max_minor || tonumber(parts[2]) < 99),
+        false,
+      )
+    ])
+    error_message = format(
+      "Unsupported kubernetes_version for %s. Use a stable Kubernetes version from 1.%s.0 through 1.%s.98, without a v prefix. See SUPPORTED_VERSIONS.md and check Cilium compatibility separately.",
+      var.talos_version,
+      try(tostring(local.talos_support.kubernetes_min_minor), "unknown"),
+      try(tostring(local.talos_support.kubernetes_max_minor), "unknown"),
+    )
+  }
 }
 
 variable "sysctls_extra_args" {
@@ -682,9 +696,9 @@ variable "registries" {
 # Deployments
 variable "cilium_version" {
   type        = string
-  default     = "1.16.2"
+  default     = "1.20.3"
   description = <<EOF
-    The version of Cilium to deploy. If not set, the `1.16.0` version will be used.
+    The version of Cilium to deploy. The default is `1.20.3`.
     Needs to be compatible with the `kubernetes_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 }

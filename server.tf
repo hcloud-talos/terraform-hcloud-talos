@@ -1,13 +1,13 @@
 data "hcloud_image" "arm" {
   count             = var.disable_arm || var.talos_image_id_arm != null || var.talos_iso_id_arm != null ? 0 : 1
-  with_selector     = "os=talos"
+  with_selector     = "os=talos,version=${var.talos_version}"
   with_architecture = "arm"
   most_recent       = true
 }
 
 data "hcloud_image" "x86" {
   count             = var.disable_x86 || var.talos_image_id_x86 != null || var.talos_iso_id_x86 != null ? 0 : 1
-  with_selector     = "os=talos"
+  with_selector     = "os=talos,version=${var.talos_version}"
   with_architecture = "x86"
   most_recent       = true
 }

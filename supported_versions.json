@@ -1,0 +1,12 @@
+{
+  "1.13": {
+    "minimum_patch": 11,
+    "kubernetes_min_minor": 31,
+    "kubernetes_max_minor": 36
+  },
+  "1.14": {
+    "minimum_patch": 3,
+    "kubernetes_min_minor": 32,
+    "kubernetes_max_minor": 37
+  }
+}

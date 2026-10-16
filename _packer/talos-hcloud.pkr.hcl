@@ -10,7 +10,19 @@ packer {
 
 variable "talos_version" {
   type    = string
-  default = "v1.12.2"
+  default = "v1.14.3"
+
+  validation {
+    condition = anytrue([
+      for parts in regexall("^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$", var.talos_version) : try(
+        # Packer validation cannot reference locals or path.root.
+        # tests/packer.py checks these bounds against supported_versions.json.
+        parts[2] >= { "1.13" = 11, "1.14" = 3 }[join(".", slice(parts, 0, 2))],
+        false,
+      )
+    ])
+    error_message = "Unsupported talos_version. Use a stable version from ../SUPPORTED_VERSIONS.md in vMAJOR.MINOR.PATCH format."
+  }
 }
 
 variable "image_url_arm" {
@@ -67,7 +79,7 @@ source "hcloud" "talos-arm" {
   server_type  = "${var.server_type_arm}"
   ssh_username = "root"
 
-  snapshot_name   = "Talos Linux ${var.talos_version} ARM by hcloud-talos"
+  snapshot_name = "Talos Linux ${var.talos_version} ARM by hcloud-talos"
   snapshot_labels = {
     type    = "infra",
     os      = "talos",
@@ -85,7 +97,7 @@ source "hcloud" "talos-x86" {
   server_type  = "${var.server_type_x86}"
   ssh_username = "root"
 
-  snapshot_name   = "Talos Linux ${var.talos_version} x86 by hcloud-talos"
+  snapshot_name = "Talos Linux ${var.talos_version} x86 by hcloud-talos"
   snapshot_labels = {
     type    = "infra",
     os      = "talos",

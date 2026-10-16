@@ -19,7 +19,7 @@ terraform {
 
     talos = {
       source  = "siderolabs/talos"
-      version = ">= 0.7.0"
+      version = "~> 0.12.0"
     }
   }
 }
@@ -36,7 +36,7 @@ locals {
     ]
   ]))
 
-  talos_version = "v1.12.2"
+  talos_version = "v1.14.3"
 }
 
 provider "hcloud" {
@@ -144,7 +144,7 @@ module "talos" {
 
   # Cilium bootstrap values - GitOps manages post-bootstrap (ArgoCD in my case)
   deploy_cilium  = true # set to false after first deployment and let GitOps handle upgrades
-  cilium_version = "1.18.5"
+  cilium_version = "1.20.3"
   # cilium_values  = [templatefile("../path/to/your/git-ops/cilium/values.yaml", {})]
 
   deploy_prometheus_operator_crds  = true # set to false after first deployment and let GitOps handle upgrades
