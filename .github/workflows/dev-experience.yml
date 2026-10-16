@@ -83,11 +83,16 @@ jobs:
         id: validate
         run: ${{ matrix.cli }} validate -no-color
         continue-on-error: true
+      - name: IaC Test
+        id: test
+        run: ${{ matrix.cli }} test -no-color
+        continue-on-error: true
       - name: Fail on error
         if: ${{
           steps.fmt.outcome != 'success'
           || steps.init.outcome != 'success'
           || steps.validate.outcome != 'success'
+          || steps.test.outcome != 'success'
           }}
         run: |
           exit 1

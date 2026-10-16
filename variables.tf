@@ -91,7 +91,7 @@ variable "location_name" {
     Possible values: fsn1, nbg1, hel1, ash, hil, sin
   EOF
   validation {
-    condition     = contains(data.hcloud_locations.all.locations[*].name, var.location_name)
+    condition     = contains(data.hcloud_locations.all.names, var.location_name)
     error_message = "Invalid location name."
   }
 }
@@ -592,12 +592,21 @@ variable "kubernetes_version" {
   description = <<EOF
     The Kubernetes version to use. This variable is required.
 
+    Used for the initial deployment, and also drives live Kubernetes upgrades: changing this value runs
+    Talos's `upgrade-k8s` procedure natively via the `talos_cluster` resource on the next `terraform apply`.
+    See the "Upgrading Kubernetes" section in the README before bumping it on an existing cluster.
+
     Choose a version compatible with your Talos version:
     https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
 
     Also ensure compatibility with `cilium_version`:
     https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
+
+  validation {
+    condition     = can(regex("^v?[0-9]+\\.[0-9]+\\.[0-9]+$", var.kubernetes_version))
+    error_message = "kubernetes_version must look like \"1.35.0\" or \"v1.35.0\"."
+  }
 }
 
 variable "sysctls_extra_args" {

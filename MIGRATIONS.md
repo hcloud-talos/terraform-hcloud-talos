@@ -2,6 +2,25 @@
 
 This document describes how to migrate between major versions of this module.
 
+## v4 (from v3.x)
+
+### Breaking Changes
+
+- The `talos_machine_bootstrap` resource is replaced by `talos_cluster`. On the first `terraform apply` after
+  upgrading, Terraform will plan to destroy `talos_machine_bootstrap.this[0]` and create `talos_cluster.this`. This
+  is safe: both resources' `Delete` is a no-op (verified in the provider source), and the Bootstrap RPC
+  `talos_cluster` issues on create is idempotent against an already-bootstrapped cluster (`codes.AlreadyExists` is
+  treated as success).
+- `kubernetes_version` is no longer bootstrap-only: changing it now runs a live `upgrade-k8s` through `talos_cluster`
+  on `terraform apply`. **Before upgrading this module**, make sure `kubernetes_version` in your existing
+  configuration matches the version your cluster is actually running — otherwise the next apply will immediately
+  kick off an unintended Kubernetes upgrade. See "Upgrading Kubernetes" in the README for details.
+
+### General Guidance
+
+- Run `terraform plan` first and confirm the only changes are the `talos_machine_bootstrap` → `talos_cluster`
+  swap (and, if you intend it, a `kubernetes_version` upgrade) before applying.
+
 ## v3 (from v2.x)
 
 ### Breaking Changes

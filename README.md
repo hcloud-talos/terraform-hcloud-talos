@@ -713,10 +713,18 @@ kernel_modules_to_load = [
 
 ## Upgrading Kubernetes
 
-The `kubernetes_version` variable in this Terraform module is used for the _initial deployment_ of your Kubernetes cluster.
-It does **not** trigger in-place Kubernetes version upgrades on existing nodes.
+Changing `kubernetes_version` and running `terraform apply` now natively upgrades Kubernetes: the `talos_cluster`
+resource runs Talos's `upgrade-k8s` procedure, which sequentially upgrades kube-apiserver, kube-controller-manager,
+kube-scheduler, kube-proxy, and kubelet across nodes with health gating.
 
-To upgrade your Kubernetes cluster, you must use the `talosctl upgrade-k8s` command.
+- The apply can take a long time on multi-node clusters (each component is upgraded one node at a time with health
+  checks in between). The module sets a generous `update` timeout on `talos_cluster`, but plan for a long-running
+  `terraform apply` on HA clusters.
+- `kubernetes_version` also still matters for scale-up: nodes added later bootstrap directly at that version via
+  `data.talos_machine_configuration`. Bumping `kubernetes_version` upgrades the running cluster and keeps future
+  nodes in sync in the same step.
+- If you'd rather upgrade manually (e.g. to control timing more precisely, or on a version of this module before
+  this native support existed), you can still use `talosctl upgrade-k8s` directly:
 
 **Important Considerations for `talosctl` commands:**
 

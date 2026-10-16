@@ -17,5 +17,5 @@ data "http" "talos_health" {
     min_delay_ms = 5000
     max_delay_ms = 5000
   }
-  depends_on = [talos_machine_bootstrap.this]
+  depends_on = [talos_cluster.this]
 }
