@@ -2,7 +2,7 @@
 
 This document describes how to migrate between major versions of this module.
 
-## v4 (from v3.x)
+## v5 (from v4.x)
 
 ### Breaking Changes
 
@@ -12,14 +12,147 @@ This document describes how to migrate between major versions of this module.
   `talos_cluster` issues on create is idempotent against an already-bootstrapped cluster (`codes.AlreadyExists` is
   treated as success).
 - `kubernetes_version` is no longer bootstrap-only: changing it now runs a live `upgrade-k8s` through `talos_cluster`
-  on `terraform apply`. **Before upgrading this module**, make sure `kubernetes_version` in your existing
-  configuration matches the version your cluster is actually running — otherwise the next apply will immediately
-  kick off an unintended Kubernetes upgrade. See "Upgrading Kubernetes" in the README for details.
+  on `terraform apply`. This replaces the v4 guidance that Terraform does not upgrade Kubernetes on existing nodes.
+  **Before upgrading this module**, make sure `kubernetes_version` in your existing configuration matches the
+  version your cluster is actually running — otherwise the next apply will immediately kick off an unintended
+  Kubernetes upgrade. See "Upgrading Kubernetes" in the README for details.
+- Talos OS upgrades are unchanged: changing `talos_version` still does not upgrade existing nodes.
 
 ### General Guidance
 
 - Run `terraform plan` first and confirm the only changes are the `talos_machine_bootstrap` → `talos_cluster`
   swap (and, if you intend it, a `kubernetes_version` upgrade) before applying.
+
+## Image and ISO inputs
+
+Use the object inputs for image and ISO IDs that are unknown during planning.
+This includes snapshots created by `terraform-provider-imager` in the same apply.
+Change this:
+
+```hcl
+talos_image_id_x86 = imager_image.talos_x86.id
+```
+
+To this:
+
+```hcl
+talos_image_x86 = {
+  id = imager_image.talos_x86.id
+}
+```
+
+The same change applies to `talos_image_arm`, `talos_iso_x86`, and `talos_iso_arm`.
+The object must be known during planning; only its ID can remain unknown. The ID
+must be a numeric string, not null or empty. No resource addresses change.
+
+The legacy scalar inputs remain supported for fixed IDs. Do not combine an
+object input with another source for the same architecture. ARM and x86 can use
+different sources.
+
+If you set `disable_arm` or `disable_x86` only to avoid the unknown-ID error,
+you can remove that flag for the architecture with the new object input. Keep
+flags for unused architectures if you need to skip their image lookup. These
+flags skip automatic lookup and ISO attachment; they do not disable nodes or
+prevent the use of supplied image IDs.
+
+## v4 (from v3.x)
+
+Version 4.0.0 adds explicit Talos and Kubernetes version limits and the Talos 1.14
+configuration format. See the [v4.0.0 release notes](https://github.com/hcloud-talos/terraform-hcloud-talos/releases/tag/v4.0.0)
+for the complete change summary.
+
+### Breaking changes
+
+- Talos is limited to stable `v1.13.11` or later 1.13 patches, and `v1.14.3` or
+  later 1.14 patches. Older versions and unapproved minor series are rejected.
+- Kubernetes must match the selected Talos series. See
+  [SUPPORTED_VERSIONS.md](SUPPORTED_VERSIONS.md) for the exact limits.
+- Use a `v` prefix for Talos, but not for Kubernetes. Both inputs require a patch
+  number. Prereleases and build metadata are rejected.
+- The Talos provider is limited to `0.12.x`.
+- Default snapshot lookup now requires `os=talos` and
+  `version=<talos_version>` labels. Explicit image and ISO IDs still bypass the
+  lookup; check their versions yourself.
+- The Cilium default changes from `1.16.2` to `1.20.3`. Review its upgrade guide
+  and your Helm values. Pin `cilium_version` if you manage this upgrade separately.
+  Cilium compatibility is not enforced by the Talos/Kubernetes checks. Cilium 1.20
+  documents tested support for Kubernetes 1.33–1.36, not every version supported
+  by Talos.
+- The deprecated Packer template applies the same Talos limits and defaults to
+  `v1.14.3`. Update local `hcloud.auto.pkrvars.hcl` files that select older versions.
+  Use `terraform-provider-imager` for new image builds.
+- Talos 1.14 extra patches must not set legacy fields that conflict with the new
+  generated documents.
+
+### Supported versions in v4.0.0
+
+| Talos series | Minimum Talos version | Kubernetes range |
+| --- | --- | --- |
+| 1.13 | `v1.13.11` | `>= 1.31.0, < 1.36.99` |
+| 1.14 | `v1.14.3` | `>= 1.32.0, < 1.37.99` |
+
+Later stable Talos patches within these two minor series are accepted. New minor
+and major series require explicit module support. The boot image must match
+`talos_version`.
+
+### Upgrade procedure
+
+1. Back up Terraform state and etcd. Check the Talos, Kubernetes, and Cilium
+   upgrade paths.
+2. Upgrade existing nodes with the Talos tools. Changing `talos_version` or
+   `kubernetes_version` in Terraform does not upgrade those nodes. Server
+   lifecycle rules ignore changes to `user_data`, `image`, and `iso`.
+3. Build or select images that match the supported Talos version for new nodes.
+4. Set the module version to `4.0.0`, set supported version inputs, and update
+   custom patches. Review `cilium_version` explicitly. Run `terraform init -upgrade`
+   to select the required provider.
+5. Review `terraform plan`. Do not apply an unexpected server replacement.
+6. Apply machine configuration to existing nodes through your normal Talos
+   configuration process. This module supplies configuration through server
+   `user_data`; it does not apply changes to existing nodes.
+
+### Custom patches for Talos 1.14
+
+For Talos 1.13, existing legacy patches remain valid. For Talos 1.14, change this:
+
+```yaml
+machine:
+  kubelet:
+    extraArgs:
+      max-pods: "80"
+```
+
+To this:
+
+```yaml
+apiVersion: v1alpha1
+kind: KubeletConfig
+extraArgs:
+  max-pods: "80"
+```
+
+Other relevant mappings are:
+
+| Legacy field | Talos 1.14 document and field |
+| --- | --- |
+| `machine.nodeLabels` | `KubeNodeConfig.labels` |
+| `machine.kubelet.nodeIP` | `KubeNodeConfig.nodeIP` |
+| `machine.kubelet.extraConfig` | `KubeletConfig.config` |
+| `machine.features.hostDNS` | `ResolverConfig.hostDNS` |
+| `machine.install.image` | `UnattendedInstallConfig.installer.image` |
+| Installer hostname kernel argument | `HostnameConfig.hostname` |
+| `cluster.network` | `KubeNetworkConfig` |
+| `cluster.apiServer.extraArgs` | `KubeAPIServerConfig.extraArgs` |
+| `cluster.controllerManager.extraArgs` | `KubeControllerManagerConfig.extraArgs` |
+| `cluster.scheduler.extraArgs` | `KubeSchedulerConfig.extraArgs` |
+
+Talos 1.14 installation selects `/dev/sda`, as the Packer build does. If you need
+another disk, override `UnattendedInstallConfig.provisioning.diskSelector.match`.
+
+For clusters without workers, the module removes the load balancer exclusion
+label and the default control-plane scheduling restriction in both formats.
+Custom taints remain in place. Do not remove the label patch as a workaround for
+issue #620; Talos 1.14 needs the patch in the new document.
 
 ## v3 (from v2.x)
 

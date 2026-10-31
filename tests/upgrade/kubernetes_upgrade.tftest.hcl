@@ -1,5 +1,5 @@
-# Verifies that bumping talos_version regenerates machine configuration for scale-up nodes
-# without forcing replacement of existing (immutable) hcloud_server nodes.
+# Verifies that bumping kubernetes_version drives a live talos_cluster upgrade
+# without forcing replacement of the (immutable) hcloud_server nodes.
 
 mock_provider "hcloud" {
   # hcloud_server references these ids as Number-typed attributes; the default random
@@ -55,7 +55,7 @@ variables {
   hcloud_token             = "test-token"
   cluster_name             = "test-cluster"
   location_name            = "fsn1"
-  kubernetes_version       = "1.35.0"
+  talos_version            = "v1.14.3"
   disable_arm              = true
   talos_image_id_x86       = "123456"
   network_id               = "123456"
@@ -81,45 +81,55 @@ run "bootstrap_v1" {
   command = apply
 
   variables {
-    talos_version = "v1.12.2"
+    kubernetes_version = "1.35.0"
   }
 
   assert {
-    condition     = talos_machine_secrets.this.talos_version == "v1.12.2"
-    error_message = "talos_machine_secrets.this.talos_version must match var.talos_version"
+    condition     = talos_cluster.this.kubernetes_version == "v1.35.0"
+    error_message = "talos_cluster.this.kubernetes_version must be the v-prefixed form of var.kubernetes_version"
+  }
+
+  assert {
+    condition     = length(talos_cluster.this.control_plane_nodes) == 3
+    error_message = "talos_cluster.this.control_plane_nodes must list all HA control plane private IPs"
+  }
+
+  assert {
+    condition     = contains(talos_cluster.this.control_plane_nodes, talos_cluster.this.node)
+    error_message = "talos_cluster.this.node must be one of control_plane_nodes"
   }
 }
 
-run "bump_talos_version" {
+run "bump_kubernetes_version" {
   command = plan
 
   variables {
-    talos_version = "v1.13.0"
+    kubernetes_version = "1.36.0"
   }
 
   assert {
-    condition     = talos_machine_secrets.this.talos_version == "v1.13.0"
-    error_message = "talos_machine_secrets.this.talos_version must reflect the bumped talos_version"
+    condition     = talos_cluster.this.kubernetes_version == "v1.36.0"
+    error_message = "talos_cluster.this.kubernetes_version must reflect the bumped kubernetes_version"
   }
 
   assert {
-    condition     = data.talos_machine_configuration.control_plane["control-plane-1"].talos_version == "v1.13.0"
-    error_message = "scale-up config for new control plane nodes must use the bumped talos_version"
+    condition     = data.talos_machine_configuration.control_plane["control-plane-1"].kubernetes_version == "1.36.0"
+    error_message = "scale-up config for new control plane nodes must bootstrap at the bumped kubernetes_version"
   }
 
   assert {
-    condition     = data.talos_machine_configuration.worker["worker-1"].talos_version == "v1.13.0"
-    error_message = "scale-up config for new worker nodes must use the bumped talos_version"
+    condition     = data.talos_machine_configuration.worker["worker-1"].kubernetes_version == "1.36.0"
+    error_message = "scale-up config for new worker nodes must bootstrap at the bumped kubernetes_version"
   }
 
-  # hcloud_server ignore_changes must still shield existing nodes: bumping talos_version must not replace them.
+  # hcloud_server ignore_changes must still shield existing nodes: bumping kubernetes_version must not replace them.
   assert {
     condition     = output.talos_control_plane_ids["control-plane-1"] == run.bootstrap_v1.talos_control_plane_ids["control-plane-1"]
-    error_message = "control plane node must not be replaced when talos_version changes"
+    error_message = "control plane node must not be replaced when kubernetes_version changes"
   }
 
   assert {
     condition     = output.talos_worker_ids["worker-1"] == run.bootstrap_v1.talos_worker_ids["worker-1"]
-    error_message = "worker node must not be replaced when talos_version changes"
+    error_message = "worker node must not be replaced when kubernetes_version changes"
   }
 }

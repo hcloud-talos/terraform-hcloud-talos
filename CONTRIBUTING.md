@@ -98,7 +98,7 @@ Closes #123
    terraform fmt -recursive
    terraform init
    terraform validate
-   terraform test
+   terraform test -test-directory=tests/upgrade
    pre-commit run --all-files
    ```
 6. Commit using conventional commit format

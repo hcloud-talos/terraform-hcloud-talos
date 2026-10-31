@@ -156,15 +156,30 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 - You can store the token in the environment variable `HCLOUD_TOKEN` or use it in the following commands/terraform
   files.
 
+## Supported versions
+
+| Talos | Kubernetes |
+| --- | --- |
+| `v1.13.11` and later stable 1.13 patches | `>= 1.31.0, < 1.36.99` |
+| `v1.14.3` and later stable 1.14 patches | `>= 1.32.0, < 1.37.99` |
+
+Terraform rejects unsupported combinations, prereleases, and unapproved Talos
+minor versions. The boot image must match `talos_version`. Default snapshot lookup
+requires both `os=talos` and `version=<talos_version>` labels.
+
+See [SUPPORTED_VERSIONS.md](SUPPORTED_VERSIONS.md) for the policy, Cilium
+compatibility limits, and test coverage. See [MIGRATIONS.md](MIGRATIONS.md) before
+upgrading an existing cluster.
+
 ## Usage
 
 ### 1. Create Talos Images with `terraform-provider-imager` (Recommended)
 
 > [!TIP]
-> You can use official Hetzner Talos ISOs by setting `talos_iso_id_x86` and/or `talos_iso_id_arm` (but these are usually outdated – check the versions!).
+> You can use official Hetzner Talos ISOs with `talos_iso_x86 = { id = "<x86-iso-id>" }` and/or `talos_iso_arm = { id = "<arm-iso-id>" }`. Check their versions; these ISOs can be outdated.
 > List Talos ISO IDs: `hcloud iso list`
 > Check the Hetzner changelog for current Talos ISO IDs: https://docs.hetzner.cloud/changelog
-> You can also use custom Talos image by setting `talos_image_id_x86` and/or `talos_image_id_arm`.
+> You can use custom Talos images with `talos_image_x86 = { id = "<x86-image-id>" }` and/or `talos_image_arm = { id = "<arm-image-id>" }`.
 > List Talos image IDs: `hcloud image list`
 
 > [!WARNING]
@@ -172,7 +187,7 @@ This repository contains a Terraform module for creating a Kubernetes cluster wi
 > Some Hetzner-provided Talos ISOs have booted Talos in `metal` mode instead of `hcloud`, which leads to incorrect
 > node `providerID`s such as `talos://metal/...`. This breaks `hcloud-cloud-controller-manager` route creation and can
 > cause pod-to-pod networking failures across nodes.
-> If you still use `talos_iso_id_x86` or `talos_iso_id_arm`, verify the current ISO version carefully first.
+> If you use a Talos ISO, verify its version before use.
 > See [#417](https://github.com/hcloud-talos/terraform-hcloud-talos/issues/417).
 
 Before deploying with Terraform, you need Talos OS images (snapshots) available in your Hetzner Cloud project. The maintained workflow is to create those snapshots directly from Terraform with the companion provider [`hcloud-talos/imager`](https://github.com/hcloud-talos/terraform-provider-imager).
@@ -200,7 +215,46 @@ resource "imager_image" "talos_x86" {
 }
 ```
 
-Pass the resulting snapshot IDs into this module with `talos_image_id_x86` and `talos_image_id_arm`. A complete runnable example is available in [`examples/extended`](examples/extended).
+Pass the resulting snapshot IDs into the module in image objects:
+
+```hcl
+talos_image_x86 = {
+  id = imager_image.talos_x86.id
+}
+```
+
+Use `talos_image_arm` for ARM images. A complete example is available in
+[`examples/extended`](examples/extended).
+
+#### Image and ISO inputs
+
+Each architecture supports an image object or an ISO object:
+
+| Architecture | Image input | ISO input |
+| --- | --- | --- |
+| x86 | `talos_image_x86 = { id = "123456" }` | `talos_iso_x86 = { id = "122630" }` |
+| ARM | `talos_image_arm = { id = "234567" }` | `talos_iso_arm = { id = "122629" }` |
+
+The object must be known during planning. Its `id` can remain unknown until apply,
+so an image created in the same apply works without a separate image build step.
+Do not make the presence of the object depend on an ID that is unknown during
+planning. IDs must be numeric strings, not null or empty.
+
+For each architecture, supply an image object or an ISO object, not both. Do not
+combine the object with a legacy ID input for that architecture. ARM and x86 can
+use different sources. With no supplied source, the module searches for a snapshot
+with `os=talos` and `version=<talos_version>` labels.
+
+The legacy `talos_image_id_*` and `talos_iso_id_*` inputs remain supported. Their
+values must be known during planning when they control image lookup. Use the
+object inputs for IDs from resources created in the same apply. See
+[MIGRATIONS.md](MIGRATIONS.md#image-and-iso-inputs).
+
+`disable_arm` and `disable_x86` skip automatic image lookup and ISO attachment for
+the selected architecture. They do not disable nodes, and supplied image IDs are
+still used. You do not need these flags to skip lookup when you supply an image
+or ISO object. Set the flag for an unused architecture if no image is available
+for it.
 
 ### 2. Packer Workflow (Deprecated, No Longer Maintained)
 
@@ -238,15 +292,16 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  talos_version = "v1.12.2" # The version of talos features to use in generated machine configurations
+  talos_version      = "v1.14.3" # Must match the boot image.
+  kubernetes_version = "1.35.0"
 
-  # Optional: use official Hetzner Talos ISO IDs (no custom Packer image required)
-  # talos_iso_id_x86 = "<x86-iso-id>"
-  # talos_iso_id_arm = "<arm-iso-id>"
+  # Optional: use official Hetzner Talos ISOs.
+  # talos_iso_x86 = { id = "<x86-iso-id>" }
+  # talos_iso_arm = { id = "<arm-iso-id>" }
 
-  # Optional: use custom Talos image IDs (snapshots) created by terraform-provider-imager instead
-  # talos_image_id_x86 = "<x86-image-id>"
-  # talos_image_id_arm = "<arm-image-id>"
+  # Or use custom Talos images created by terraform-provider-imager.
+  # talos_image_x86 = { id = imager_image.talos_x86.id }
+  # talos_image_arm = { id = imager_image.talos_arm.id }
 
   hcloud_token            = "your-hcloud-token"
   # If true, the current IP address will be used as the source for the firewall rules.
@@ -275,10 +330,10 @@ module "talos" {
   # https://registry.terraform.io/modules/hcloud-talos/talos/hcloud
   version = "<latest-version>" # Replace with the latest version number
 
-  # Use versions compatible with each other and supported by the module/Talos
-  talos_version      = "v1.12.2"
+  # Use a supported Talos and Kubernetes combination.
+  talos_version      = "v1.14.3"
   kubernetes_version = "1.35.0"
-  cilium_version     = "1.16.2"
+  cilium_version     = "1.20.3"
 
   hcloud_token = "your-hcloud-token"
 
@@ -574,7 +629,7 @@ module "talos" {
   source  = "hcloud-talos/talos/hcloud"
   version = "<latest-version>"
 
-  talos_version      = "v1.12.2"
+  talos_version      = "v1.14.3"
   kubernetes_version = "1.35.0"
 
   hcloud_token            = "your-hcloud-token"

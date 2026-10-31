@@ -1,0 +1,25 @@
+terraform {
+  required_version = ">= 1.10.0"
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = ">= 1.70.0"
+    }
+  }
+}
+
+output "arm" {
+  value = {
+    image_id     = local.arm_image_id
+    iso_id       = local.arm_iso_id
+    lookup_count = length(data.hcloud_image.arm)
+  }
+}
+
+output "x86" {
+  value = {
+    image_id     = local.x86_image_id
+    iso_id       = local.x86_iso_id
+    lookup_count = length(data.hcloud_image.x86)
+  }
+}

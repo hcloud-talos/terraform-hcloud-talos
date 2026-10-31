@@ -83,19 +83,6 @@ variable "cluster_api_host" {
   }
 }
 
-variable "location_name" {
-  type        = string
-  description = <<EOF
-    The name of the location where the cluster will be created.
-    This is used to determine the region and zone of the cluster and network.
-    Possible values: fsn1, nbg1, hel1, ash, hil, sin
-  EOF
-  validation {
-    condition     = contains(data.hcloud_locations.all.names, var.location_name)
-    error_message = "Invalid location name."
-  }
-}
-
 variable "kubeconfig_endpoint_mode" {
   type    = string
   default = "public_ip"
@@ -338,7 +325,18 @@ variable "network_routes" {
 # Server
 variable "talos_version" {
   type        = string
-  description = "The version of talos features to use in generated machine configurations."
+  nullable    = false
+  description = "The Talos version for generated configuration and installer images. Use vMAJOR.MINOR.PATCH from SUPPORTED_VERSIONS.md. The boot image must use the same version."
+
+  validation {
+    condition = anytrue([
+      for parts in regexall("^v${local.stable_version_pattern}$", var.talos_version) : try(
+        tonumber(parts[2]) >= local.supported_talos_versions[join(".", slice(parts, 0, 2))].minimum_patch,
+        false,
+      )
+    ])
+    error_message = "Unsupported talos_version. Use ${local.supported_talos_description}. Prereleases, build metadata, and other minor versions are not supported."
+  }
 }
 
 variable "ssh_public_key" {
@@ -509,22 +507,106 @@ variable "worker_nodes" {
 variable "disable_x86" {
   type        = bool
   default     = false
-  description = "If true, x86 images will not be used."
+  description = "Skip automatic x86 image lookup and ISO attachment. Supplied image IDs are still used. This does not disable x86 nodes."
 }
 
 variable "disable_arm" {
   type        = bool
   default     = false
-  description = "If true, arm images will not be used."
+  description = "Skip automatic ARM image lookup and ISO attachment. Supplied image IDs are still used. This does not disable ARM nodes."
+}
+
+variable "talos_image_x86" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional x86 image configuration. Set id to a Hetzner Cloud image ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_image_x86 == null ? true : can(regex("^[0-9]+$", var.talos_image_x86.id))
+    error_message = "talos_image_x86.id must be a numeric image ID string, not null or empty."
+  }
+  validation {
+    condition     = var.talos_image_x86 == null || (var.talos_image_id_x86 == null && var.talos_iso_id_x86 == null)
+    error_message = "Do not combine talos_image_x86 with talos_image_id_x86 or talos_iso_id_x86."
+  }
+}
+
+variable "talos_image_arm" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional ARM image configuration. Set id to a Hetzner Cloud image ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_image_arm == null ? true : can(regex("^[0-9]+$", var.talos_image_arm.id))
+    error_message = "talos_image_arm.id must be a numeric image ID string, not null or empty."
+  }
+  validation {
+    condition     = var.talos_image_arm == null || (var.talos_image_id_arm == null && var.talos_iso_id_arm == null)
+    error_message = "Do not combine talos_image_arm with talos_image_id_arm or talos_iso_id_arm."
+  }
+}
+
+variable "talos_iso_x86" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional x86 ISO configuration. Set id to a Hetzner Cloud ISO ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with an image object or legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_iso_x86 == null ? true : can(regex("^[0-9]+$", var.talos_iso_x86.id))
+    error_message = "talos_iso_x86.id must be a numeric ISO ID string, not null or empty."
+  }
+  validation {
+    condition = var.talos_iso_x86 == null || (
+      var.talos_image_x86 == null && var.talos_image_id_x86 == null && var.talos_iso_id_x86 == null
+    )
+    error_message = "Do not combine talos_iso_x86 with talos_image_x86, talos_image_id_x86, or talos_iso_id_x86."
+  }
+}
+
+variable "talos_iso_arm" {
+  type = object({
+    id = string
+  })
+  default     = null
+  description = <<EOF
+    Optional ARM ISO configuration. Set id to a Hetzner Cloud ISO ID.
+    The object must be known during planning; its ID can remain unknown until apply.
+    Supply only one source per architecture. Do not combine this object with an image object or legacy ID inputs.
+  EOF
+  validation {
+    condition     = var.talos_iso_arm == null ? true : can(regex("^[0-9]+$", var.talos_iso_arm.id))
+    error_message = "talos_iso_arm.id must be a numeric ISO ID string, not null or empty."
+  }
+  validation {
+    condition = var.talos_iso_arm == null || (
+      var.talos_image_arm == null && var.talos_image_id_arm == null && var.talos_iso_id_arm == null
+    )
+    error_message = "Do not combine talos_iso_arm with talos_image_arm, talos_image_id_arm, or talos_iso_id_arm."
+  }
 }
 
 variable "talos_image_id_x86" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud image ID for x86_64 architecture (for example a custom Talos snapshot).
-    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
-    Hint: list Talos snapshot IDs with `hcloud image list`.
+    Legacy x86 image ID input. Prefer talos_image_x86 = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    A supplied ID skips automatic image lookup. List image IDs with `hcloud image list`.
   EOF
   validation {
     condition     = var.talos_image_id_x86 == null || can(regex("^[0-9]+$", var.talos_image_id_x86))
@@ -536,9 +618,9 @@ variable "talos_image_id_arm" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud image ID for arm64 architecture (for example a custom Talos snapshot).
-    If set, this ID is used directly and the module skips the "os=talos" image selector lookup.
-    Hint: list Talos snapshot IDs with `hcloud image list`.
+    Legacy ARM image ID input. Prefer talos_image_arm = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    A supplied ID skips automatic image lookup. List image IDs with `hcloud image list`.
   EOF
   validation {
     condition     = var.talos_image_id_arm == null || can(regex("^[0-9]+$", var.talos_image_id_arm))
@@ -550,9 +632,9 @@ variable "talos_iso_id_x86" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud ISO ID for x86_64 architecture.
-    If set, the ISO is mounted via the server `iso` field.
-    Hint: list Talos ISO IDs with `hcloud iso list`.
+    Legacy x86 ISO ID input. Prefer talos_iso_x86 = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    The ISO is attached unless disable_x86 is true. List ISO IDs with `hcloud iso list`.
   EOF
   validation {
     condition     = var.talos_iso_id_x86 == null || can(regex("^[0-9]+$", var.talos_iso_id_x86))
@@ -564,9 +646,9 @@ variable "talos_iso_id_arm" {
   type        = string
   default     = null
   description = <<EOF
-    Optional Hetzner Cloud ISO ID for arm64 architecture.
-    If set, the ISO is mounted via the server `iso` field.
-    Hint: list Talos ISO IDs with `hcloud iso list`.
+    Legacy ARM ISO ID input. Prefer talos_iso_arm = { id = ... } for new configurations.
+    This ID must be known during planning when it controls automatic image lookup.
+    The ISO is attached unless disable_arm is true. List ISO IDs with `hcloud iso list`.
   EOF
   validation {
     condition     = var.talos_iso_id_arm == null || can(regex("^[0-9]+$", var.talos_iso_id_arm))
@@ -589,23 +671,32 @@ variable "kube_api_extra_args" {
 
 variable "kubernetes_version" {
   type        = string
+  nullable    = false
   description = <<EOF
-    The Kubernetes version to use. This variable is required.
-
-    Used for the initial deployment, and also drives live Kubernetes upgrades: changing this value runs
-    Talos's `upgrade-k8s` procedure natively via the `talos_cluster` resource on the next `terraform apply`.
-    See the "Upgrading Kubernetes" section in the README before bumping it on an existing cluster.
-
-    Choose a version compatible with your Talos version:
-    https://docs.siderolabs.com/talos/latest/getting-started/support-matrix
-
-    Also ensure compatibility with `cilium_version`:
-    https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+    The Kubernetes version, in MAJOR.MINOR.PATCH format without a v prefix.
+    The version must match the Talos compatibility matrix in SUPPORTED_VERSIONS.md.
+    Prereleases and build metadata are not supported.
+    Changing this value on an existing cluster runs Talos's `upgrade-k8s` through the `talos_cluster`
+    resource on the next `terraform apply`. See "Upgrading Kubernetes" in the README first.
+    Check Cilium compatibility separately: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 
   validation {
-    condition     = can(regex("^v?[0-9]+\\.[0-9]+\\.[0-9]+$", var.kubernetes_version))
-    error_message = "kubernetes_version must look like \"1.35.0\" or \"v1.35.0\"."
+    condition = !local.talos_version_supported || anytrue([
+      for parts in regexall("^${local.stable_version_pattern}$", var.kubernetes_version) : try(
+        tonumber(parts[0]) == 1 &&
+        tonumber(parts[1]) >= local.talos_support.kubernetes_min_minor &&
+        tonumber(parts[1]) <= local.talos_support.kubernetes_max_minor &&
+        (tonumber(parts[1]) < local.talos_support.kubernetes_max_minor || tonumber(parts[2]) < 99),
+        false,
+      )
+    ])
+    error_message = format(
+      "Unsupported kubernetes_version for %s. Use a stable Kubernetes version from 1.%s.0 through 1.%s.98, without a v prefix. See SUPPORTED_VERSIONS.md and check Cilium compatibility separately.",
+      var.talos_version,
+      try(tostring(local.talos_support.kubernetes_min_minor), "unknown"),
+      try(tostring(local.talos_support.kubernetes_max_minor), "unknown"),
+    )
   }
 }
 
@@ -691,9 +782,9 @@ variable "registries" {
 # Deployments
 variable "cilium_version" {
   type        = string
-  default     = "1.16.2"
+  default     = "1.20.3"
   description = <<EOF
-    The version of Cilium to deploy. If not set, the `1.16.0` version will be used.
+    The version of Cilium to deploy. The default is `1.20.3`.
     Needs to be compatible with the `kubernetes_version`: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 }

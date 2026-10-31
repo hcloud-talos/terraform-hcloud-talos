@@ -52,7 +52,7 @@ locals {
               interface = "eth0"
               dhcp      = true
               vip = var.enable_floating_ip ? {
-                ip = data.hcloud_floating_ip.control_plane_ipv4[0].ip_address
+                ip = local.control_plane_public_vip_ipv4
                 hcloud = {
                   apiToken = var.hcloud_token
                 }

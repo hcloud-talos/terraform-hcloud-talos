@@ -2,6 +2,11 @@
 
 This directory contains Packer configuration to build Talos OS images suitable for use with Hetzner Cloud.
 
+The template rejects Talos versions outside the [module support policy](../SUPPORTED_VERSIONS.md).
+Its default is `v1.14.3`. Use the same version for the image and the Terraform
+`talos_version` input. Update existing `hcloud.auto.pkrvars.hcl` files if they
+select an unsupported version.
+
 > [!WARNING]
 > The `_packer/` workflow is deprecated and no longer maintained.
 > Use [`hcloud-talos/imager`](https://github.com/hcloud-talos/terraform-provider-imager) for new clusters and ongoing updates.
@@ -13,7 +18,7 @@ This directory contains Packer configuration to build Talos OS images suitable f
 >
 > ```hcl
 > # _packer/hcloud.auto.pkrvars.hcl
-> talos_version = "v1.7.0" # Replace with your desired Talos version
+> talos_version = "v1.14.3" # Must match the Terraform input.
 >
 > # Optionally, set custom server type for building snapshot:
 > # server_type_arm = "cax21"
@@ -68,14 +73,14 @@ If you need to include additional system extensions in your Talos images (e.g., 
     - ARM: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz`
     - x86: `https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz`
 
-    Replace `<SCHEMATIC_ID>` with the ID obtained in the previous step and `<TALOS_VERSION>` with the target Talos version (e.g., `v1.7.0`).
+    Replace `<SCHEMATIC_ID>` with the ID obtained in the previous step and `<TALOS_VERSION>` with the target Talos version (for example, `v1.14.3`).
 
 4.  **Override Packer Variables:**
     Create a file named `hcloud.auto.pkrvars.hcl` in this directory to provide the custom image URLs and the corresponding Talos version to Packer. The file should look like this:
 
     ```hcl
     # _packer/hcloud.auto.pkrvars.hcl
-    talos_version = "<TALOS_VERSION>" # e.g., "v1.7.0"
+    talos_version = "<TALOS_VERSION>" # For example, "v1.14.3".
     image_url_arm = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-arm64.raw.xz"
     image_url_x86 = "https://factory.talos.dev/image/<SCHEMATIC_ID>/<TALOS_VERSION>/hcloud-amd64.raw.xz"
     ```

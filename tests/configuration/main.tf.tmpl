@@ -1,0 +1,65 @@
+terraform {
+  required_version = ">= 1.10.0"
+  required_providers {
+    talos = {
+      source  = "siderolabs/talos"
+      version = "~> 0.12.0"
+    }
+  }
+}
+
+# Fixed infrastructure inputs. No cloud provider or cluster connection is present.
+locals {
+  control_planes = [for node in var.control_plane_nodes : merge(node, { name = "control-plane-${node.id}" })]
+  workers        = [for node in var.worker_nodes : merge(node, { name = "worker-${node.id}" })]
+  worker_count   = length(var.worker_nodes)
+
+  cluster_endpoint_url_internal  = "https://kube.example.test:6443"
+  cert_SANs                      = ["kube.example.test", "192.0.2.10", "10.0.1.100"]
+  network_id                     = "123"
+  node_ipv4_cidr                 = var.node_ipv4_cidr
+  node_ipv4_cidr_mask_size       = split("/", var.node_ipv4_cidr)[1]
+  pod_ipv4_cidr                  = var.pod_ipv4_cidr
+  service_ipv4_cidr              = var.service_ipv4_cidr
+  control_plane_private_vip_ipv4 = "10.0.1.100"
+  control_plane_public_vip_ipv4  = "192.0.2.20"
+  extra_host_entries = [{
+    ip      = "10.0.1.100"
+    aliases = ["kube.example.test"]
+  }]
+}
+
+resource "terraform_data" "validate" {
+  for_each = merge(
+    { for node in local.control_planes : node.name => data.talos_machine_configuration.control_plane[node.name].machine_configuration },
+    { for node in local.workers : node.name => data.talos_machine_configuration.worker[node.name].machine_configuration },
+  )
+  triggers_replace = [each.value]
+
+  provisioner "local-exec" {
+    command = "bash '${path.module}/validate.sh'"
+    environment = {
+      TALOS_TEST_CONFIG = each.value
+    }
+  }
+}
+
+output "control_planes" {
+  sensitive = true
+  value = {
+    for name, config in data.talos_machine_configuration.control_plane : name => {
+      for doc in split("\n---\n", config.machine_configuration) :
+      try(yamldecode(doc).kind, "legacy") => yamldecode(doc)...
+    }
+  }
+}
+
+output "workers" {
+  sensitive = true
+  value = {
+    for name, config in data.talos_machine_configuration.worker : name => {
+      for doc in split("\n---\n", config.machine_configuration) :
+      try(yamldecode(doc).kind, "legacy") => yamldecode(doc)...
+    }
+  }
+}

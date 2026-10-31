@@ -83,16 +83,46 @@ jobs:
         id: validate
         run: ${{ matrix.cli }} validate -no-color
         continue-on-error: true
-      - name: IaC Test
-        id: test
-        run: ${{ matrix.cli }} test -no-color
-        continue-on-error: true
+      - name: Test Kubernetes and Talos version upgrades
+        run: ${{ matrix.cli }} test -test-directory=tests/upgrade -no-color
+      - name: Test image and ISO selection
+        env:
+          IAC_CLI: ${{ matrix.cli }}
+        run: ./tests/images.sh
+      - name: Install Talos configuration validator
+        run: |
+          version="v1.14.$(jq -r '.["1.14"].minimum_patch' supported_versions.json)"
+          tools="$RUNNER_TEMP/talos-tools"
+          mkdir -p "$tools"
+          cd "$tools"
+          curl -fsSLO "https://github.com/siderolabs/talos/releases/download/$version/talosctl-linux-amd64"
+          curl -fsSLO "https://github.com/siderolabs/talos/releases/download/$version/sha256sum.txt"
+          grep ' talosctl-linux-amd64$' sha256sum.txt | sha256sum -c -
+          mv talosctl-linux-amd64 talosctl
+          chmod +x talosctl
+          echo "$tools" >> "$GITHUB_PATH"
+      - name: Test version policy and Talos configurations
+        env:
+          IAC_CLI: ${{ matrix.cli }}
+        run: ./tests/run.sh
+      - name: Test Packer version policy
+        if: matrix.engine == 'terraform' && matrix.version == '~1.16.0'
+        run: |
+          tools="$RUNNER_TEMP/packer-tools"
+          mkdir -p "$tools"
+          cd "$tools"
+          curl -fsSLO https://releases.hashicorp.com/packer/1.16.1/packer_1.16.1_linux_amd64.zip
+          curl -fsSLO https://releases.hashicorp.com/packer/1.16.1/packer_1.16.1_SHA256SUMS
+          grep ' packer_1.16.1_linux_amd64.zip$' packer_1.16.1_SHA256SUMS | sha256sum -c -
+          unzip -q packer_1.16.1_linux_amd64.zip
+          export PATH="$tools:$PATH"
+          cd "$GITHUB_WORKSPACE"
+          python3 tests/packer.py
       - name: Fail on error
         if: ${{
           steps.fmt.outcome != 'success'
           || steps.init.outcome != 'success'
           || steps.validate.outcome != 'success'
-          || steps.test.outcome != 'success'
           }}
         run: |
           exit 1

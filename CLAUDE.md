@@ -85,7 +85,7 @@ talosctl --talosconfig ./talosconfig --endpoint <public-ip> version
 ```bash
 terraform fmt -recursive -check -diff
 terraform init && terraform validate
-terraform test
+terraform test -test-directory=tests/upgrade
 pre-commit run --all-files
 ```
 
