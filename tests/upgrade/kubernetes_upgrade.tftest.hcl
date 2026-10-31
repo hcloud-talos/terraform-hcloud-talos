@@ -98,6 +98,11 @@ run "bootstrap_v1" {
     condition     = contains(talos_cluster.this.control_plane_nodes, talos_cluster.this.node)
     error_message = "talos_cluster.this.node must be one of control_plane_nodes"
   }
+
+  assert {
+    condition     = talos_cluster.this.timeouts.create == "20m" && talos_cluster.this.timeouts.update == "60m"
+    error_message = "talos_cluster timeouts must default to create = 20m, update = 60m"
+  }
 }
 
 run "bump_kubernetes_version" {
@@ -131,5 +136,19 @@ run "bump_kubernetes_version" {
   assert {
     condition     = output.talos_worker_ids["worker-1"] == run.bootstrap_v1.talos_worker_ids["worker-1"]
     error_message = "worker node must not be replaced when kubernetes_version changes"
+  }
+}
+
+run "override_talos_cluster_update_timeout" {
+  command = plan
+
+  variables {
+    kubernetes_version     = "1.36.0"
+    talos_cluster_timeouts = { update = "120m" }
+  }
+
+  assert {
+    condition     = talos_cluster.this.timeouts.update == "120m" && talos_cluster.this.timeouts.create == "20m"
+    error_message = "talos_cluster_timeouts.update must be configurable while create keeps its default"
   }
 }

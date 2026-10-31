@@ -770,16 +770,58 @@ kernel_modules_to_load = [
 
 Changing `kubernetes_version` and running `terraform apply` now natively upgrades Kubernetes: the `talos_cluster`
 resource runs Talos's `upgrade-k8s` procedure, which sequentially upgrades kube-apiserver, kube-controller-manager,
-kube-scheduler, kube-proxy, and kubelet across nodes with health gating.
+kube-scheduler, and kubelet across nodes with health gating. kube-proxy is disabled in this module (Cilium replaces
+it), so it is not part of the upgrade.
 
 - The apply can take a long time on multi-node clusters (each component is upgraded one node at a time with health
-  checks in between). The module sets a generous `update` timeout on `talos_cluster`, but plan for a long-running
-  `terraform apply` on HA clusters.
+  checks in between). The default `update` timeout is 60 minutes; raise `talos_cluster_timeouts.update` for large
+  clusters.
 - `kubernetes_version` also still matters for scale-up: nodes added later bootstrap directly at that version via
   `data.talos_machine_configuration`. Bumping `kubernetes_version` upgrades the running cluster and keeps future
   nodes in sync in the same step.
 - If you'd rather upgrade manually (e.g. to control timing more precisely, or on a version of this module before
-  this native support existed), you can still use `talosctl upgrade-k8s` directly:
+  this native support existed), you can still use `talosctl upgrade-k8s` directly (see below).
+
+### Guarantees and health checks
+
+What the upgrade does guarantee:
+
+- **One minor version at a time.** Only patch upgrades within a minor (`1.35.0 → 1.35.4`) and upgrades to the next
+  minor (`1.35.x → 1.36.y`) are accepted. Skipping a minor (`1.34 → 1.36`) or downgrading fails before any
+  component changes. Upgrade one minor per `terraform apply`.
+- **Images are pre-pulled** on every node before any component is restarted, so a missing or unreachable image fails
+  the upgrade early instead of mid-rollout.
+- **Health gating between steps.** Components are upgraded one at a time (kube-apiserver, kube-controller-manager,
+  kube-scheduler, then kubelet) and node by node; each step waits for the component to become ready
+  before the next one starts.
+- **Safe retries.** Terraform records the new `kubernetes_version` only after the whole upgrade succeeds. If the
+  apply fails or times out, the next `terraform apply` runs the upgrade again. The upgrade starts from the lowest
+  version still running in the cluster, so nodes that were already upgraded are not touched again.
+
+Health checks the module runs:
+
+| When | Check | Scope |
+| --- | --- | --- |
+| Cluster creation | `talos_cluster` waits until etcd, apid, and kubelet are healthy on all control planes | Talos layer only |
+| Kubernetes upgrade | `upgrade-k8s` waits for each component before the next step | Each upgraded component |
+| After create or upgrade | `GET https://<bootstrap endpoint>:6443/version` is retried every 5 s for up to 5 minutes | Kubernetes API reachable |
+
+What it does **not** guarantee:
+
+- **No drain.** `talos_cluster` has no drain option: a Kubernetes upgrade restarts components in place without a
+  node reboot, so nodes are not cordoned or drained. Running pods keep running, but plan the upgrade for a
+  maintenance window. (The provider's `drain_on_upgrade` belongs to `talos_machine` and applies only to Talos OS
+  upgrade reboots, which this module does not perform.)
+- **No full cluster health check.** The final check confirms only that the API server answers. It does not confirm
+  that all nodes are `Ready` or that workloads are healthy. Verify with `kubectl get nodes` and
+  `talosctl health` after the apply.
+- **No drift detection.** Terraform does not read the running Kubernetes version back from the cluster. If you
+  upgrade with `talosctl upgrade-k8s` outside Terraform, set `kubernetes_version` to the same version afterwards.
+- **No rollback.** A failed upgrade is not rolled back. Fix the cause and re-run `terraform apply`.
+- **Add-ons are not upgraded for you.** Check that `cilium_version` and the Hetzner CCM support the target
+  Kubernetes version before you upgrade.
+
+### Upgrading with talosctl
 
 **Important Considerations for `talosctl` commands:**
 

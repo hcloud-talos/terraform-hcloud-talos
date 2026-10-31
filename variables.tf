@@ -700,6 +700,20 @@ variable "kubernetes_version" {
   }
 }
 
+variable "talos_cluster_timeouts" {
+  type = object({
+    create = optional(string, "20m")
+    update = optional(string, "60m")
+  })
+  default     = {}
+  nullable    = false
+  description = <<EOF
+    Timeouts for the `talos_cluster` resource.
+    `create` covers etcd bootstrap and the Talos health gate. `update` covers a Kubernetes upgrade,
+    which rolls every component node by node; raise it for large clusters.
+  EOF
+}
+
 variable "sysctls_extra_args" {
   type        = map(string)
   default     = {}

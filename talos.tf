@@ -84,15 +84,13 @@ resource "talos_cluster" "this" {
   endpoint            = local.bootstrap_endpoint
   control_plane_nodes = local.control_plane_private_ipv4_list
   kubernetes_version  = local.kubernetes_version_v
-  depends_on = [
-    hcloud_server.control_planes
-  ]
+  timeouts            = var.talos_cluster_timeouts
 
-  timeouts = {
-    create = "10m"
-    # upgrade-k8s rolls sequentially across every node with health gating; must outlast that.
-    update = "60m"
-  }
+  # upgrade-k8s also rolls kubelet on workers, so every node must exist before it runs.
+  depends_on = [
+    hcloud_server.control_planes,
+    hcloud_server.workers,
+  ]
 }
 
 data "talos_client_configuration" "this" {
