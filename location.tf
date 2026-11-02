@@ -6,7 +6,8 @@ variable "location_name" {
     Possible values: fsn1, nbg1, hel1, ash, hil, sin
   EOF
   validation {
-    condition     = contains(data.hcloud_locations.all.locations[*].name, var.location_name)
+    # .names is deprecated, but .locations cannot be mocked to a non-empty list in terraform test.
+    condition     = contains(data.hcloud_locations.all.names, var.location_name)
     error_message = "Invalid location name."
   }
 }

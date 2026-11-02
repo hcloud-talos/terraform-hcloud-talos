@@ -676,6 +676,8 @@ variable "kubernetes_version" {
     The Kubernetes version, in MAJOR.MINOR.PATCH format without a v prefix.
     The version must match the Talos compatibility matrix in SUPPORTED_VERSIONS.md.
     Prereleases and build metadata are not supported.
+    Changing this value on an existing cluster runs Talos's `upgrade-k8s` through the `talos_cluster`
+    resource on the next `terraform apply`. See "Upgrading Kubernetes" in the README first.
     Check Cilium compatibility separately: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
   EOF
 
@@ -696,6 +698,20 @@ variable "kubernetes_version" {
       try(tostring(local.talos_support.kubernetes_max_minor), "unknown"),
     )
   }
+}
+
+variable "talos_cluster_timeouts" {
+  type = object({
+    create = optional(string, "20m")
+    update = optional(string, "60m")
+  })
+  default     = {}
+  nullable    = false
+  description = <<EOF
+    Timeouts for the `talos_cluster` resource.
+    `create` covers etcd bootstrap and the Talos health gate. `update` covers a Kubernetes upgrade,
+    which rolls every component node by node; raise it for large clusters.
+  EOF
 }
 
 variable "sysctls_extra_args" {

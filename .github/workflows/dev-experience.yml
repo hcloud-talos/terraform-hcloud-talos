@@ -83,6 +83,8 @@ jobs:
         id: validate
         run: ${{ matrix.cli }} validate -no-color
         continue-on-error: true
+      - name: Test Kubernetes and Talos version upgrades
+        run: ${{ matrix.cli }} test -test-directory=tests/upgrade -no-color
       - name: Test image and ISO selection
         env:
           IAC_CLI: ${{ matrix.cli }}
