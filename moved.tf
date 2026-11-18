@@ -10,3 +10,12 @@ removed {
     destroy = false
   }
 }
+
+# Replaced by talos_cluster.this, which adopts the already-bootstrapped cluster.
+removed {
+  from = talos_machine_bootstrap.this
+
+  lifecycle {
+    destroy = false
+  }
+}
