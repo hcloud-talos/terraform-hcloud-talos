@@ -1,5 +1,18 @@
 # Tests
 
+## Kubernetes and Talos upgrades
+
+Run from the repository root after `terraform init`:
+
+```sh
+terraform test -test-directory=tests/upgrade
+```
+
+These tests use the full module with mocked `hcloud`, `talos`, `http`, `kubectl`,
+and `helm` providers. They bump `kubernetes_version` and `talos_version` and check
+that `talos_cluster` and the generated machine configuration follow, while existing
+servers are not replaced. No token, cloud resources, or cluster access is required.
+
 ## Image and ISO selection
 
 Run from the repository root:

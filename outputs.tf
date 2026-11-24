@@ -63,3 +63,8 @@ output "talos_worker_ids" {
   description = "Server IDs of the hetzner talos workers machines"
   value       = { for id, server in hcloud_server.workers : id => server.id }
 }
+
+output "talos_control_plane_ids" {
+  description = "Server IDs of the hetzner talos control plane machines"
+  value       = { for id, server in hcloud_server.control_planes : id => server.id }
+}
